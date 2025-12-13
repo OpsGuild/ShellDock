@@ -1,0 +1,15 @@
+name: test
+description: Simple test commands to verify ShellDock works
+version: "1.0.0"
+commands:
+  - description: Print hello message
+    command: echo "Hello from ShellDock!"
+  - description: Show current date
+    command: date
+  - description: List current directory
+    command: ls -la | head -5
+  - description: Show system info
+    command: uname -a
+
+
+

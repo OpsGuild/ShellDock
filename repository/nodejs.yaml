@@ -1,0 +1,29 @@
+name: nodejs
+description: Node.js installation and setup
+versions:
+  - version: "v1"
+    latest: true
+    description: Node.js installation using NodeSource repository
+    commands:
+      - description: Install Node.js
+        platforms:
+          ubuntu: curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs
+          debian: curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs
+          centos: curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash - && sudo yum install -y nodejs
+          rhel: curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash - && sudo yum install -y nodejs
+          fedora: curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash - && sudo dnf install -y nodejs
+          arch: sudo pacman -S nodejs npm
+          darwin: brew install node
+        command: curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs
+      - description: Verify Node.js installation
+        command: node --version && npm --version
+        skip_on_error: false
+      - description: Install global npm packages (optional)
+        platforms:
+          linux: sudo npm install -g yarn pnpm
+          darwin: npm install -g yarn pnpm
+        command: sudo npm install -g yarn pnpm
+        skip_on_error: true
+
+
+

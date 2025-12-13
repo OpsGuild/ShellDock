@@ -1,0 +1,31 @@
+name: docker
+description: Docker installation and setup commands (platform-agnostic)
+version: "1.0.0"
+commands:
+  - description: Update package index
+    platforms:
+      linux: sudo apt-get update
+      darwin: brew update
+      windows: choco upgrade chocolatey
+    skip_on_error: false
+  - description: Install Docker
+    platforms:
+      linux: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      darwin: brew install --cask docker
+      windows: choco install docker-desktop
+    skip_on_error: false
+  - description: Start Docker service
+    platforms:
+      linux: sudo systemctl start docker
+      darwin: open -a Docker
+      windows: Start-Service docker
+    skip_on_error: true
+  - description: Enable Docker on boot
+    platforms:
+      linux: sudo systemctl enable docker
+      darwin: echo "Docker auto-starts on macOS"
+      windows: Set-Service -Name docker -StartupType Automatic
+    skip_on_error: true
+
+
+

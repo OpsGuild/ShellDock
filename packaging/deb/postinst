@@ -1,0 +1,9 @@
+#!/bin/bash
+# Post-installation script for shelldock
+
+echo "ShellDock installed successfully!"
+echo "Run 'shelldock --help' to get started"
+echo "Run 'shelldock manage' to open the interactive UI"
+
+
+

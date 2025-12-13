@@ -1,0 +1,89 @@
+name: test
+description: Test command set with multiple versions
+versions:
+  - version: "v1"
+    description: Simple test commands (basic version)
+    commands:
+      - description: Print hello message
+        command: echo "Hello from ShellDock v1!"
+      - description: Show current date
+        command: date
+      - description: List current directory
+        command: ls -la | head -5
+      - description: Show system info
+        command: uname -a
+
+  - version: "v2"
+    description: Test commands with platform support
+    commands:
+      - description: Print platform-specific greeting
+        platforms:
+          ubuntu: echo "Hello from Ubuntu!"
+          debian: echo "Hello from Debian!"
+          centos: echo "Hello from CentOS!"
+          fedora: echo "Hello from Fedora!"
+          arch: echo "Hello from Arch!"
+          darwin: echo "Hello from macOS!"
+          windows: echo "Hello from Windows!"
+        command: echo "Hello from ShellDock v2!"
+      - description: Show package manager
+        platforms:
+          ubuntu: 'echo "Package manager: apt"'
+          debian: 'echo "Package manager: apt"'
+          centos: 'echo "Package manager: yum"'
+          rhel: 'echo "Package manager: yum"'
+          fedora: 'echo "Package manager: dnf"'
+          arch: 'echo "Package manager: pacman"'
+          darwin: 'echo "Package manager: brew"'
+          windows: 'echo "Package manager: choco"'
+        command: 'echo "Package manager: unknown"'
+      - description: Show current date
+        command: date
+      - description: List current directory
+        command: ls -la | head -5
+
+  - version: "v3"
+    latest: true
+    description: Advanced test commands with all features
+    commands:
+      - description: Print platform-specific greeting
+        platforms:
+          ubuntu: echo "🖥️  Running on Ubuntu - Using apt package manager"
+          debian: echo "🖥️  Running on Debian - Using apt package manager"
+          centos: echo "🖥️  Running on CentOS - Using yum package manager"
+          rhel: echo "🖥️  Running on RHEL - Using yum package manager"
+          fedora: echo "🖥️  Running on Fedora - Using dnf package manager"
+          arch: echo "🖥️  Running on Arch - Using pacman package manager"
+          darwin: echo "🖥️  Running on macOS - Using brew package manager"
+          windows: echo "🖥️  Running on Windows - Using choco package manager"
+        command: echo "🖥️  Running on unknown platform"
+      - description: Show system information
+        platforms:
+          linux: uname -a
+          darwin: uname -a && sw_vers
+          windows: systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+        command: uname -a
+      - description: Show current date and time
+        command: date
+      - description: List files in current directory
+        command: ls -la | head -5
+      - description: Show disk usage
+        platforms:
+          linux: df -h | head -5
+          darwin: df -h | head -5
+          windows: wmic logicaldisk get size,freespace,caption
+        command: df -h | head -5
+      - description: Show memory information
+        platforms:
+          linux: free -h
+          darwin: vm_stat
+          windows: systeminfo | findstr /C:"Total Physical Memory"
+        command: free -h || echo "Memory info not available"
+        skip_on_error: true
+      - description: Show network interfaces
+        platforms:
+          linux: ip addr show | head -10 || ifconfig | head -10
+          darwin: ifconfig | head -10
+          windows: ipconfig
+        command: ifconfig | head -10 || echo "Network info not available"
+        skip_on_error: true

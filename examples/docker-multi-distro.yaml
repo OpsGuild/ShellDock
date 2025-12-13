@@ -1,0 +1,51 @@
+name: docker
+description: Docker installation and setup commands (multi-distribution)
+version: "1.0.0"
+commands:
+  - description: Update package index
+    platforms:
+      ubuntu: sudo apt-get update
+      debian: sudo apt-get update
+      centos: sudo yum check-update || true
+      rhel: sudo yum check-update || true
+      fedora: sudo dnf check-update || true
+      arch: sudo pacman -Sy
+      darwin: brew update
+      windows: choco upgrade chocolatey
+    skip_on_error: false
+  - description: Install Docker
+    platforms:
+      ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      debian: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      centos: sudo yum install -y docker
+      rhel: sudo yum install -y docker
+      fedora: sudo dnf install -y docker
+      arch: sudo pacman -S docker
+      darwin: brew install --cask docker
+      windows: choco install docker-desktop
+    skip_on_error: false
+  - description: Start Docker service
+    platforms:
+      ubuntu: sudo systemctl start docker
+      debian: sudo systemctl start docker
+      centos: sudo systemctl start docker
+      rhel: sudo systemctl start docker
+      fedora: sudo systemctl start docker
+      arch: sudo systemctl start docker
+      darwin: open -a Docker
+      windows: Start-Service docker
+    skip_on_error: true
+  - description: Enable Docker on boot
+    platforms:
+      ubuntu: sudo systemctl enable docker
+      debian: sudo systemctl enable docker
+      centos: sudo systemctl enable docker
+      rhel: sudo systemctl enable docker
+      fedora: sudo systemctl enable docker
+      arch: sudo systemctl enable docker
+      darwin: echo "Docker auto-starts on macOS"
+      windows: Set-Service -Name docker -StartupType Automatic
+    skip_on_error: true
+
+
+

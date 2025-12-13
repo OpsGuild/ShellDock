@@ -1,0 +1,46 @@
+name: docker
+description: Docker installation and setup commands
+versions:
+  - version: "v1"
+    latest: true
+    description: Docker installation with platform-specific commands
+    commands:
+      - description: Update package index
+        platforms:
+          ubuntu: sudo apt-get update
+          debian: sudo apt-get update
+          centos: sudo yum check-update || true
+          rhel: sudo yum check-update || true
+          fedora: sudo dnf check-update || true
+          arch: sudo pacman -Sy
+          darwin: brew update
+        command: sudo apt-get update
+      - description: Install Docker
+        platforms:
+          ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+          debian: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+          centos: sudo yum install -y docker
+          rhel: sudo yum install -y docker
+          fedora: sudo dnf install -y docker
+          arch: sudo pacman -S docker
+          darwin: brew install --cask docker
+        command: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+      - description: Start Docker service
+        platforms:
+          linux: sudo systemctl start docker
+          darwin: open -a Docker
+        command: sudo systemctl start docker
+        skip_on_error: true
+      - description: Enable Docker on boot
+        platforms:
+          linux: sudo systemctl enable docker
+        command: sudo systemctl enable docker
+        skip_on_error: true
+      - description: Add current user to docker group (Linux only)
+        platforms:
+          linux: sudo usermod -aG docker $USER
+        command: sudo usermod -aG docker $USER
+        skip_on_error: true
+
+
+

@@ -1,0 +1,19 @@
+# Maintainer: ShellDock Team <team@shelldock.io>
+pkgname=shelldock
+pkgver=VERSION
+pkgrel=1
+pkgdesc="Fast shell command repository manager"
+arch=('x86_64' 'aarch64')
+url="https://github.com/shelldock/shelldock"
+license=('MIT')
+depends=('glibc')
+source=("shelldock")
+sha256sums=('SKIP')
+
+package() {
+  install -Dm755 shelldock "$pkgdir/usr/local/bin/shelldock"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/shelldock/README.md"
+  install -d "$pkgdir/usr/share/shelldock/repository"
+  install -m644 repository/*.yaml "$pkgdir/usr/share/shelldock/repository/" 2>/dev/null || true
+}
+

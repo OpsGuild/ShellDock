@@ -1,0 +1,18 @@
+Package: shelldock
+Version: VERSION
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: libc6
+Maintainer: ShellDock Team <team@shelldock.io>
+Description: Fast shell command repository manager
+ ShellDock is a fast, cross-platform tool for managing and executing
+ saved shell commands from bundled repository or local directory.
+ .
+ Features:
+  - Bundled command repository (included with installation)
+  - Local command repository (~/.shelldock)
+  - Interactive TUI for command management
+  - Step-by-step command execution with prompts
+  - Support for multiple package managers
+

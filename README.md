@@ -1,0 +1,1214 @@
+# ShellDock
+
+A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Quick Install](#quick-install)
+  - [Build from Source](#build-from-source)
+  - [Package Manager Installation](#package-manager-installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Basic Commands](#basic-commands)
+  - [Command Execution](#command-execution)
+  - [Command Management](#command-management)
+  - [Versioning](#versioning)
+  - [Platform Support](#platform-support)
+- [Command Reference](#command-reference)
+- [Command Set Format](#command-set-format)
+- [Examples](#examples)
+- [Repository Structure](#repository-structure)
+- [Development](#development)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- ⚡ **Fast** - Built with Go for optimal performance
+- 📦 **Bundled Repository** - Pre-installed command sets included with installation
+- 💾 **Local Repository** - Manage your own custom command sets in ~/.shelldock
+- 🎨 **Interactive TUI** - Beautiful terminal UI for managing commands
+- 📦 **Package Manager Support** - Install via apt, yum, pacman, and more
+- 🔄 **Step-by-step Execution** - Run commands with confirmation prompts
+- 🛡️ **Safe** - Review commands before execution
+- 🏷️ **Versioning** - Support for multiple versions of command sets
+- 🖥️ **Platform-Agnostic** - Automatic platform detection and distribution-specific commands
+- ⏭️ **Selective Execution** - Skip or run only specific steps
+- 📋 **Preview Mode** - View commands without executing
+- 📤 **Echo Mode** - Output commands in copyable format for scripting
+
+## Installation
+
+### Quick Install
+
+#### Debian/Ubuntu (apt)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-apt.sh | sudo bash
+sudo apt update
+sudo apt install shelldock
+```
+
+#### RedHat/CentOS/Fedora (yum/dnf)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-yum.sh | sudo bash
+sudo yum install shelldock
+# or
+sudo dnf install shelldock
+```
+
+#### Arch Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-arch.sh | bash
+```
+
+#### Generic Linux/macOS
+
+The quickest way to install ShellDock on Linux or macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install.sh | bash
+```
+
+This script will:
+1. Detect your OS and architecture
+2. Download the appropriate binary
+3. Install it to `/usr/local/bin/shelldock`
+4. Make it executable
+
+**Example Output:**
+```
+🚀 Installing ShellDock v1.0.0...
+📥 Downloading from https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-linux-amd64...
+📦 Installing to /usr/local/bin...
+✅ ShellDock installed successfully!
+
+Run 'shelldock --help' to get started
+Run 'shelldock manage' to open the interactive UI
+```
+
+### Build from Source
+
+#### Prerequisites
+
+- Go 1.21 or later
+- Make (optional, for using Makefile)
+
+#### Build Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/shelldock/shelldock.git
+   cd shelldock
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   go mod download
+   go mod tidy
+   ```
+
+3. **Build the binary:**
+   ```bash
+   # Simple build
+   go build -o shelldock .
+   
+   # Or use Makefile
+   make build
+   ```
+
+4. **Install (optional):**
+   ```bash
+   # Manual installation
+   sudo cp shelldock /usr/local/bin/
+   
+   # Or use Makefile
+   sudo make install
+   ```
+
+**Example Output:**
+```
+Building shelldock...
+Build complete: build/shelldock
+Installing shelldock...
+Installation complete!
+```
+
+### Package Manager Installation
+
+#### Debian/Ubuntu (apt)
+
+1. **Download the .deb package:**
+   ```bash
+   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock_1.0.0_amd64.deb
+   ```
+
+2. **Install using dpkg:**
+   ```bash
+   sudo dpkg -i shelldock_1.0.0_amd64.deb
+   ```
+
+   If you encounter dependency issues:
+   ```bash
+   sudo apt-get install -f
+   ```
+
+**Example Output:**
+```
+Selecting previously unselected package shelldock.
+(Reading database ... 123456 files and directories currently installed.)
+Preparing to unpack shelldock_1.0.0_amd64.deb ...
+Unpacking shelldock (1.0.0) ...
+Setting up shelldock (1.0.0) ...
+ShellDock installed successfully!
+```
+
+#### RedHat/CentOS/Fedora (yum/dnf)
+
+1. **Download the .rpm package:**
+   ```bash
+   # For CentOS/RHEL
+   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-1.0.0-1.x86_64.rpm
+   
+   # For Fedora
+   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-1.0.0-1.fc38.x86_64.rpm
+   ```
+
+2. **Install using rpm:**
+   ```bash
+   # CentOS/RHEL
+   sudo rpm -i shelldock-1.0.0-1.x86_64.rpm
+   
+   # Fedora
+   sudo dnf install shelldock-1.0.0-1.fc38.x86_64.rpm
+   ```
+
+**Example Output:**
+```
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:shelldock-1.0.0-1                ################################# [100%]
+ShellDock installed successfully!
+```
+
+#### Arch Linux (pacman)
+
+1. **Using AUR helper (recommended):**
+   ```bash
+   # Using yay
+   yay -S shelldock
+   
+   # Using paru
+   paru -S shelldock
+   ```
+
+2. **Manual AUR installation:**
+   ```bash
+   git clone https://aur.archlinux.org/shelldock.git
+   cd shelldock
+   makepkg -si
+   ```
+
+**Example Output:**
+```
+==> Making package: shelldock 1.0.0-1
+==> Checking runtime dependencies...
+==> Installing package shelldock with pacman -U...
+loading packages...
+resolving dependencies...
+looking for conflicting packages...
+Packages (1) shelldock-1.0.0-1
+Total Installed Size:  5.23 MiB
+:: Proceed with installation? [Y/n]
+```
+
+#### macOS (Homebrew)
+
+```bash
+brew install shelldock/tap/shelldock
+```
+
+#### Windows
+
+1. **Download the Windows binary:**
+   ```powershell
+   # Using PowerShell
+   Invoke-WebRequest -Uri "https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
+   ```
+
+2. **Add to PATH:**
+   - Move `shelldock.exe` to a directory in your PATH (e.g., `C:\Program Files\shelldock\`)
+   - Or add the directory to your system PATH
+
+## Configuration
+
+ShellDock uses a configuration file at `~/.shelldock/.sdrc` to store platform settings.
+
+### View Current Configuration
+
+```bash
+shelldock config show
+```
+
+**Example Output:**
+```
+ShellDock Configuration:
+  Platform setting: auto
+  Active platform: ubuntu
+  Config file: ~/.shelldock/.sdrc
+```
+
+### Set Platform
+
+```bash
+# Auto-detect platform (recommended)
+shelldock config set auto
+
+# Set specific platform
+shelldock config set ubuntu
+shelldock config set centos
+shelldock config set fedora
+shelldock config set arch
+shelldock config set darwin
+shelldock config set windows
+```
+
+**Supported Platforms:**
+- **Linux Distributions:** `ubuntu`, `debian`, `centos`, `rhel`, `fedora`, `arch`, `opensuse`, `alpine`, `amazon`, `oracle`
+- **Other:** `darwin` (macOS), `windows`
+- **Auto:** `auto` (automatically detects your platform)
+
+**Example Output:**
+```
+Platform set to: auto
+Auto-detected platform: ubuntu
+```
+
+## Usage
+
+### Basic Commands
+
+#### Get Help
+
+```bash
+shelldock --help
+```
+
+**Example Output:**
+```
+ShellDock is a fast, cross-platform tool for managing and executing
+saved shell commands from bundled repository or local directory.
+
+You can run a command set directly:
+  shelldock docker
+  shelldock --local docker
+
+Or use subcommands:
+  shelldock run docker
+  shelldock list
+  shelldock manage
+
+Usage:
+  shelldock [command-set-name] [flags]
+  shelldock [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  config      Manage ShellDock configuration
+  help        Help about any command
+  list        List available command sets
+  manage      Manage command sets (interactive UI)
+  run         Run a saved command set
+  show        Show commands in a command set without executing
+  sync        Sync command sets from bundled repository
+  versions    List all available versions for a command set
+
+Flags:
+  -h, --help      help for shelldock
+  -l, --local     Only check local repository (skip cloud
+  -v, --version   version for shelldock
+```
+
+#### List Available Command Sets
+
+```bash
+shelldock list
+```
+
+**Example Output:**
+```
+☁️  Bundled Repository:
+  • docker
+  • nodejs
+  • python
+
+💾 Local Repository:
+  • my-custom-setup
+  • test
+```
+
+### Command Execution
+
+#### Direct Execution (Recommended)
+
+The simplest way to run a command set:
+
+```bash
+shelldock docker
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+
+  1. Update package index
+     $ sudo apt-get update
+
+  2. Install Docker
+     $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+
+  3. Start Docker service
+     $ sudo systemctl start docker
+
+  4. Enable Docker on boot
+     $ sudo systemctl enable docker
+
+Do you want to execute these commands? (y/N): 
+```
+
+**Note:** The command will wait for you to type `y` or `n` and press Enter. To skip the prompt, use the `--yes` or `-y` flag.
+
+#### Skip Confirmation Prompt
+
+Execute commands without prompting:
+
+```bash
+shelldock docker --yes
+shelldock docker -y
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+...
+
+🚀 Executing commands...
+[1/4] Update package index (step 1)
+...
+```
+
+#### Using the `run` Subcommand
+
+```bash
+shelldock run docker
+```
+
+This is equivalent to `shelldock docker` but more explicit.
+
+#### Prefer Local Repository
+
+```bash
+# Using flag
+shelldock --local docker
+shelldock -l docker
+
+# Using subcommand
+shelldock run --local docker
+```
+
+#### Skip Specific Steps
+
+Skip steps 1, 2, and 3:
+
+```bash
+shelldock docker --skip 1,2,3
+```
+
+Skip a range of steps:
+
+```bash
+shelldock docker --skip 1-3
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+⏭️  Skipping steps: 1,2,3
+📋 Commands to execute:
+
+  4. Enable Docker on boot
+     $ sudo systemctl enable docker
+
+Do you want to execute these commands? (y/N):
+```
+
+#### Run Only Specific Steps
+
+Run only steps 1, 3, and 5:
+
+```bash
+shelldock docker --only 1,3,5
+```
+
+Run a range of steps:
+
+```bash
+shelldock docker --only 1-3
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+🎯 Running only steps: 1,3
+📋 Commands to execute:
+
+  1. Update package index
+     $ sudo apt-get update
+
+  3. Start Docker service
+     $ sudo systemctl start docker
+
+Do you want to execute these commands? (y/N):
+```
+
+**Note:** You cannot use both `--skip` and `--only` flags together.
+
+### Command Management
+
+#### Preview Commands (Show Without Executing)
+
+```bash
+shelldock show docker
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands:
+
+  1. Update package index
+     $ sudo apt-get update
+     📱 Other platforms:
+        centos: sudo yum check-update || true
+        fedora: sudo dnf check-update || true
+        arch: sudo pacman -Sy
+        darwin: brew update
+
+  2. Install Docker
+     $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+     📱 Other platforms:
+        centos: sudo yum install -y docker
+        fedora: sudo dnf install -y docker
+        arch: sudo pacman -S docker
+        darwin: brew install --cask docker
+
+💡 To execute these commands, run: shelldock docker
+```
+
+#### Echo Commands (Copyable Format)
+
+Output commands in a plain, copyable format (no descriptions or formatting):
+
+```bash
+shelldock echo docker
+```
+
+**Example Output:**
+```
+sudo apt-get update
+curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**With --skip flag:**
+```bash
+shelldock echo docker --skip 1,2
+```
+
+**Example Output:**
+```
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**With --only flag:**
+```bash
+shelldock echo docker --only 1,3
+```
+
+**Example Output:**
+```
+sudo apt-get update
+sudo systemctl start docker
+```
+
+**Other options:**
+```bash
+shelldock echo docker --local          # Only from local repository
+shelldock echo docker --ver v2         # Specific version
+shelldock echo docker@v2               # Version using @ syntax
+```
+
+This is useful for:
+- Copying commands to run manually
+- Piping commands to a shell: `shelldock echo docker | bash`
+- Scripting and automation
+- Generating scripts from command sets
+
+**With Flags:**
+```bash
+# Skip specific steps
+shelldock echo docker --skip 1,2
+
+# Run only specific steps
+shelldock echo docker --only 3,4
+
+# Use specific version
+shelldock echo docker --ver v1
+
+# From local repository only
+shelldock echo docker --local
+```
+
+**Example with --skip:**
+```bash
+$ shelldock echo docker --skip 1
+curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**Example with --only:**
+```bash
+$ shelldock echo docker --only 2,3
+curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+sudo systemctl start docker
+```
+
+#### Interactive Management UI
+
+```bash
+shelldock manage
+```
+
+This opens an interactive terminal UI where you can:
+- **View** all command sets
+- **Add** new command sets
+- **Edit** existing commands
+- **Delete** command sets
+
+**UI Controls:**
+- `↑/↓` or `j/k` - Navigate command sets
+- `Enter` - View command set details
+- `a` - Add new command set
+- `e` - Edit selected command set
+- `d` - Delete selected command set
+- `q` or `Ctrl+C` - Quit
+
+**Example UI:**
+```
+┌─────────────────────────────────────┐
+│  ShellDock - Command Sets           │
+├─────────────────────────────────────┤
+│  ▶ docker                           │
+│    nodejs                           │
+│    python                           │
+│    test                             │
+│                                     │
+│  Controls: ↑/↓ Navigate | Enter    │
+│  View | a Add | d Delete | q Quit  │
+└─────────────────────────────────────┘
+```
+
+### Versioning
+
+#### List Available Versions
+
+```bash
+shelldock versions docker
+```
+
+**Example Output:**
+```
+Available versions for 'docker':
+
+  - v1
+  - v2
+  * v3 (latest)
+
+Use 'shelldock docker@<version>' or 'shelldock docker --ver <version>' to run a specific version
+```
+
+#### Run Specific Version
+
+Using `@` syntax:
+
+```bash
+shelldock docker@v1
+shelldock docker@v2
+```
+
+Using `--ver` flag:
+
+```bash
+shelldock docker --ver v1
+shelldock run docker --ver v2
+```
+
+**Example Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup commands
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+
+  1. Update package index
+     $ sudo apt-get update
+...
+```
+
+#### Show Specific Version
+
+```bash
+shelldock show docker@v1
+shelldock show docker --ver v2
+```
+
+### Platform Support
+
+ShellDock automatically detects your platform and uses the appropriate commands. Commands can be defined for multiple platforms in a single command set.
+
+**Example with Platform-Specific Commands:**
+
+When you run `shelldock docker` on Ubuntu, it uses:
+```bash
+sudo apt-get update
+```
+
+On CentOS, it automatically uses:
+```bash
+sudo yum check-update || true
+```
+
+On Fedora:
+```bash
+sudo dnf check-update || true
+```
+
+The platform is detected from:
+1. Your `.sdrc` configuration file
+2. Auto-detection from `/etc/os-release` (Linux)
+3. System detection (macOS/Windows)
+
+**Unsupported Platform Handling:**
+
+If you set a platform that doesn't have commands defined for it, ShellDock will gracefully handle this:
+
+- Commands without platform-specific support will be skipped during execution
+- A warning message will show which platforms are available
+- You can change your platform with `shelldock config set <platform>`
+
+**Example:**
+```bash
+$ shelldock config set windows
+$ shelldock show git
+
+📦 Command Set: git
+📝 Description: Git installation and setup
+🔢 Version: v1
+🖥️  Platform: windows
+📋 Commands:
+
+  1. Install Git
+     ⚠️  No command available for platform 'windows'
+     Available platforms: ubuntu, debian, centos, rhel, fedora, arch, darwin
+
+  2. Verify Git installation
+     $ git --version
+
+⚠️  Warning: Some commands are not available for platform 'windows'
+   Consider changing your platform with: shelldock config set <platform>
+```
+
+## Command Reference
+
+### `shelldock [command-set-name]`
+
+Run a command set directly.
+
+**Flags:**
+- `-l, --local` - Only check local repository (skip cloud
+- `--skip <steps>` - Skip specific steps (comma-separated or range)
+- `--only <steps>` - Run only specific steps (comma-separated or range)
+- `--ver <version>` - Run specific version (e.g., v1, v2)
+- `-y, --yes` - Execute commands without prompting for confirmation
+
+**Examples:**
+```bash
+shelldock docker
+shelldock docker --local
+shelldock docker --skip 1,2,3
+shelldock docker --only 1-3
+shelldock docker@v1
+shelldock docker --ver v1
+shelldock docker --yes
+shelldock docker -y
+```
+
+### `shelldock run [command-set-name]`
+
+Explicitly run a command set. Same as direct execution but more explicit.
+
+**Flags:** Same as direct execution
+
+**Examples:**
+```bash
+shelldock run docker
+shelldock run docker --skip 1,2
+shelldock run docker --only 3,4,5
+```
+
+### `shelldock show [command-set-name]`
+
+Preview commands without executing them.
+
+**Flags:**
+- `-l, --local` - Only check local repository
+- `--ver <version>` - Show specific version
+
+**Examples:**
+```bash
+shelldock show docker
+shelldock show docker --local
+shelldock show docker@v1
+```
+
+### `shelldock list`
+
+List all available command sets from both cloud and local repositories.
+
+**Example:**
+```bash
+shelldock list
+```
+
+### `shelldock manage`
+
+Open interactive terminal UI for managing command sets.
+
+**Example:**
+```bash
+shelldock manage
+```
+
+### `shelldock versions [command-set-name]`
+
+List all available versions for a command set.
+
+**Example:**
+```bash
+shelldock versions docker
+```
+
+### `shelldock config show`
+
+Show current configuration.
+
+**Example:**
+```bash
+shelldock config show
+```
+
+### `shelldock config set [platform]`
+
+Set the platform for command execution.
+
+**Examples:**
+```bash
+shelldock config set auto
+shelldock config set ubuntu
+shelldock config set centos
+```
+
+### `shelldock sync`
+
+Sync command sets from bundled repository (placeholder for future implementation).
+
+**Example:**
+```bash
+shelldock sync
+```
+
+## Command Set Format
+
+Command sets are stored as YAML files. They support both single-version and multi-version formats.
+
+### Single Version Format
+
+```yaml
+name: docker
+description: Docker installation and setup commands
+version: "v1"
+commands:
+  - description: Update package index
+    command: sudo apt-get update
+  - description: Install Docker
+    command: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+    skip_on_error: false
+  - description: Start Docker service
+    command: sudo systemctl start docker
+    skip_on_error: true
+```
+
+### Multi-Version Format
+
+```yaml
+name: docker
+description: Docker installation and setup commands
+versions:
+  - version: "v1"
+    description: Docker installation and setup commands
+    commands:
+      - description: Install Docker
+        command: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+  - version: "v2"
+    description: Docker installation with updated script
+    commands:
+      - description: Install Docker
+        command: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+  - version: "v3"
+    latest: true
+    description: Docker installation with platform support
+    commands:
+      - description: Install Docker
+        platforms:
+          ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+          centos: sudo yum install -y docker
+          fedora: sudo dnf install -y docker
+          arch: sudo pacman -S docker
+          darwin: brew install --cask docker
+```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_file
+
+### Platform-Specific Commands
+
+Commands can specify different commands for different platforms:
+
+```yaml
+name: docker
+description: Docker installation (platform-agnostic)
+version: "v1"
+commands:
+  - description: Update package index
+    platforms:
+      ubuntu: sudo apt-get update
+      debian: sudo apt-get update
+      centos: sudo yum check-update || true
+      rhel: sudo yum check-update || true
+      fedora: sudo dnf check-update || true
+      arch: sudo pacman -Sy
+      darwin: brew update
+      windows: choco upgrade chocolatey
+  - description: Install Docker
+    platforms:
+      ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      centos: sudo yum install -y docker
+      fedora: sudo dnf install -y docker
+      arch: sudo pacman -S docker
+      darwin: brew install --cask docker
+      windows: choco install docker-desktop
+```
+
+**Field Descriptions:**
+- `name` - Unique identifier for the command set
+- `description` - Human-readable description
+- `version` - Version string (e.g., "v1", "v2")
+- `commands` - Array of command objects
+  - `description` - What this command does
+  - `command` - Single command (backward compatible)
+  - `platforms` - Map of platform -> command (preferred for multi-platform)
+  - `skip_on_error` - Continue execution if this command fails (default: false)
+
+## Examples
+
+### Example 1: Docker Installation
+
+**Command Set File:** `~/.shelldock/docker.yaml`
+
+```yaml
+name: docker
+description: Docker installation and setup
+version: "v1"
+commands:
+  - description: Update package index
+    platforms:
+      ubuntu: sudo apt-get update
+      centos: sudo yum check-update || true
+      fedora: sudo dnf check-update || true
+  - description: Install Docker
+    platforms:
+      ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      centos: sudo yum install -y docker
+      fedora: sudo dnf install -y docker
+  - description: Start Docker service
+    command: sudo systemctl start docker
+    skip_on_error: true
+```
+
+**Usage:**
+```bash
+shelldock docker
+```
+
+**Output:**
+```
+📦 Command Set: docker
+📝 Description: Docker installation and setup
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+
+  1. Update package index
+     $ sudo apt-get update
+
+  2. Install Docker
+     $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+
+  3. Start Docker service
+     $ sudo systemctl start docker
+
+Do you want to execute these commands? (y/N): y
+
+🚀 Executing commands...
+
+[1/3] Update package index (step 1)
+$ sudo apt-get update
+Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
+...
+✅ Success
+
+[2/3] Install Docker (step 2)
+$ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+...
+✅ Success
+
+[3/3] Start Docker service (step 3)
+$ sudo systemctl start docker
+✅ Success
+
+🎉 All commands executed successfully!
+```
+
+### Example 2: Node.js Setup with Version Selection
+
+```bash
+# List versions
+shelldock versions nodejs
+
+# Run specific version
+shelldock nodejs@v1
+
+# Skip installation step if already installed
+shelldock nodejs --skip 1
+
+# Execute without prompt
+shelldock nodejs --yes
+```
+
+### Example 3: Selective Step Execution
+
+```bash
+# Only run steps 3 and 4
+shelldock docker --only 3,4
+
+# Skip steps 1-3, run the rest
+shelldock docker --skip 1-3
+```
+
+## Repository Structure
+
+### Local Repository
+
+Location: `~/.shelldock/`
+
+Structure:
+```
+~/.shelldock/
+├── .sdrc                    # Configuration file
+├── docker.yaml              # Command set file
+├── nodejs.yaml
+└── my-custom-setup.yaml
+```
+
+### Cloud Cache
+
+Location: `~/.cache/shelldock/cloud/`
+
+Cached command sets from the bundled repository.
+
+## Development
+
+### Prerequisites
+
+- Go 1.21 or later
+- Make (optional)
+
+### Setup
+
+```bash
+git clone https://github.com/shelldock/shelldock.git
+cd shelldock
+go mod download
+```
+
+### Build
+
+```bash
+# Simple build
+go build -o shelldock .
+
+# Using Makefile
+make build
+
+# Build for all platforms
+make build-all
+```
+
+### Test
+
+```bash
+# Run comprehensive test suite
+./test-suite.sh
+
+# Or use Makefile
+make test
+
+# See docs/MANUAL_TESTING.md for manual testing guide
+```
+
+**Test Suite Coverage:**
+- ✅ Basic functionality (list, show, run)
+- ✅ Versioning (v1, v2, v3, latest detection)
+- ✅ Platform support (detection, configuration, platform-specific commands)
+- ✅ Step filtering (--skip, --only, ranges)
+- ✅ Flag combinations (version + skip, version + only, etc.)
+- ✅ Error handling (non-existent sets, invalid formats, conflicts)
+- ✅ Command execution (with --yes flag)
+- ✅ Edge cases (empty sets, platform-only commands, etc.)
+
+**Example Output:**
+```
+🧪 ShellDock Comprehensive Test Suite
+======================================
+
+▶ Test 1: List command sets
+----------------------------------------
+✅ PASSED
+
+...
+
+==========================================
+📊 Test Summary
+==========================================
+✅ Passed: 44
+❌ Failed: 0
+Total: 44
+
+🎉 All tests passed!
+```
+
+### Create Packages
+
+```bash
+# Debian package
+make deb
+
+# RPM package
+make rpm
+
+# Arch package
+make arch
+```
+
+### Project Structure
+
+```
+shelldock/
+├── cmd/                 # CLI commands
+├── internal/
+│   ├── cli/            # Command-line interface
+│   ├── config/         # Configuration management
+│   ├── repo/           # Repository management
+│   └── tui/            # Terminal UI
+├── examples/           # Example command sets
+├── packaging/          # Package configurations
+├── scripts/            # Installation scripts
+├── go.mod
+├── go.sum
+├── Makefile
+└── README.md
+```
+
+## Documentation
+
+Additional documentation is available in the `docs/` folder:
+
+- **[Manual Testing Guide](docs/MANUAL_TESTING.md)** - Comprehensive guide for manual testing of all features
+- **[Features](docs/FEATURES.md)** - Detailed feature list and descriptions
+- **[Quick Start](docs/QUICKSTART.md)** - Quick start guide for new users
+- **[Test Input](docs/TEST_INPUT.md)** - Test input examples
+- **[Test Results](docs/TEST_RESULTS.md)** - Test results and validation
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Contribution Guidelines
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Adding Command Sets
+
+To contribute command sets to the bundled repository:
+
+1. Create a well-documented YAML file
+2. Include platform-specific commands where applicable
+3. Test on multiple platforms
+4. Submit via Pull Request
+
+## License
+
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ for developers who love automation**

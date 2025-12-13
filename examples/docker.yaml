@@ -1,0 +1,31 @@
+name: docker
+description: Docker installation and setup commands
+version: "1.0.0"
+commands:
+  - description: Update package index
+    command: sudo apt-get update
+    skip_on_error: false
+  - description: Install prerequisites
+    command: sudo apt-get install -y ca-certificates curl gnupg lsb-release
+    skip_on_error: false
+  - description: Add Docker's official GPG key
+    command: sudo mkdir -p /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    skip_on_error: false
+  - description: Set up Docker repository
+    command: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    skip_on_error: false
+  - description: Install Docker Engine
+    command: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    skip_on_error: false
+  - description: Start Docker service
+    command: sudo systemctl start docker
+    skip_on_error: true
+  - description: Enable Docker on boot
+    command: sudo systemctl enable docker
+    skip_on_error: true
+  - description: Add current user to docker group
+    command: sudo usermod -aG docker $USER
+    skip_on_error: true
+
+
+
