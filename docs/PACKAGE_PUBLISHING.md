@@ -25,7 +25,7 @@ The workflow is defined in `.github/workflows/publish-packages.yml` and triggers
 
 **Installation:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-apt.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
 sudo apt update
 sudo apt install shelldock
 ```
@@ -52,7 +52,7 @@ repo/deb/
 
 **Installation:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-yum.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-yum.sh | sudo bash
 sudo yum install shelldock
 # or
 sudo dnf install shelldock
@@ -71,7 +71,7 @@ repo/rpm/
 
 **Installation:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-arch.sh | bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-arch.sh | bash
 ```
 
 **Note:** Arch Linux packages can be published to AUR (Arch User Repository) or a custom repository.
@@ -91,7 +91,7 @@ Update the version in:
 git add .
 git commit -m "Release version 1.0.0"
 git tag v1.0.0
-git push origin main
+git push origin master
 git push origin v1.0.0
 ```
 

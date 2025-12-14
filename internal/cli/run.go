@@ -205,7 +205,8 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	if hasUnsupportedCommands {
 		fmt.Printf("⚠️  Warning: Some commands are not available for platform '%s'\n", platform)
 		fmt.Printf("   Consider changing your platform with: shelldock config set <platform>\n")
-		fmt.Printf("   Or use --yes flag to skip unsupported commands during execution\n\n")
+		fmt.Printf("   Or use --yes flag to skip unsupported commands during execution\n")
+		fmt.Println()
 	}
 
 	// Skip prompt if --yes flag is set
@@ -241,7 +242,8 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		}
 	}
 
-	fmt.Println("\n🚀 Executing commands...\n")
+	fmt.Println("\n🚀 Executing commands...")
+	fmt.Println()
 
 	for i, cmd := range commandsToRun {
 		originalNum := originalIndices[i]
@@ -269,7 +271,8 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 			os.Exit(1)
 		}
 
-		fmt.Println("✅ Success\n")
+		fmt.Println("✅ Success")
+		fmt.Println()
 	}
 
 	fmt.Println("🎉 All commands executed successfully!")

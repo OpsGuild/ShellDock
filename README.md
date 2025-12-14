@@ -44,10 +44,24 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 
 ### Quick Install
 
+> **Note:** The GitHub repository URLs below are placeholders. For local installation, see [Build from Source](#build-from-source) or use the local install script.
+
+#### Local Installation (Development)
+
+For installing from the local source code:
+
+```bash
+# From the project root directory
+bash scripts/install-local.sh
+```
+
+This will build and install ShellDock from the current source code.
+
 #### Debian/Ubuntu (apt)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-apt.sh | sudo bash
+# Once published to GitHub:
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
 sudo apt update
 sudo apt install shelldock
 ```
@@ -55,7 +69,8 @@ sudo apt install shelldock
 #### RedHat/CentOS/Fedora (yum/dnf)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-yum.sh | sudo bash
+# Once published to GitHub:
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-yum.sh | sudo bash
 sudo yum install shelldock
 # or
 sudo dnf install shelldock
@@ -64,15 +79,16 @@ sudo dnf install shelldock
 #### Arch Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install-arch.sh | bash
+# Once published to GitHub:
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-arch.sh | bash
 ```
 
 #### Generic Linux/macOS
 
-The quickest way to install ShellDock on Linux or macOS:
+The quickest way to install ShellDock on Linux or macOS (once published):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shelldock/shelldock/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install.sh | bash
 ```
 
 This script will:
@@ -84,7 +100,7 @@ This script will:
 **Example Output:**
 ```
 🚀 Installing ShellDock v1.0.0...
-📥 Downloading from https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-linux-amd64...
+📥 Downloading from https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-linux-amd64...
 📦 Installing to /usr/local/bin...
 ✅ ShellDock installed successfully!
 
@@ -103,7 +119,7 @@ Run 'shelldock manage' to open the interactive UI
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/shelldock/shelldock.git
+   git clone https://github.com/OpsGuild/ShellDock.git
    cd shelldock
    ```
 
@@ -145,7 +161,7 @@ Installation complete!
 
 1. **Download the .deb package:**
    ```bash
-   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock_1.0.0_amd64.deb
+   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock_1.0.0_amd64.deb
    ```
 
 2. **Install using dpkg:**
@@ -173,10 +189,10 @@ ShellDock installed successfully!
 1. **Download the .rpm package:**
    ```bash
    # For CentOS/RHEL
-   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-1.0.0-1.x86_64.rpm
+   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-1.0.0-1.x86_64.rpm
    
    # For Fedora
-   wget https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-1.0.0-1.fc38.x86_64.rpm
+   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-1.0.0-1.fc38.x86_64.rpm
    ```
 
 2. **Install using rpm:**
@@ -238,7 +254,7 @@ brew install shelldock/tap/shelldock
 1. **Download the Windows binary:**
    ```powershell
    # Using PowerShell
-   Invoke-WebRequest -Uri "https://github.com/shelldock/shelldock/releases/download/v1.0.0/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
+   Invoke-WebRequest -Uri "https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
    ```
 
 2. **Add to PATH:**
@@ -1081,7 +1097,7 @@ Cached command sets from the bundled repository.
 ### Setup
 
 ```bash
-git clone https://github.com/shelldock/shelldock.git
+git clone https://github.com/OpsGuild/ShellDock.git
 cd shelldock
 go mod download
 ```

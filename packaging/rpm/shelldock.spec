@@ -3,7 +3,7 @@ Version:        VERSION
 Release:        1%{?dist}
 Summary:        Fast shell command repository manager
 License:        MIT
-URL:            https://github.com/shelldock/shelldock
+URL:            https://github.com/OpsGuild/ShellDock
 Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch

@@ -5,8 +5,8 @@
 
 set -e
 
-REPO_URL="https://raw.githubusercontent.com/shelldock/shelldock/main/repo/deb"
-GITHUB_REPO="shelldock/shelldock"
+REPO_URL="https://raw.githubusercontent.com/OpsGuild/ShellDock/master/repo/deb"
+GITHUB_REPO="OpsGuild/ShellDock"
 
 echo "🔧 Installing ShellDock APT repository..."
 

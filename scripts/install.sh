@@ -1,12 +1,20 @@
 #!/bin/bash
 
+# ShellDock Installation Script
+# NOTE: This script requires the project to be published to GitHub.
+# For local installation, use scripts/install-local.sh instead.
+
 set -e
 
 VERSION="1.0.0"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="shelldock"
+GITHUB_REPO="OpsGuild/ShellDock"
 
 echo "🚀 Installing ShellDock v${VERSION}..."
+echo "⚠️  NOTE: This script requires the project to be published to GitHub."
+echo "   For local installation, use: bash scripts/install-local.sh"
+echo ""
 
 # Detect OS
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -30,7 +38,7 @@ else
 fi
 
 # Download URL (update this to your actual release URL)
-DOWNLOAD_URL="https://github.com/shelldock/shelldock/releases/download/v${VERSION}/shelldock-${OS}-${ARCH}"
+DOWNLOAD_URL="https://github.com/OpsGuild/ShellDock/releases/download/v${VERSION}/shelldock-${OS}-${ARCH}"
 
 echo "📥 Downloading from ${DOWNLOAD_URL}..."
 
