@@ -45,7 +45,6 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 
 ### Quick Install
 
-> **Note:** The GitHub repository URLs below are placeholders. For local installation, see [Build from Source](#build-from-source) or use the local install script.
 
 #### Local Installation (Development)
 
@@ -61,7 +60,6 @@ This will build and install ShellDock from the current source code.
 #### Debian/Ubuntu (apt)
 
 ```bash
-# Once published to GitHub:
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
 sudo apt update
 sudo apt install shelldock
@@ -70,7 +68,6 @@ sudo apt install shelldock
 #### RedHat/CentOS/Fedora (yum/dnf)
 
 ```bash
-# Once published to GitHub:
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-yum.sh | sudo bash
 sudo yum install shelldock
 # or
@@ -80,7 +77,6 @@ sudo dnf install shelldock
 #### Arch Linux
 
 ```bash
-# Once published to GitHub:
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-arch.sh | bash
 ```
 
@@ -1340,6 +1336,7 @@ shelldock/
 
 Additional documentation is available in the `docs/` folder:
 
+- **[Testing Guide](docs/TESTING.md)** - How to run unit and integration tests
 - **[Manual Testing Guide](docs/MANUAL_TESTING.md)** - Comprehensive guide for manual testing of all features
 - **[Features](docs/FEATURES.md)** - Detailed feature list and descriptions
 - **[Quick Start](docs/QUICKSTART.md)** - Quick start guide for new users

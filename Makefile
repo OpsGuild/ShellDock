@@ -23,8 +23,28 @@ clean:
 	@rm -rf dist
 	@echo "Clean complete!"
 
-test:
-	@go test ./...
+test: test-unit test-integration
+
+test-unit:
+	@echo "=========================================="
+	@echo "🧪 Running Unit Tests"
+	@echo "=========================================="
+	@go test -v -race -coverprofile=coverage.out ./...
+	@echo ""
+	@echo "📊 Coverage Report:"
+	@go tool cover -func=coverage.out
+	@echo ""
+	@echo "✅ Unit tests completed"
+	@echo ""
+
+test-integration: build
+	@echo "=========================================="
+	@echo "🧪 Running Integration Tests"
+	@echo "=========================================="
+	@chmod +x test/test-suite.sh
+	@./test/test-suite.sh
+	@echo ""
+	@echo "✅ Integration tests completed"
 
 # Cross-platform builds
 build-all:
