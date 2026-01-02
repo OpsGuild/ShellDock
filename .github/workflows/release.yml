@@ -963,11 +963,26 @@ jobs:
         with:
           path: ./release-assets
 
+      - name: Extract GPG key from apt-repo
+        run: |
+          if [ -f release-assets/apt-repository/apt-repo/gpg.key ]; then
+            mkdir -p release-assets
+            cp release-assets/apt-repository/apt-repo/gpg.key release-assets/gpg.key
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release-assets/**/*
+            release-assets/**/*.deb
+            release-assets/**/*.rpm
+            release-assets/**/*.snap
+            release-assets/**/*.flatpak
+            release-assets/**/*.nupkg
+            release-assets/**/*.exe
+            release-assets/**/shelldock-*
+            release-assets/**/PKGBUILD
+            release-assets/gpg.key
           draft: false
           prerelease: false
           generate_release_notes: true
