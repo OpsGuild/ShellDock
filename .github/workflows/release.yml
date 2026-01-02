@@ -223,6 +223,140 @@ jobs:
             dist/*.${{ matrix.package_type }}
             dist/rpm/RPMS/*/*.rpm
 
+  apt-repo:
+    name: Create APT Repository
+    needs: [test, build, packages]
+    runs-on: ubuntu-latest
+    if: ${{ vars.SKIP_PACKAGES != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download DEB packages
+        uses: actions/download-artifact@v4
+        with:
+          name: deb-package
+          path: ./apt-repo/pool/main/s/shelldock
+
+      - name: Setup APT repository tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev apt-utils gnupg2
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping GPG signing"
+            exit 0
+          fi
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --import
+          gpg --list-secret-keys --keyid-format LONG
+        continue-on-error: true
+
+      - name: Create APT repository structure
+        run: |
+          mkdir -p apt-repo/dists/stable/main/binary-amd64
+          mkdir -p apt-repo/dists/stable/main/binary-arm64
+          
+          # Move .deb files to pool
+          find apt-repo/pool -name "*.deb" -exec mv {} apt-repo/pool/main/s/shelldock/ \;
+          
+          # Generate Packages file for amd64
+          cd apt-repo
+          dpkg-scanpackages --arch amd64 pool/main > dists/stable/main/binary-amd64/Packages 2>/dev/null || true
+          gzip -k dists/stable/main/binary-amd64/Packages
+          
+          # Generate Packages file for arm64 (if available)
+          dpkg-scanpackages --arch arm64 pool/main > dists/stable/main/binary-arm64/Packages 2>/dev/null || true
+          gzip -k dists/stable/main/binary-arm64/Packages 2>/dev/null || true
+
+      - name: Generate Release file
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, creating unsigned Release"
+            cd apt-repo/dists/stable
+            cat > Release << EOF
+          Origin: ShellDock
+          Label: ShellDock
+          Suite: stable
+          Codename: stable
+          Version: ${{ steps.version.outputs.version }}
+          Architectures: amd64 arm64
+          Components: main
+          Description: ShellDock APT Repository
+          EOF
+            exit 0
+          fi
+          
+          cd apt-repo/dists/stable
+          cat > Release << EOF
+          Origin: ShellDock
+          Label: ShellDock
+          Suite: stable
+          Codename: stable
+          Version: ${{ steps.version.outputs.version }}
+          Architectures: amd64 arm64
+          Components: main
+          Description: ShellDock APT Repository
+          EOF
+          
+          # Add file hashes
+          find main -type f | while read file; do
+            echo " $(md5sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file" >> Release
+            echo " $(sha256sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file" >> Release
+          done
+
+      - name: Sign Release file
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping signing"
+            exit 0
+          fi
+          cd apt-repo/dists/stable
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --clearsign -o InRelease Release
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign -o Release.gpg Release
+        continue-on-error: true
+
+      - name: Export GPG public key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping key export"
+            exit 0
+          fi
+          mkdir -p apt-repo
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --export --armor > apt-repo/gpg.key || true
+        continue-on-error: true
+
+      - name: Upload APT repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: apt-repository
+          path: apt-repo/
+
   snap:
     name: Build Snap Package
     needs: [test, build]
@@ -683,6 +817,72 @@ jobs:
           }
           EOF
 
+      - name: Generate .SRCINFO
+        run: |
+          cd packaging/arch
+          # Use Docker with Arch Linux to generate .SRCINFO properly
+          docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux/base:latest bash -c "
+            pacman -Sy --noconfirm base-devel
+            makepkg --printsrcinfo > .SRCINFO
+          " || {
+            # Fallback: Generate .SRCINFO manually if Docker fails
+            source PKGBUILD
+            {
+              echo "pkgbase = $pkgname"
+              echo "	pkgdesc = $pkgdesc"
+              echo "	pkgver = $pkgver"
+              echo "	pkgrel = $pkgrel"
+              echo "	url = $url"
+              echo "	arch = ${arch[@]}"
+              echo "	license = ${license[@]}"
+              for i in "${!source_x86_64[@]}"; do
+                echo "	source_x86_64 = ${source_x86_64[$i]}"
+              done
+              for i in "${!source_aarch64[@]}"; do
+                echo "	source_aarch64 = ${source_aarch64[$i]}"
+              done
+              for i in "${!sha256sums_x86_64[@]}"; do
+                echo "	sha256sums_x86_64 = ${sha256sums_x86_64[$i]}"
+              done
+              for i in "${!sha256sums_aarch64[@]}"; do
+                echo "	sha256sums_aarch64 = ${sha256sums_aarch64[$i]}"
+              done
+            } > .SRCINFO
+          }
+
+      - name: Publish to AUR
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+        run: |
+          if [ -z "$AUR_SSH_KEY" ]; then
+            echo "AUR_SSH_KEY not set, skipping AUR publish"
+            exit 0
+          fi
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$AUR_SSH_KEY" > ~/.ssh/aur_key
+          chmod 600 ~/.ssh/aur_key
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone AUR repository
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git clone ssh://aur@aur.archlinux.org/shelldock.git aur-repo || echo "AUR repo may not exist yet"
+          
+          if [ -d aur-repo ]; then
+            cd aur-repo
+            # Copy PKGBUILD and .SRCINFO
+            cp ../packaging/arch/PKGBUILD .
+            cp ../packaging/arch/.SRCINFO .
+            
+            # Commit and push
+            git add PKGBUILD .SRCINFO
+            git diff --staged --quiet || (git commit -m "Update to ${{ github.ref_name }}" && GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git push origin master)
+          fi
+        continue-on-error: true
+
       - name: Upload PKGBUILD
         uses: actions/upload-artifact@v4
         with:
@@ -738,7 +938,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [test, build, packages, snap, flatpak, chocolatey, homebrew, aur, gpg-sign]
+    needs: [test, build, packages, snap, flatpak, chocolatey, homebrew, aur, gpg-sign, apt-repo]
     runs-on: ubuntu-latest
     if: always() && needs.test.result == 'success' && needs.build.result == 'success'
     permissions:
