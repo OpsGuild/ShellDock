@@ -180,7 +180,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.package_type }}-package
-          path: dist/*.${{ matrix.package_type }} dist/rpm/RPMS/*/*.rpm
+          path: |
+            dist/*.${{ matrix.package_type }}
+            dist/rpm/RPMS/*/*.rpm
 
   snap:
     name: Build Snap Package
@@ -268,7 +270,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: snap-package
-          path: *.snap
+          path: "*.snap"
 
   flatpak:
     name: Build Flatpak Package
@@ -360,7 +362,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flatpak-package
-          path: *.flatpak
+          path: "*.flatpak"
 
   homebrew:
     name: Update Homebrew Formula
@@ -539,7 +541,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chocolatey-package
-          path: chocolatey/*.nupkg
+          path: "chocolatey/*.nupkg"
 
   aur:
     name: Update AUR Package
@@ -632,7 +634,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gpg-signatures
-          path: artifacts/*.asc
+          path: "artifacts/*.asc"
 
   release:
     name: Create Release
