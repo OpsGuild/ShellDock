@@ -657,13 +657,39 @@ jobs:
           end
           EOF
 
-      - name: Commit and push formula
+      - name: Commit and push formula to main repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/shelldock.rb
           git diff --staged --quiet || git commit -m "Update Homebrew formula to ${{ github.ref_name }}"
           git push origin HEAD:main || git push origin HEAD:master
+
+      - name: Push to Homebrew tap (if repository exists)
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping tap push"
+            echo "To enable Homebrew tap, create https://github.com/OpsGuild/homebrew-tap and add HOMEBREW_TAP_TOKEN"
+            exit 0
+          fi
+          # Clone tap repository
+          git clone https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git homebrew-tap || {
+            echo "Homebrew tap repository not found. Create it at https://github.com/OpsGuild/homebrew-tap"
+            exit 0
+          }
+          cd homebrew-tap
+          # Copy formula
+          mkdir -p Formula
+          cp ../Formula/shelldock.rb Formula/
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/shelldock.rb
+          git diff --staged --quiet || git commit -m "Update shelldock to ${{ github.ref_name }}"
+          git push origin main || git push origin master
+        continue-on-error: true
 
   chocolatey:
     name: Build and Publish Chocolatey Package
@@ -963,26 +989,36 @@ jobs:
         with:
           path: ./release-assets
 
-      - name: Extract GPG key from apt-repo
+      - name: Prepare release files
         run: |
+          # Create a clean release directory
+          mkdir -p release-files
+          
+          # Copy unique files (avoid duplicates)
+          find release-assets -name "*.deb" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "*.rpm" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "*.snap" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "*.flatpak" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "*.nupkg" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "*.exe" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          find release-assets -name "PKGBUILD" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          
+          # Copy binaries (shelldock-* but not .deb/.rpm/etc)
+          find release-assets -name "shelldock-*" -type f ! -name "*.deb" ! -name "*.rpm" ! -name "*.snap" ! -name "*.flatpak" ! -name "*.nupkg" ! -name "*.exe" -exec cp {} release-files/ \; 2>/dev/null || true
+          
+          # Extract GPG key if it exists
           if [ -f release-assets/apt-repository/apt-repo/gpg.key ]; then
-            mkdir -p release-assets
-            cp release-assets/apt-repository/apt-repo/gpg.key release-assets/gpg.key
+            cp release-assets/apt-repository/apt-repo/gpg.key release-files/gpg.key
           fi
+          
+          # List files to be uploaded
+          echo "Files to upload:"
+          ls -lh release-files/ || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            release-assets/**/*.deb
-            release-assets/**/*.rpm
-            release-assets/**/*.snap
-            release-assets/**/*.flatpak
-            release-assets/**/*.nupkg
-            release-assets/**/*.exe
-            release-assets/**/shelldock-*
-            release-assets/**/PKGBUILD
-            release-assets/gpg.key
+          files: release-files/*
           draft: false
           prerelease: false
           generate_release_notes: true

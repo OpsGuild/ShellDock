@@ -139,10 +139,32 @@ curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/i
 
 #### macOS
 
-**Option 1: Homebrew**
+**Option 1: Homebrew (Tap Repository)**
+
+To use Homebrew, you need to set up a tap repository first:
+
+1. **Create a Homebrew tap repository:**
+   - Create a new repository on GitHub: `https://github.com/OpsGuild/homebrew-tap`
+   - The workflow will automatically push the formula there
+
+2. **Install from tap:**
+   ```bash
+   brew tap OpsGuild/tap
+   brew install shelldock
+   ```
+
+**Option 1b: Homebrew (Direct Formula)**
+
+Alternatively, install directly from the formula in the main repository:
 
 ```bash
-brew install shelldock/tap/shelldock
+brew install OpsGuild/ShellDock/shelldock
+```
+
+Or if the formula is in a `Formula/` directory:
+
+```bash
+brew install --build-from-source https://raw.githubusercontent.com/OpsGuild/ShellDock/master/Formula/shelldock.rb
 ```
 
 **Option 2: Direct Binary**
