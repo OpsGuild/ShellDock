@@ -311,6 +311,21 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		}
 	}
 	
+	// Safety check: ensure we have commands to run
+	if len(commandsToRun) == 0 {
+		fmt.Fprintf(os.Stderr, "Error: No commands found in command set '%s'\n", cmdSet.Name)
+		os.Exit(1)
+	}
+	
+	// Safety check: ensure originalIndices matches commandsToRun length
+	if len(originalIndices) != len(commandsToRun) {
+		// Re-initialize if there's a mismatch (defensive programming)
+		originalIndices = make([]int, len(commandsToRun))
+		for i := range commandsToRun {
+			originalIndices[i] = i + 1 // 1-indexed
+		}
+	}
+	
 	fmt.Printf("\n📦 Command Set: %s\n", cmdSet.Name)
 	fmt.Printf("📝 Description: %s\n", cmdSet.Description)
 	fmt.Printf("🔢 Version: %s\n", cmdSet.Version)
@@ -324,11 +339,23 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	
 	fmt.Printf("📋 Commands to execute:\n\n")
 
+	// Safety check: ensure originalIndices matches commandsToRun length
+	if len(originalIndices) != len(commandsToRun) {
+		// Re-initialize if there's a mismatch
+		originalIndices = make([]int, len(commandsToRun))
+		for i := range commandsToRun {
+			originalIndices[i] = i + 1 // 1-indexed
+		}
+	}
+
 	hasUnsupportedCommands := false
 	providedArgs := parseArgsFlag(argsFlag)
 	
 	for i, cmd := range commandsToRun {
-		originalNum := originalIndices[i]
+		originalNum := i + 1 // Default to 1-indexed position
+		if i < len(originalIndices) {
+			originalNum = originalIndices[i]
+		}
 		fmt.Printf("  %d. %s\n", originalNum, cmd.Description)
 		command := getCommandForPlatform(cmd, platform)
 		if command == "" {
@@ -421,7 +448,10 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	fmt.Println()
 
 	for i, cmd := range commandsToRun {
-		originalNum := originalIndices[i]
+		originalNum := i + 1 // Default to 1-indexed position
+		if i < len(originalIndices) {
+			originalNum = originalIndices[i]
+		}
 		command := getCommandForPlatform(cmd, platform)
 		if command == "" {
 			fmt.Printf("[%d/%d] %s (step %d)\n", i+1, len(commandsToRun), cmd.Description, originalNum)
