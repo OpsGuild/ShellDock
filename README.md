@@ -39,6 +39,7 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 - ⏭️ **Selective Execution** - Skip or run only specific steps
 - 📋 **Preview Mode** - View commands without executing
 - 📤 **Echo Mode** - Output commands in copyable format for scripting
+- 🔧 **Dynamic Arguments** - Pass arguments to commands via `--args` flag or interactive prompts
 
 ## Installation
 
@@ -426,6 +427,83 @@ shelldock docker -y
 ...
 ```
 
+#### Dynamic Arguments
+
+Some command sets accept dynamic arguments that can be provided via the `--args` flag or through interactive prompts.
+
+**Using `--args` flag:**
+
+```bash
+shelldock git --args name="John Doe",email="john@example.com"
+```
+
+**Example Output:**
+```
+📦 Command Set: git
+📝 Description: Git installation and basic configuration
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+
+  1. Install Git
+     $ sudo apt-get update && sudo apt-get install -y git
+
+  2. Verify Git installation
+     $ git --version
+
+  3. Configure Git (set your name and email)
+     $ git config --global user.name "John Doe" && git config --global user.email "john@example.com"
+
+Do you want to execute these commands? (y/N):
+```
+
+**Interactive prompting (when `--args` not provided):**
+
+```bash
+shelldock git
+```
+
+**Example Output:**
+```
+📦 Command Set: git
+📝 Description: Git installation and basic configuration
+🔢 Version: v1
+🖥️  Platform: ubuntu
+📋 Commands to execute:
+
+  1. Install Git
+     $ sudo apt-get update && sudo apt-get install -y git
+
+  2. Verify Git installation
+     $ git --version
+
+  3. Configure Git (set your name and email)
+     $ git config --global user.name "{{name}}" && git config --global user.email "{{email}}"
+     📝 Will prompt for: name, email
+
+Do you want to execute these commands? (y/N): y
+
+🚀 Executing commands...
+
+[1/3] Install Git (step 1)
+$ sudo apt-get update && sudo apt-get install -y git
+✅ Success
+
+[2/3] Verify Git installation (step 2)
+$ git --version
+✅ Success
+
+[3/3] Configure Git (set your name and email) (step 3)
+Enter your Git user name: John Doe
+Enter your Git email address: john@example.com
+$ git config --global user.name "John Doe" && git config --global user.email "john@example.com"
+✅ Success
+
+🎉 All commands executed successfully!
+```
+
+**Note:** Arguments can have default values. If a default is set and you don't provide a value, the default will be used automatically.
+
 #### Using the `run` Subcommand
 
 ```bash
@@ -777,11 +855,12 @@ $ shelldock show git
 Run a command set directly.
 
 **Flags:**
-- `-l, --local` - Only check local repository (skip cloud
+- `-l, --local` - Only check local repository (skip bundled repository)
 - `--skip <steps>` - Skip specific steps (comma-separated or range)
 - `--only <steps>` - Run only specific steps (comma-separated or range)
 - `--ver <version>` - Run specific version (e.g., v1, v2)
 - `-y, --yes` - Execute commands without prompting for confirmation
+- `--args <key=value,...>` - Provide dynamic arguments (e.g., `--args name=John,email=john@example.com`)
 
 **Examples:**
 ```bash
@@ -969,6 +1048,72 @@ commands:
   - `command` - Single command (backward compatible)
   - `platforms` - Map of platform -> command (preferred for multi-platform)
   - `skip_on_error` - Continue execution if this command fails (default: false)
+  - `args` - Array of argument definitions for dynamic command arguments
+
+### Dynamic Arguments
+
+Commands can accept dynamic arguments that are provided at runtime. This allows commands to be more flexible and reusable.
+
+**Using Arguments in Commands:**
+
+Arguments are referenced in commands using `{{argName}}` syntax:
+
+```yaml
+commands:
+  - description: Configure Git
+    command: git config --global user.name "{{name}}" && git config --global user.email "{{email}}"
+    args:
+      - name: name
+        prompt: "Enter your Git user name"
+        required: true
+      - name: email
+        prompt: "Enter your Git email address"
+        required: true
+```
+
+**Argument Definition Fields:**
+- `name` - Variable name used in `{{name}}` placeholders (required)
+- `prompt` - Custom prompt question shown to user (optional, defaults to "Enter {name}:")
+- `default` - Default value if argument not provided (optional)
+- `required` - Whether argument is required (default: false)
+
+**Providing Arguments:**
+
+You can provide arguments in two ways:
+
+1. **Using `--args` flag** (no prompting):
+   ```bash
+   shelldock git --args name="John Doe",email="john@example.com"
+   ```
+
+2. **Interactive prompting** (if `--args` not provided):
+   ```bash
+   shelldock git
+   # Will prompt:
+   # Enter your Git user name: John Doe
+   # Enter your Git email address: john@example.com
+   ```
+
+**Example with Default Values:**
+
+```yaml
+commands:
+  - description: Install npm packages
+    command: npm install -g {{packages}}
+    args:
+      - name: packages
+        prompt: "Enter npm package names (space-separated)"
+        default: "yarn pnpm"
+        required: false
+```
+
+In this example, if no `--args` is provided and the user doesn't enter a value, it will use the default "yarn pnpm".
+
+**Notes:**
+- Arguments work with both `command` and `platforms` fields
+- If a required argument is missing and not in a terminal, the command will fail
+- Arguments are substituted as-is, so ensure proper quoting in your commands
+- Multiple arguments can be provided: `--args key1=value1,key2=value2`
 
 ## Examples
 
@@ -1135,6 +1280,7 @@ make test
 - ✅ Flag combinations (version + skip, version + only, etc.)
 - ✅ Error handling (non-existent sets, invalid formats, conflicts)
 - ✅ Command execution (with --yes flag)
+- ✅ Dynamic arguments (--args flag, interactive prompting)
 - ✅ Edge cases (empty sets, platform-only commands, etc.)
 
 **Example Output:**
@@ -1197,6 +1343,7 @@ Additional documentation is available in the `docs/` folder:
 - **[Manual Testing Guide](docs/MANUAL_TESTING.md)** - Comprehensive guide for manual testing of all features
 - **[Features](docs/FEATURES.md)** - Detailed feature list and descriptions
 - **[Quick Start](docs/QUICKSTART.md)** - Quick start guide for new users
+- **[Bash Completion](docs/BASH_COMPLETION.md)** - Install and use bash completion for ShellDock
 - **[Test Input](docs/TEST_INPUT.md)** - Test input examples
 - **[Test Results](docs/TEST_RESULTS.md)** - Test results and validation
 
