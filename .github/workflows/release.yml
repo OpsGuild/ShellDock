@@ -81,15 +81,24 @@ jobs:
           echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-      - name: Build binary
-        run: |
-          VERSION_NUM="${VERSION#v}"
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
-            -ldflags "-X main.version=${VERSION_NUM}" \
-            -o ${{ matrix.binary_name }} .
+      - name: Build binary (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+        run: |
+          VERSION_NUM="${VERSION#v}"
+          go build -ldflags "-X main.version=${VERSION_NUM}" -o ${{ matrix.binary_name }} .
+
+      - name: Build binary (Windows)
+        if: matrix.os == 'windows-latest'
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          VERSION_NUM: ${{ steps.version.outputs.version }}
+        shell: pwsh
+        run: |
+          go build -ldflags "-X main.version=$env:VERSION_NUM" -o ${{ matrix.binary_name }} .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -233,6 +242,28 @@ jobs:
       - name: Build snap
         run: snapcraft --destructive-mode
 
+      - name: Login to Snap Store
+        if: secrets.SNAP_STORE_CREDENTIALS != ''
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
+        run: |
+          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d > snapcraft_credentials.txt
+          snapcraft login --with snapcraft_credentials.txt
+          rm -f snapcraft_credentials.txt
+
+      - name: Register snap name (if not already registered)
+        if: secrets.SNAP_STORE_CREDENTIALS != ''
+        run: |
+          snapcraft register shelldock || echo "Snap name already registered or registration failed"
+        continue-on-error: true
+
+      - name: Publish to Snap Store
+        if: secrets.SNAP_STORE_CREDENTIALS != ''
+        run: |
+          SNAP_FILE=$(ls *.snap | head -1)
+          snapcraft push "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
+        continue-on-error: true
+
       - name: Upload snap
         uses: actions/upload-artifact@v4
         with:
@@ -295,6 +326,36 @@ jobs:
           flatpak-builder build flatpak/com.github.opsguild.shelldock.yml --repo=repo
           flatpak build-bundle repo shelldock-${{ steps.version.outputs.version }}.flatpak com.github.opsguild.shelldock
 
+      - name: Publish to Flathub (if configured)
+        if: secrets.FLATHUB_SSH_KEY != ''
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "${{ secrets.FLATHUB_SSH_KEY }}" > ~/.ssh/flathub_key
+          chmod 600 ~/.ssh/flathub_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          
+          # Clone Flathub repository
+          git clone git@github.com:flathub/com.github.opsguild.shelldock.git flathub-repo || \
+          git clone https://github.com/flathub/com.github.opsguild.shelldock.git flathub-repo || \
+          echo "Flathub repository not found. You may need to submit to Flathub first."
+          
+          if [ -d flathub-repo ]; then
+            cd flathub-repo
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            # Update manifest with new version
+            FLATPAK_FILE=$(ls ../*.flatpak | head -1)
+            # Extract and update version in manifest if needed
+            # This is a simplified version - you may need to adjust based on your Flathub manifest structure
+            
+            git add .
+            git diff --staged --quiet || git commit -m "Update to ${{ github.ref_name }}"
+            git push origin master || git push origin main || echo "Push failed"
+          fi
+        continue-on-error: true
+
       - name: Upload flatpak
         uses: actions/upload-artifact@v4
         with:
@@ -306,9 +367,14 @@ jobs:
     needs: [test, build]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: version
@@ -323,32 +389,54 @@ jobs:
           path: ./build/
         continue-on-error: true
 
-      - name: Calculate SHA256
-        id: sha256
+      - name: Download macOS ARM64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-darwin-arm64
+          path: ./build/
+        continue-on-error: true
+
+      - name: Calculate SHA256 for amd64
+        id: sha256_amd64
         run: |
-          SHA256=$(sha256sum build/shelldock-darwin-amd64 | cut -d' ' -f1)
-          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          if [ -f build/shelldock-darwin-amd64 ]; then
+            SHA256=$(sha256sum build/shelldock-darwin-amd64 | cut -d' ' -f1)
+            echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate SHA256 for arm64
+        id: sha256_arm64
+        run: |
+          if [ -f build/shelldock-darwin-arm64 ]; then
+            SHA256=$(sha256sum build/shelldock-darwin-arm64 | cut -d' ' -f1)
+            echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Homebrew formula
         run: |
-          mkdir -p homebrew
-          cat > homebrew/shelldock.rb << EOF
+          mkdir -p Formula
+          cat > Formula/shelldock.rb << EOF
           class Shelldock < Formula
             desc "A fast, cross-platform shell command repository manager"
             homepage "https://github.com/OpsGuild/ShellDock"
             url "https://github.com/OpsGuild/ShellDock/archive/${{ github.ref_name }}.tar.gz"
-            sha256 "${{ steps.sha256.outputs.sha256 }}"
             version "${{ steps.version.outputs.version }}"
+            sha256 "${{ steps.sha256_amd64.outputs.sha256 }}"
             
-            if OS.mac? && Hardware::CPU.intel?
-              url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-amd64"
-              sha256 "${{ steps.sha256.outputs.sha256 }}"
-            elsif OS.mac? && Hardware::CPU.arm?
-              url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-arm64"
+            on_macos do
+              if Hardware::CPU.intel?
+                url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-amd64"
+                sha256 "${{ steps.sha256_amd64.outputs.sha256 }}"
+              else
+                url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-arm64"
+                sha256 "${{ steps.sha256_arm64.outputs.sha256 }}"
+              end
             end
             
             def install
-              bin.install "shelldock-darwin-#{Hardware::CPU.arch == "arm64" ? "arm64" : "amd64"}" => "shelldock"
+              if OS.mac?
+                bin.install "shelldock-darwin-#{Hardware::CPU.arch == "arm64" ? "arm64" : "amd64"}" => "shelldock"
+              end
             end
             
             test do
@@ -357,14 +445,16 @@ jobs:
           end
           EOF
 
-      - name: Upload formula
-        uses: actions/upload-artifact@v4
-        with:
-          name: homebrew-formula
-          path: homebrew/shelldock.rb
+      - name: Commit and push formula
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/shelldock.rb
+          git diff --staged --quiet || git commit -m "Update Homebrew formula to ${{ github.ref_name }}"
+          git push origin HEAD:main || git push origin HEAD:master
 
   chocolatey:
-    name: Build Chocolatey Package
+    name: Build and Publish Chocolatey Package
     needs: [test, build]
     runs-on: windows-latest
     steps:
@@ -432,6 +522,18 @@ jobs:
       - name: Build Chocolatey package
         run: |
           choco pack chocolatey\shelldock\shelldock.nuspec --output-directory chocolatey
+
+      - name: Set Chocolatey API key
+        if: secrets.CHOCOLATEY_API_KEY != ''
+        run: |
+          choco apikey --key "${{ secrets.CHOCOLATEY_API_KEY }}" --source https://push.chocolatey.org/
+
+      - name: Publish to Chocolatey
+        if: secrets.CHOCOLATEY_API_KEY != ''
+        run: |
+          $package = Get-ChildItem chocolatey\*.nupkg | Select-Object -First 1
+          choco push $package.FullName --source https://push.chocolatey.org/ --force
+        continue-on-error: true
 
       - name: Upload Chocolatey package
         uses: actions/upload-artifact@v4
