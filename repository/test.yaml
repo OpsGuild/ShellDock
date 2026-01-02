@@ -15,7 +15,7 @@ versions:
           arch: date
           alpine: date
           darwin: date
-          windows: Get-Date
+          windows: powershell -Command "Get-Date"
         command: date
         skip_on_error: false
       - description: Display system information
@@ -28,7 +28,7 @@ versions:
           arch: uname -a
           alpine: uname -a
           darwin: uname -a
-          windows: systeminfo | Select-String "OS Name","OS Version"
+          windows: powershell -Command "Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion"
         command: uname -a
         skip_on_error: true
       - description: Display current working directory
@@ -41,7 +41,7 @@ versions:
           arch: pwd
           alpine: pwd
           darwin: pwd
-          windows: Get-Location
+          windows: powershell -Command "Get-Location"
         command: pwd
         skip_on_error: false
       - description: List files in current directory
@@ -54,7 +54,7 @@ versions:
           arch: ls -la
           alpine: ls -la
           darwin: ls -la
-          windows: Get-ChildItem
+          windows: powershell -Command "Get-ChildItem"
         command: ls -la
         skip_on_error: false
       - description: Test echo command
@@ -67,7 +67,7 @@ versions:
           arch: echo "ShellDock test successful on Linux"
           alpine: echo "ShellDock test successful on Linux"
           darwin: echo "ShellDock test successful on macOS"
-          windows: Write-Host "ShellDock test successful on Windows"
+          windows: powershell -Command "Write-Host 'ShellDock test successful on Windows'"
         command: echo "ShellDock test successful"
         skip_on_error: false
 
