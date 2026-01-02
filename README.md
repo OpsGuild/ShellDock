@@ -43,11 +43,36 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 
 ## Installation
 
-### Quick Install
+### Quick Install (All Platforms)
+
+**One-command installation for Linux and macOS:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install.sh | bash
+```
+
+This script automatically:
+- Detects your OS and architecture
+- Downloads the appropriate binary
+- Installs ShellDock to `/usr/local/bin/shelldock`
+- Makes it executable
+
+**Example Output:**
+```
+🚀 Installing ShellDock v1.0.0...
+📥 Downloading from https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-linux-amd64...
+📦 Installing to /usr/local/bin...
+✅ ShellDock installed successfully!
+
+Run 'shelldock --help' to get started
+Run 'shelldock manage' to open the interactive UI
+```
+
+### Platform-Specific Installation
 
 Choose the installation method that best fits your system:
 
-#### Debian/Ubuntu (apt) - Recommended
+#### Debian/Ubuntu (apt)
 
 **Option 1: One-Line Install Script (Easiest)**
 
@@ -139,32 +164,11 @@ curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/i
 
 #### macOS
 
-**Option 1: Homebrew (Tap Repository)**
-
-To use Homebrew, you need to set up a tap repository first:
-
-1. **Create a Homebrew tap repository:**
-   - Create a new repository on GitHub: `https://github.com/OpsGuild/homebrew-tap`
-   - The workflow will automatically push the formula there
-
-2. **Install from tap:**
-   ```bash
-   brew tap OpsGuild/tap
-   brew install shelldock
-   ```
-
-**Option 1b: Homebrew (Direct Formula)**
-
-Alternatively, install directly from the formula in the main repository:
+**Option 1: Homebrew**
 
 ```bash
-brew install OpsGuild/ShellDock/shelldock
-```
-
-Or if the formula is in a `Formula/` directory:
-
-```bash
-brew install --build-from-source https://raw.githubusercontent.com/OpsGuild/ShellDock/master/Formula/shelldock.rb
+brew tap OpsGuild/tap
+brew install shelldock
 ```
 
 **Option 2: Direct Binary**
@@ -200,38 +204,14 @@ New-Item -ItemType Directory -Path "C:\Program Files\shelldock" -Force
 Move-Item shelldock.exe "C:\Program Files\shelldock\"
 ```
 
-#### Generic Linux/macOS (Universal Installer)
-
-The quickest way to install ShellDock on any Linux or macOS system:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install.sh | bash
-```
-
-This script will:
-1. Detect your OS and architecture
-2. Download the appropriate binary
-3. Install it to `/usr/local/bin/shelldock`
-4. Make it executable
-
-**Example Output:**
-```
-🚀 Installing ShellDock v1.0.0...
-📥 Downloading from https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-linux-amd64...
-📦 Installing to /usr/local/bin...
-✅ ShellDock installed successfully!
-
-Run 'shelldock --help' to get started
-Run 'shelldock manage' to open the interactive UI
-```
-
 #### Local Installation (Development)
 
 For installing from the local source code:
 
 ```bash
 # From the project root directory
-bash scripts/install-local.sh
+go build -o shelldock .
+sudo cp shelldock /usr/local/bin/
 ```
 
 This will build and install ShellDock from the current source code.
