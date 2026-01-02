@@ -1,6 +1,7 @@
 .PHONY: build install clean test package deb rpm
 
-VERSION := 1.0.0
+# Get version from git tag, or use "dev" if no tag
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
 BUILD_DIR := build
 BINARY_NAME := shelldock
 GOOS := $(shell go env GOOS)

@@ -61,9 +61,11 @@ This script automatically:
 
 **Example Output:**
 ```
+🔍 Checking for latest release...
 🚀 Installing ShellDock v1.0.0...
 📥 Downloading from https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-linux-amd64...
 📦 Installing to /usr/local/bin...
+📦 Installing repository files...
 ✅ ShellDock installed successfully!
 
 Run 'shelldock --help' to get started
@@ -544,13 +546,14 @@ Detailed installation instructions for each package manager:
 > **Note:** The APT repository is included in each release. For production use, consider hosting it on GitHub Pages or your own server for better performance.
 
 ```bash
-# 1. Download and add GPG key from the latest release
-# Replace VERSION with the latest version (e.g., v1.0.0)
-VERSION="v1.0.0"
-curl -fsSL https://github.com/OpsGuild/ShellDock/releases/download/${VERSION}/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/shelldock-archive-keyring.gpg
+# 1. Get latest version from GitHub API
+LATEST_VERSION=$(curl -s https://api.github.com/repos/OpsGuild/ShellDock/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "v1.0.0")
 
-# 2. Add repository
-echo "deb [signed-by=/usr/share/keyrings/shelldock-archive-keyring.gpg] https://github.com/OpsGuild/ShellDock/releases/download/${VERSION}/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/shelldock.list
+# 2. Download and add GPG key from the latest release
+curl -fsSL https://github.com/OpsGuild/ShellDock/releases/download/${LATEST_VERSION}/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/shelldock-archive-keyring.gpg
+
+# 3. Add repository
+echo "deb [signed-by=/usr/share/keyrings/shelldock-archive-keyring.gpg] https://github.com/OpsGuild/ShellDock/releases/download/${LATEST_VERSION}/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/shelldock.list
 
 # 3. Update and install
 sudo apt update
