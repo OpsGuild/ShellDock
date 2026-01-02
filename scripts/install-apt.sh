@@ -17,9 +17,21 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Remove any existing shelldock repository sources (if they exist)
+echo "🧹 Cleaning up any old repository configurations..."
+# Remove from sources.list.d
 if [ -f /etc/apt/sources.list.d/shelldock.list ]; then
-    echo "🧹 Removing old repository configuration..."
+    echo "   Removing /etc/apt/sources.list.d/shelldock.list"
     rm -f /etc/apt/sources.list.d/shelldock.list
+fi
+# Also check and remove from main sources.list if present
+if grep -q "shelldock\|ShellDock" /etc/apt/sources.list 2>/dev/null; then
+    echo "   Removing ShellDock entries from /etc/apt/sources.list"
+    sed -i '/shelldock\|ShellDock/d' /etc/apt/sources.list
+fi
+# Remove GPG key if it exists (optional cleanup)
+if [ -f /usr/share/keyrings/shelldock-archive-keyring.gpg ]; then
+    echo "   Removing old GPG key (will be re-added if needed)"
+    rm -f /usr/share/keyrings/shelldock-archive-keyring.gpg
 fi
 
 # Install required dependencies
