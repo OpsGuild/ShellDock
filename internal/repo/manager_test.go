@@ -36,7 +36,9 @@ func TestGetCommandSet_LocalFirst(t *testing.T) {
 
 	// Create local command set
 	localPath := filepath.Join(tmpHome, ".shelldock")
-	os.MkdirAll(localPath, 0755)
+	if err := os.MkdirAll(localPath, 0755); err != nil {
+		t.Fatalf("Failed to create local path: %v", err)
+	}
 	localRepo := NewRepository(localPath)
 	localCmdSet := &CommandSet{
 		Name:        "test",
@@ -87,12 +89,20 @@ func TestManagerListCommandSets(t *testing.T) {
 	bundledRepo := NewRepository(tmpBundled)
 
 	// Add to local
-	localRepo.SaveCommandSet(&CommandSet{Name: "local1", Version: "v1", Commands: []Command{}}, "")
-	localRepo.SaveCommandSet(&CommandSet{Name: "local2", Version: "v1", Commands: []Command{}}, "")
+	if err := localRepo.SaveCommandSet(&CommandSet{Name: "local1", Version: "v1", Commands: []Command{}}, ""); err != nil {
+		t.Fatalf("Failed to save local1: %v", err)
+	}
+	if err := localRepo.SaveCommandSet(&CommandSet{Name: "local2", Version: "v1", Commands: []Command{}}, ""); err != nil {
+		t.Fatalf("Failed to save local2: %v", err)
+	}
 
 	// Add to bundled
-	bundledRepo.SaveCommandSet(&CommandSet{Name: "bundled1", Version: "v1", Commands: []Command{}}, "")
-	bundledRepo.SaveCommandSet(&CommandSet{Name: "local1", Version: "v1", Commands: []Command{}}, "") // Duplicate
+	if err := bundledRepo.SaveCommandSet(&CommandSet{Name: "bundled1", Version: "v1", Commands: []Command{}}, ""); err != nil {
+		t.Fatalf("Failed to save bundled1: %v", err)
+	}
+	if err := bundledRepo.SaveCommandSet(&CommandSet{Name: "local1", Version: "v1", Commands: []Command{}}, ""); err != nil {
+		t.Fatalf("Failed to save local1 duplicate: %v", err)
+	}
 
 	manager := &Manager{
 		localRepo:   localRepo,

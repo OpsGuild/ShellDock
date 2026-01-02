@@ -25,9 +25,6 @@ type model struct {
 	commandSets []string
 	selected    int
 	cmdSet      *repo.CommandSet
-	editingIdx  int
-	input       string
-	err         error
 	addEdit     *addEditModel
 }
 
@@ -243,7 +240,7 @@ func (m *model) viewDelete() string {
 	}
 
 	name := m.commandSets[m.selected]
-	m.manager.GetLocalRepo().DeleteCommandSet(name)
+	_ = m.manager.GetLocalRepo().DeleteCommandSet(name)
 	sets, _ := m.manager.GetLocalRepo().ListCommandSets()
 	m.commandSets = sets
 	m.state = stateList

@@ -64,7 +64,9 @@ func TestLoadConfig_FromFile(t *testing.T) {
 	
 	// Create config directory and file
 	configDir := filepath.Join(tmpDir, ".shelldock")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config directory: %v", err)
+	}
 	configPath := filepath.Join(configDir, ConfigFileName)
 	
 	// Create config file

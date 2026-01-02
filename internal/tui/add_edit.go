@@ -10,14 +10,12 @@ import (
 )
 
 type addEditModel struct {
-	manager     *repo.Manager
-	isEdit      bool
-	cmdSet      *repo.CommandSet
-	step        int // 0: name, 1: description, 2: version, 3: commands
-	cmdIdx      int // current command being edited
-	field       int // 0: desc, 1: command
-	input       string
-	err         error
+	manager *repo.Manager
+	isEdit  bool
+	cmdSet  *repo.CommandSet
+	step    int // 0: name, 1: description, 2: version, 3: commands
+	cmdIdx  int // current command being edited
+	field   int // 0: desc, 1: command
 }
 
 func newAddEditModel(manager *repo.Manager, isEdit bool, cmdSet *repo.CommandSet) *addEditModel {

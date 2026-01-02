@@ -289,10 +289,7 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	
 	// Filter commands if flags are provided
 	commandsToRun := cmdSet.Commands
-	originalIndices := make([]int, len(cmdSet.Commands))
-	for i := range originalIndices {
-		originalIndices[i] = i + 1
-	}
+	var originalIndices []int
 	
 	if skipSteps != "" || onlySteps != "" {
 		var err error
@@ -330,7 +327,7 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		command := getCommandForPlatform(cmd, platform)
 		if command == "" {
 			fmt.Printf("     ⚠️  No command available for platform '%s'\n", platform)
-			if cmd.Platforms != nil {
+			if cmd.Platforms != nil && len(cmd.Platforms) > 0 {
 				availablePlatforms := make([]string, 0, len(cmd.Platforms))
 				for p := range cmd.Platforms {
 					availablePlatforms = append(availablePlatforms, p)

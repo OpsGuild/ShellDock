@@ -64,10 +64,7 @@ Examples:
 
 		// Filter commands if flags are provided
 		commandsToRun := cmdSet.Commands
-		originalIndices := make([]int, len(cmdSet.Commands))
-		for i := range originalIndices {
-			originalIndices[i] = i + 1
-		}
+		var originalIndices []int
 
 		if echoSkipFlag != "" || echoOnlyFlag != "" {
 			var err error

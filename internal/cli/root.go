@@ -61,7 +61,7 @@ Or use subcommands:
 			return
 		}
 		// Otherwise show help
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 
