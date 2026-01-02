@@ -19,8 +19,13 @@ versions:
         command: python3 -m pip install --upgrade pip
         skip_on_error: true
       - description: Install common Python packages
-        command: python3 -m pip install --user virtualenv pipenv
+        command: python3 -m pip install --user {{packages}}
         skip_on_error: true
+        args:
+          - name: packages
+            prompt: "Enter Python package names to install (space-separated, e.g., virtualenv pipenv)"
+            default: "virtualenv pipenv"
+            required: false
       - description: Verify Python installation
         command: python3 --version && pip3 --version
         skip_on_error: false

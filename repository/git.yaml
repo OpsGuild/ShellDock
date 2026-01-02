@@ -19,6 +19,13 @@ versions:
         command: git --version
         skip_on_error: false
       - description: Configure Git (set your name and email)
-        command: 'echo "Please configure Git manually: git config --global user.name \"Your Name\" && git config --global user.email \"your.email@example.com\""'
+        command: git config --global user.name "{{name}}" && git config --global user.email "{{email}}"
         skip_on_error: true
+        args:
+          - name: name
+            prompt: "Enter your Git user name"
+            required: true
+          - name: email
+            prompt: "Enter your Git email address"
+            required: true
 

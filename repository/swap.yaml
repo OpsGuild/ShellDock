@@ -1,0 +1,102 @@
+name: swap
+description: Swap file setup and configuration
+versions:
+  - version: "v1"
+    latest: true
+    description: Create and configure swap file
+    commands:
+      - description: Check current swap usage
+        command: free -h
+        skip_on_error: true
+      - description: Create swap file (2GB default)
+        platforms:
+          ubuntu: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          debian: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          centos: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          rhel: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          fedora: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          arch: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          alpine: sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+        command: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+        args:
+          - name: size
+            prompt: "Enter swap file size (e.g., 2G, 4G, 512M)"
+            default: "2G"
+            required: false
+          - name: count
+            prompt: "Enter swap size in MB (fallback if fallocate fails, e.g., 2048 for 2GB)"
+            default: "2048"
+            required: false
+        skip_on_error: false
+      - description: Set secure permissions on swap file
+        platforms:
+          ubuntu: sudo chmod 600 /swapfile
+          debian: sudo chmod 600 /swapfile
+          centos: sudo chmod 600 /swapfile
+          rhel: sudo chmod 600 /swapfile
+          fedora: sudo chmod 600 /swapfile
+          arch: sudo chmod 600 /swapfile
+          alpine: sudo chmod 600 /swapfile
+        command: sudo chmod 600 /swapfile
+        skip_on_error: false
+      - description: Format file as swap
+        platforms:
+          ubuntu: sudo mkswap /swapfile
+          debian: sudo mkswap /swapfile
+          centos: sudo mkswap /swapfile
+          rhel: sudo mkswap /swapfile
+          fedora: sudo mkswap /swapfile
+          arch: sudo mkswap /swapfile
+          alpine: sudo mkswap /swapfile
+        command: sudo mkswap /swapfile
+        skip_on_error: false
+      - description: Enable swap file
+        platforms:
+          ubuntu: sudo swapon /swapfile
+          debian: sudo swapon /swapfile
+          centos: sudo swapon /swapfile
+          rhel: sudo swapon /swapfile
+          fedora: sudo swapon /swapfile
+          arch: sudo swapon /swapfile
+          alpine: sudo swapon /swapfile
+        command: sudo swapon /swapfile
+        skip_on_error: false
+      - description: Verify swap is active
+        platforms:
+          ubuntu: free -h
+          debian: free -h
+          centos: free -h
+          rhel: free -h
+          fedora: free -h
+          arch: free -h
+          alpine: free -h
+        command: free -h
+        skip_on_error: true
+      - description: Make swap permanent (add to /etc/fstab)
+        platforms:
+          ubuntu: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          debian: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          centos: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          rhel: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          fedora: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          arch: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          alpine: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+        command: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+        skip_on_error: true
+      - description: Set swappiness (optional, default 60)
+        platforms:
+          ubuntu: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          debian: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          centos: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          rhel: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          fedora: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          arch: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+          alpine: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+        command: 'echo "vm.swappiness={{swappiness}}" | sudo tee -a /etc/sysctl.conf && sudo sysctl vm.swappiness={{swappiness}}'
+        args:
+          - name: swappiness
+            prompt: "Enter swappiness value (0-100, lower = less swap usage, default 60)"
+            default: "60"
+            required: false
+        skip_on_error: true
+

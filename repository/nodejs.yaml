@@ -20,10 +20,15 @@ versions:
         skip_on_error: false
       - description: Install global npm packages (optional)
         platforms:
-          linux: sudo npm install -g yarn pnpm
-          darwin: npm install -g yarn pnpm
-        command: sudo npm install -g yarn pnpm
+          linux: sudo npm install -g {{packages}}
+          darwin: npm install -g {{packages}}
+        command: sudo npm install -g {{packages}}
         skip_on_error: true
+        args:
+          - name: packages
+            prompt: "Enter npm package names to install globally (space-separated, e.g., yarn pnpm)"
+            default: "yarn pnpm"
+            required: false
 
 
 
