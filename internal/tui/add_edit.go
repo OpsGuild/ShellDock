@@ -25,7 +25,7 @@ func newAddEditModel(manager *repo.Manager, isEdit bool, cmdSet *repo.CommandSet
 		cmdSet = &repo.CommandSet{
 			Name:        "",
 			Description: "",
-			Version:     "1.0.0",
+			Version:     "v1",
 			Commands:    []repo.Command{},
 		}
 	}
@@ -86,7 +86,7 @@ func (m *addEditModel) handleEnter() (*addEditModel, tea.Cmd) {
 	case 2: // version
 		m.cmdSet.Version = strings.TrimSpace(m.input)
 		if m.cmdSet.Version == "" {
-			m.cmdSet.Version = "1.0.0"
+			m.cmdSet.Version = "v1"
 		}
 		m.step = 3
 		m.cmdIdx = 0
