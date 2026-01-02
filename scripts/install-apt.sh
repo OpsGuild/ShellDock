@@ -1,24 +1,14 @@
 #!/bin/bash
 
-# ShellDock APT Repository Installation Script
-# This script adds the ShellDock repository to your system's apt sources
+# ShellDock Installation Script for Debian/Ubuntu
+# This script downloads and installs the latest ShellDock .deb package
 
 set -euo pipefail
 
-REPO_URL="https://raw.githubusercontent.com/OpsGuild/ShellDock/master/repo/deb"
 GITHUB_REPO="OpsGuild/ShellDock"
+GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 
-echo "🔧 Installing ShellDock APT repository..."
-
-# Detect distribution
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    DISTRO=$ID
-    VERSION_CODENAME=${VERSION_CODENAME:-$VERSION_ID}
-else
-    echo "❌ Cannot detect Linux distribution"
-    exit 1
-fi
+echo "🚀 Installing ShellDock..."
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
@@ -28,50 +18,66 @@ fi
 
 # Install required dependencies
 echo "📦 Installing required packages..."
-apt-get update
-apt-get install -y curl gnupg2 ca-certificates apt-transport-https
+apt-get update -qq
+apt-get install -y -qq curl wget
 
-# Check if repository exists
-echo "🔍 Checking repository availability..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$REPO_URL/dists/stable/Release" || echo "000")
-if [[ ! "$HTTP_CODE" =~ ^(200|301|302)$ ]]; then
-    echo ""
-    echo "⚠️  Warning: ShellDock APT repository is not yet available."
-    echo "   The repository at $REPO_URL does not exist yet."
-    echo ""
-    echo "📦 Alternative installation methods:"
-    echo "   1. Build from source:"
-    echo "      git clone https://github.com/$GITHUB_REPO.git"
-    echo "      cd ShellDock"
-    echo "      go build -o shelldock ."
-    echo "      sudo cp shelldock /usr/local/bin/"
-    echo ""
-    echo "   2. Download binary from GitHub Releases (when available):"
-    echo "      https://github.com/$GITHUB_REPO/releases"
-    echo ""
-    echo "   3. Wait for the repository to be published"
-    echo ""
+# Detect architecture
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+    amd64)
+        DEB_ARCH="amd64"
+        ;;
+    arm64)
+        DEB_ARCH="arm64"
+        ;;
+    *)
+        echo "❌ Unsupported architecture: $ARCH"
+        echo "   Supported architectures: amd64, arm64"
+        exit 1
+        ;;
+esac
+
+# Get latest release version
+echo "🔍 Checking for latest release..."
+LATEST_VERSION=$(curl -s "${GITHUB_API}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+
+if [ -z "$LATEST_VERSION" ]; then
+    echo "❌ Could not determine latest version"
+    echo "   Please install manually from: https://github.com/${GITHUB_REPO}/releases"
     exit 1
 fi
 
-# Add repository
-echo "➕ Adding ShellDock repository..."
-cat > /etc/apt/sources.list.d/shelldock.list << EOF
-deb [trusted=yes] $REPO_URL stable main
-EOF
+VERSION_NUMBER=${LATEST_VERSION#v}  # Remove 'v' prefix if present
+DEB_FILE="shelldock_${VERSION_NUMBER}_${DEB_ARCH}.deb"
+DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/${DEB_FILE}"
 
-# Update package list
-echo "🔄 Updating package list..."
-apt-get update
+echo "📥 Downloading ShellDock ${LATEST_VERSION} (${DEB_ARCH})..."
+TMP_DIR=$(mktemp -d)
+cd "$TMP_DIR"
+
+if ! wget -q "$DOWNLOAD_URL"; then
+    echo "❌ Failed to download ${DEB_FILE}"
+    echo "   URL: ${DOWNLOAD_URL}"
+    echo "   Please check: https://github.com/${GITHUB_REPO}/releases"
+    exit 1
+fi
+
+# Install the package
+echo "📦 Installing ShellDock..."
+if dpkg -i "$DEB_FILE" 2>&1 | grep -q "dependency problems"; then
+    echo "🔧 Fixing dependencies..."
+    apt-get install -f -y -qq
+fi
+
+# Cleanup
+cd /
+rm -rf "$TMP_DIR"
 
 echo ""
-echo "✅ ShellDock repository added successfully!"
+echo "✅ ShellDock installed successfully!"
 echo ""
-echo "To install ShellDock, run:"
-echo "  sudo apt install shelldock"
-echo ""
-echo "To update ShellDock in the future:"
-echo "  sudo apt update && sudo apt upgrade shelldock"
+echo "Run 'shelldock --help' to get started"
+echo "Run 'shelldock manage' to open the interactive UI"
 echo ""
 
 
