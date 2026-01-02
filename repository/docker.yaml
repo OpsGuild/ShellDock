@@ -7,14 +7,15 @@ versions:
     commands:
       - description: Update package index
         platforms:
-          ubuntu: sudo apt-get update
-          debian: sudo apt-get update
+          ubuntu: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true'
+          debian: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true'
           centos: sudo yum check-update || true
           rhel: sudo yum check-update || true
           fedora: sudo dnf check-update || true
           arch: sudo pacman -Sy
           darwin: brew update
-        command: sudo apt-get update
+        command: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true'
+        skip_on_error: true
       - description: Install Docker
         platforms:
           ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh

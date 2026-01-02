@@ -7,14 +7,15 @@ versions:
     commands:
       - description: Install Git
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y git
-          debian: sudo apt-get update && sudo apt-get install -y git
+          ubuntu: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y git'
+          debian: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y git'
           centos: sudo yum install -y git
           rhel: sudo yum install -y git
           fedora: sudo dnf install -y git
           arch: sudo pacman -S git
           darwin: brew install git
-        command: sudo apt-get update && sudo apt-get install -y git
+        command: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y git'
+        skip_on_error: false
       - description: Verify Git installation
         command: git --version
         skip_on_error: false

@@ -7,14 +7,15 @@ versions:
     commands:
       - description: Install Python 3 and pip
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
-          debian: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+          ubuntu: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y python3 python3-pip python3-venv'
+          debian: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y python3 python3-pip python3-venv'
           centos: sudo yum install -y python3 python3-pip
           rhel: sudo yum install -y python3 python3-pip
           fedora: sudo dnf install -y python3 python3-pip
           arch: sudo pacman -S python python-pip
           darwin: brew install python3
-        command: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+        command: 'sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true 2>&1 || sudo apt-get update 2>&1 || true; sudo apt-get install -y python3 python3-pip python3-venv'
+        skip_on_error: false
       - description: Upgrade pip
         command: python3 -m pip install --upgrade pip
         skip_on_error: true

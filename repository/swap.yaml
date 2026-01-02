@@ -8,16 +8,27 @@ versions:
       - description: Check current swap usage
         command: free -h
         skip_on_error: true
-      - description: Create swap file (2GB default)
+      - description: Check if swap file already exists
         platforms:
-          ubuntu: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          debian: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          centos: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          rhel: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          fedora: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          arch: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-          alpine: sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
-        command: sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}
+          ubuntu: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          debian: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          centos: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          rhel: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          fedora: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          arch: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+          alpine: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+        command: test -f /swapfile && echo "Swap file exists" || echo "Swap file does not exist"
+        skip_on_error: true
+      - description: Create swap file (2GB default) - skips if already exists
+        platforms:
+          ubuntu: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          debian: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          centos: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          rhel: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          fedora: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          arch: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+          alpine: 'if [ ! -f /swapfile ]; then sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
+        command: 'if [ ! -f /swapfile ]; then sudo fallocate -l {{size}} /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count={{count}}; else echo "Swap file already exists, skipping creation"; fi'
         args:
           - name: size
             prompt: "Enter swap file size (e.g., 2G, 4G, 512M)"
@@ -27,7 +38,7 @@ versions:
             prompt: "Enter swap size in MB (fallback if fallocate fails, e.g., 2048 for 2GB)"
             default: "2048"
             required: false
-        skip_on_error: false
+        skip_on_error: true
       - description: Set secure permissions on swap file
         platforms:
           ubuntu: sudo chmod 600 /swapfile
@@ -39,28 +50,28 @@ versions:
           alpine: sudo chmod 600 /swapfile
         command: sudo chmod 600 /swapfile
         skip_on_error: false
-      - description: Format file as swap
+      - description: Format file as swap (skips if already formatted)
         platforms:
-          ubuntu: sudo mkswap /swapfile
-          debian: sudo mkswap /swapfile
-          centos: sudo mkswap /swapfile
-          rhel: sudo mkswap /swapfile
-          fedora: sudo mkswap /swapfile
-          arch: sudo mkswap /swapfile
-          alpine: sudo mkswap /swapfile
-        command: sudo mkswap /swapfile
-        skip_on_error: false
-      - description: Enable swap file
+          ubuntu: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          debian: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          centos: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          rhel: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          fedora: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          arch: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+          alpine: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+        command: 'if ! file /swapfile | grep -q "swap"; then sudo mkswap /swapfile; else echo "Swap file already formatted, skipping"; fi'
+        skip_on_error: true
+      - description: Enable swap file (skips if already active)
         platforms:
-          ubuntu: sudo swapon /swapfile
-          debian: sudo swapon /swapfile
-          centos: sudo swapon /swapfile
-          rhel: sudo swapon /swapfile
-          fedora: sudo swapon /swapfile
-          arch: sudo swapon /swapfile
-          alpine: sudo swapon /swapfile
-        command: sudo swapon /swapfile
-        skip_on_error: false
+          ubuntu: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          debian: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          centos: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          rhel: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          fedora: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          arch: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+          alpine: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+        command: 'if ! swapon --show | grep -q "/swapfile"; then sudo swapon /swapfile; else echo "Swap file already active, skipping"; fi'
+        skip_on_error: true
       - description: Verify swap is active
         platforms:
           ubuntu: free -h
@@ -72,16 +83,16 @@ versions:
           alpine: free -h
         command: free -h
         skip_on_error: true
-      - description: Make swap permanent (add to /etc/fstab)
+      - description: Make swap permanent (add to /etc/fstab) - skips if already present
         platforms:
-          ubuntu: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          debian: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          centos: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          rhel: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          fedora: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          arch: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-          alpine: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
-        command: 'echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab'
+          ubuntu: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          debian: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          centos: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          rhel: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          fedora: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          arch: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+          alpine: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
+        command: 'if ! grep -q "/swapfile" /etc/fstab; then echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab; else echo "Swap file already in /etc/fstab, skipping"; fi'
         skip_on_error: true
       - description: Set swappiness (optional, default 60)
         platforms:
