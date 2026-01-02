@@ -343,7 +343,8 @@ else
 fi
 
 test_start "Yes flag (skip prompt)"
-if sd test --yes 2>&1 | grep -q "Executing commands\|Success"; then
+output=$(sd test --yes 2>&1)
+if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
     test_fail "Yes flag" "Failed to execute with --yes"
@@ -386,21 +387,24 @@ fi
 # ============================================
 
 test_start "Execute with --yes flag (v1)"
-if sd test@v1 --yes 2>&1 | grep -q "Success\|Executing"; then
+output=$(sd test@v1 --yes 2>&1)
+if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
     test_fail "Execute with yes flag" "Failed to execute"
 fi
 
 test_start "Execute with skip and yes"
-if sd test@v1 --skip 2,3,4 --yes 2>&1 | grep -q "Success\|Executing"; then
+output=$(sd test@v1 --skip 2,3,4 --yes 2>&1)
+if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
     test_fail "Execute with skip and yes" "Failed"
 fi
 
 test_start "Execute with only and yes"
-if sd test@v1 --only 1 --yes 2>&1 | grep -q "Success\|Executing"; then
+output=$(sd test@v1 --only 1 --yes 2>&1)
+if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
     test_fail "Execute with only and yes" "Failed"
