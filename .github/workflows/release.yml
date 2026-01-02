@@ -437,15 +437,15 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping Snap Store login"
             exit 0
           fi
-          # Decode base64 credentials and export as environment variable
-          # Use a temp file to avoid exposing in process list
+          # Decode base64 credentials to temp file
           CREDS_FILE=$(mktemp)
           echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
+          # Unset SNAPCRAFT_STORE_CREDENTIALS before login (snapcraft doesn't allow it set during login)
+          unset SNAPCRAFT_STORE_CREDENTIALS
+          # Login using the credentials file directly
+          snapcraft login --with "$CREDS_FILE" || echo "Login failed or already logged in"
           # Securely remove temp file
           shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
-          # Login using environment variable (new method, --with is deprecated)
-          snapcraft login || echo "Login failed or already logged in"
         continue-on-error: true
 
       - name: Register snap name (if not already registered)
@@ -457,12 +457,14 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping registration"
             exit 0
           fi
-          # Decode and export credentials
+          # Decode credentials to temp file
           CREDS_FILE=$(mktemp)
           echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
-          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
+          # Unset env var and use file for login
+          unset SNAPCRAFT_STORE_CREDENTIALS
+          snapcraft login --with "$CREDS_FILE" || echo "Already logged in"
           snapcraft register shelldock || echo "Snap name already registered or registration failed"
+          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
         continue-on-error: true
 
       - name: Publish to Snap Store
@@ -474,19 +476,21 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
             exit 0
           fi
-          # Decode and export credentials
+          # Decode credentials to temp file
           CREDS_FILE=$(mktemp)
           echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
-          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
-          # Ensure we're logged in
-          snapcraft login || echo "Login failed or already logged in"
+          # Unset env var before login (required by snapcraft)
+          unset SNAPCRAFT_STORE_CREDENTIALS
+          # Login using credentials file
+          snapcraft login --with "$CREDS_FILE" || echo "Login failed or already logged in"
           SNAP_FILE=$(ls *.snap | head -1)
           if [ -n "$SNAP_FILE" ]; then
             snapcraft upload "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
           else
             echo "No snap file found to upload"
           fi
+          # Securely remove temp file
+          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
         continue-on-error: true
 
       - name: Upload snap
@@ -730,8 +734,10 @@ jobs:
           } else {
             $VERSION = "v${{ github.event.inputs.version }}"
           }
-          $VERSION = $VERSION -replace '^v', ''
-          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
+          # Remove 'v' prefix if present
+          $VERSION_NUM = $VERSION -replace '^v', ''
+          Write-Host "Extracted version: $VERSION_NUM from $VERSION"
+          echo "version=$VERSION_NUM" >> $env:GITHUB_OUTPUT
 
       - name: Download Windows binary
         uses: actions/download-artifact@v4
@@ -744,6 +750,73 @@ jobs:
           mkdir -p chocolatey\shelldock\tools
           Move-Item shelldock-windows-amd64.exe chocolatey\shelldock\tools\shelldock.exe
           
+          # Copy icon if it exists
+          if (Test-Path "static\images\icon.jpg") {
+            Copy-Item "static\images\icon.jpg" "chocolatey\shelldock\tools\icon.jpg"
+          }
+          
+          # Create LICENSE.txt (MIT License)
+          $license = @"
+MIT License
+
+Copyright (c) 2024 OpsGuild
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For the latest license information, visit:
+https://github.com/OpsGuild/ShellDock/blob/master/LICENSE
+"@
+          $license | Out-File -Encoding UTF8 chocolatey\shelldock\tools\LICENSE.txt
+          
+          # Create VERIFICATION.txt
+          $verification = @"
+VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+The software is open source and available at:
+https://github.com/OpsGuild/ShellDock
+
+The source code repository is:
+https://github.com/OpsGuild/ShellDock
+
+The binary is built from source and published to GitHub Releases:
+https://github.com/OpsGuild/ShellDock/releases
+
+You can verify the binary by:
+1. Checking the GitHub Releases page for the version
+2. Comparing the SHA256 hash with the release notes
+3. Reviewing the source code at the repository URL above
+
+The maintainer of this package is the same as the software author (OpsGuild).
+"@
+          $verification | Out-File -Encoding UTF8 chocolatey\shelldock\tools\VERIFICATION.txt
+          
+          # Create chocolateyUninstall.ps1
+          $uninstall = @"
+`$ErrorActionPreference = 'Stop'
+`$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
+Remove-BinFile -Name shelldock
+"@
+          $uninstall | Out-File -Encoding UTF8 chocolatey\shelldock\tools\chocolateyUninstall.ps1
+          
+          # Create nuspec with all required fields
           $nuspec = @"
           <?xml version="1.0" encoding="utf-8"?>
           <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
@@ -753,19 +826,28 @@ jobs:
               <title>ShellDock</title>
               <authors>OpsGuild</authors>
               <owners>OpsGuild</owners>
-              <description>A fast, cross-platform shell command repository manager</description>
+              <summary>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</summary>
+              <description>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</description>
               <projectUrl>https://github.com/OpsGuild/ShellDock</projectUrl>
               <packageSourceUrl>https://github.com/OpsGuild/ShellDock</packageSourceUrl>
-              <tags>shell commands automation</tags>
+              <licenseUrl>https://github.com/OpsGuild/ShellDock/blob/master/LICENSE</licenseUrl>
+              <releaseNotes>https://github.com/OpsGuild/ShellDock/releases</releaseNotes>
+              <docsUrl>https://github.com/OpsGuild/ShellDock/blob/master/README.md</docsUrl>
+              <bugTrackerUrl>https://github.com/OpsGuild/ShellDock/issues</bugTrackerUrl>
+              <projectSourceUrl>https://github.com/OpsGuild/ShellDock</projectSourceUrl>
+              <iconUrl>https://raw.githubusercontent.com/OpsGuild/ShellDock/master/static/images/icon.jpg</iconUrl>
+              <tags>shell commands automation cli tool</tags>
             </metadata>
             <files>
               <file src="tools\**" target="tools" />
+              <file src="tools\icon.jpg" target="tools" />
             </files>
           </package>
           "@
           
           $nuspec | Out-File -Encoding UTF8 chocolatey\shelldock\shelldock.nuspec
           
+          # Create chocolateyInstall.ps1
           $install = @"
           `$ErrorActionPreference = 'Stop'
           `$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
