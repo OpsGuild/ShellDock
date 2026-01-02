@@ -248,6 +248,9 @@ jobs:
           name: shelldock-linux-amd64
           path: ./
 
+      - name: Make binary executable
+        run: chmod +x shelldock-linux-amd64
+
       - name: Setup Snapcraft
         run: |
           sudo snap install snapcraft --classic
@@ -265,10 +268,15 @@ jobs:
             saved shell commands from bundled repository or local directory.
           grade: stable
           confinement: strict
+          title: ShellDock
+          license: MIT
+          contact: https://github.com/OpsGuild/ShellDock
+          website: https://github.com/OpsGuild/ShellDock
+          source-code: https://github.com/OpsGuild/ShellDock
           
           apps:
             shelldock:
-              command: shelldock
+              command: usr/bin/shelldock
               plugs:
                 - home
                 - network
@@ -363,6 +371,7 @@ jobs:
       - name: Create flatpak manifest
         run: |
           mkdir -p flatpak
+          cp shelldock-linux-amd64 flatpak/
           cat > flatpak/com.github.opsguild.shelldock.yml << 'EOF'
           app-id: com.github.opsguild.shelldock
           runtime: org.freedesktop.Platform
@@ -384,7 +393,7 @@ jobs:
 
       - name: Build flatpak
         run: |
-          flatpak-builder build flatpak/com.github.opsguild.shelldock.yml --repo=repo
+          flatpak-builder --force-clean build flatpak/com.github.opsguild.shelldock.yml --repo=repo
           flatpak build-bundle repo shelldock-${{ steps.version.outputs.version }}.flatpak com.github.opsguild.shelldock
 
       - name: Publish to Flathub (if configured)
