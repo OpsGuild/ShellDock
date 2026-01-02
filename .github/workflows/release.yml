@@ -133,7 +133,7 @@ jobs:
     name: Build Packages
     needs: [test, build]
     runs-on: ubuntu-latest
-    if: env.SKIP_PACKAGES != 'true' && (needs.test.result == 'success' && needs.build.result == 'success')
+    if: ${{ vars.SKIP_PACKAGES != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
     strategy:
       matrix:
         include:
@@ -227,7 +227,7 @@ jobs:
     name: Build Snap Package
     needs: [test, build]
     runs-on: ubuntu-latest
-    if: env.SKIP_SNAP != 'true' && (needs.test.result == 'success' && needs.build.result == 'success')
+    if: ${{ vars.SKIP_SNAP != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -332,7 +332,7 @@ jobs:
     name: Build Flatpak Package
     needs: [test, build]
     runs-on: ubuntu-latest
-    if: env.SKIP_FLATPAK != 'true' && (needs.test.result == 'success' && needs.build.result == 'success')
+    if: ${{ vars.SKIP_FLATPAK != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -432,7 +432,7 @@ jobs:
     name: Update Homebrew Formula
     needs: [test, build]
     runs-on: ubuntu-latest
-    if: env.SKIP_HOMEBREW != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: ${{ vars.SKIP_HOMEBREW != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     permissions:
       contents: write
     steps:
@@ -523,7 +523,7 @@ jobs:
     name: Build and Publish Chocolatey Package
     needs: [test, build]
     runs-on: windows-latest
-    if: env.SKIP_CHOCOLATEY != 'true' && (needs.test.result == 'success' && needs.build.result == 'success')
+    if: ${{ vars.SKIP_CHOCOLATEY != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -624,7 +624,7 @@ jobs:
     name: Update AUR Package
     needs: [test, build]
     runs-on: ubuntu-latest
-    if: env.SKIP_AUR != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: ${{ vars.SKIP_AUR != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
