@@ -430,41 +430,63 @@ jobs:
 
       - name: Login to Snap Store
         env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
+          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
-          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+          set +x  # Prevent command echoing to avoid exposing credentials
+          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
             echo "SNAP_STORE_CREDENTIALS not set, skipping Snap Store login"
             exit 0
           fi
-          # Decode and export credentials
-          export SNAPCRAFT_STORE_CREDENTIALS
-          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d | snapcraft login --with -
+          # Decode base64 credentials and export as environment variable
+          # Use a temp file to avoid exposing in process list
+          CREDS_FILE=$(mktemp)
+          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
+          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
+          # Securely remove temp file
+          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
+          # Login using environment variable (new method, --with is deprecated)
+          snapcraft login || echo "Login failed or already logged in"
         continue-on-error: true
 
       - name: Register snap name (if not already registered)
         env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
+          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
-          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+          set +x  # Prevent command echoing
+          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
             echo "SNAP_STORE_CREDENTIALS not set, skipping registration"
             exit 0
           fi
+          # Decode and export credentials
+          CREDS_FILE=$(mktemp)
+          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
+          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
+          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
           snapcraft register shelldock || echo "Snap name already registered or registration failed"
         continue-on-error: true
 
       - name: Publish to Snap Store
         env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
+          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
-          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+          set +x  # Prevent command echoing to avoid exposing credentials
+          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
             echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
             exit 0
           fi
+          # Decode and export credentials
+          CREDS_FILE=$(mktemp)
+          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
+          export SNAPCRAFT_STORE_CREDENTIALS=$(cat "$CREDS_FILE")
+          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
           # Ensure we're logged in
-          export SNAPCRAFT_STORE_CREDENTIALS
-          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d | snapcraft login --with - || true
+          snapcraft login || echo "Login failed or already logged in"
           SNAP_FILE=$(ls *.snap | head -1)
-          snapcraft upload "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
+          if [ -n "$SNAP_FILE" ]; then
+            snapcraft upload "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
+          else
+            echo "No snap file found to upload"
+          fi
         continue-on-error: true
 
       - name: Upload snap
