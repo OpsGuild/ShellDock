@@ -184,7 +184,8 @@ jobs:
       - name: Build RPM package
         if: matrix.package_type == 'rpm'
         run: |
-          sudo dnf install -y rpm-build
+          sudo apt-get update
+          sudo apt-get install -y rpm
           mkdir -p dist/rpm/BUILD dist/rpm/BUILDROOT dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS
           
           cp ./build/shelldock-linux-amd64 dist/rpm/SOURCES/shelldock
