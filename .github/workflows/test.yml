@@ -173,9 +173,16 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: ./build
 
-      - name: List downloaded files
+      - name: List downloaded files (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         run: |
-          ls -la ./build/ || dir ./build/
+          ls -la ./build/
+
+      - name: List downloaded files (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path ./build -Recurse
 
       - name: Install ShellDock (Linux)
         if: matrix.os == 'ubuntu-latest'
