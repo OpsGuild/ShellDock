@@ -3,7 +3,7 @@
 # ShellDock APT Repository Installation Script
 # This script adds the ShellDock repository to your system's apt sources
 
-set -e
+set -euo pipefail
 
 REPO_URL="https://raw.githubusercontent.com/OpsGuild/ShellDock/master/repo/deb"
 GITHUB_REPO="OpsGuild/ShellDock"
@@ -30,6 +30,29 @@ fi
 echo "📦 Installing required packages..."
 apt-get update
 apt-get install -y curl gnupg2 ca-certificates apt-transport-https
+
+# Check if repository exists
+echo "🔍 Checking repository availability..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$REPO_URL/dists/stable/Release" || echo "000")
+if [[ ! "$HTTP_CODE" =~ ^(200|301|302)$ ]]; then
+    echo ""
+    echo "⚠️  Warning: ShellDock APT repository is not yet available."
+    echo "   The repository at $REPO_URL does not exist yet."
+    echo ""
+    echo "📦 Alternative installation methods:"
+    echo "   1. Build from source:"
+    echo "      git clone https://github.com/$GITHUB_REPO.git"
+    echo "      cd ShellDock"
+    echo "      go build -o shelldock ."
+    echo "      sudo cp shelldock /usr/local/bin/"
+    echo ""
+    echo "   2. Download binary from GitHub Releases (when available):"
+    echo "      https://github.com/$GITHUB_REPO/releases"
+    echo ""
+    echo "   3. Wait for the repository to be published"
+    echo ""
+    exit 1
+fi
 
 # Add repository
 echo "➕ Adding ShellDock repository..."
