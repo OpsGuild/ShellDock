@@ -16,9 +16,16 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Remove any existing shelldock repository sources (if they exist)
+if [ -f /etc/apt/sources.list.d/shelldock.list ]; then
+    echo "🧹 Removing old repository configuration..."
+    rm -f /etc/apt/sources.list.d/shelldock.list
+fi
+
 # Install required dependencies
 echo "📦 Installing required packages..."
-apt-get update -qq
+# Update package list, ignoring errors from bad repositories
+apt-get update -qq -o Acquire::Check-Valid-Until=false 2>/dev/null || apt-get update -qq 2>/dev/null || true
 apt-get install -y -qq curl wget
 
 # Detect architecture

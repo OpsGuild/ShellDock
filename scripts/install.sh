@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # ShellDock Installation Script
-# NOTE: This script requires the project to be published to GitHub.
-# For local installation, use scripts/install-local.sh instead.
 
 set -e
 
@@ -12,9 +10,6 @@ BINARY_NAME="shelldock"
 GITHUB_REPO="OpsGuild/ShellDock"
 
 echo "🚀 Installing ShellDock v${VERSION}..."
-echo "⚠️  NOTE: This script requires the project to be published to GitHub."
-echo "   For local installation, use: bash scripts/install-local.sh"
-echo ""
 
 # Detect OS
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -55,9 +50,25 @@ fi
 # Make executable
 chmod +x /tmp/${BINARY_NAME}
 
-# Install
+# Install binary
 echo "📦 Installing to ${INSTALL_DIR}..."
 sudo mv /tmp/${BINARY_NAME} ${INSTALL_DIR}/${BINARY_NAME}
+
+# Install repository files
+echo "📦 Installing repository files..."
+REPO_DIR="/usr/share/shelldock/repository"
+sudo mkdir -p "${REPO_DIR}"
+
+# Download repository files from GitHub
+REPO_FILES=("docker.yaml" "git.yaml" "kubernetes.yaml" "nodejs.yaml" "python.yaml" "swap.yaml")
+for file in "${REPO_FILES[@]}"; do
+    REPO_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/master/repository/${file}"
+    if command -v curl &> /dev/null; then
+        sudo curl -sL -o "${REPO_DIR}/${file}" "${REPO_URL}" || echo "⚠️  Warning: Could not download ${file}"
+    elif command -v wget &> /dev/null; then
+        sudo wget -q -O "${REPO_DIR}/${file}" "${REPO_URL}" || echo "⚠️  Warning: Could not download ${file}"
+    fi
+done
 
 # Verify installation
 if command -v ${BINARY_NAME} &> /dev/null; then
@@ -65,6 +76,7 @@ if command -v ${BINARY_NAME} &> /dev/null; then
     echo ""
     echo "Run 'shelldock --help' to get started"
     echo "Run 'shelldock manage' to open the interactive UI"
+    echo "Run 'shelldock list' to see available command sets"
 else
     echo "❌ Installation failed. Please check your PATH."
     exit 1
