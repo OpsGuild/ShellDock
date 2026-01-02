@@ -302,9 +302,9 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping Snap Store login"
             exit 0
           fi
-          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d > snapcraft_credentials.txt
-          snapcraft login --with snapcraft_credentials.txt
-          rm -f snapcraft_credentials.txt
+          # Decode and export credentials
+          export SNAPCRAFT_STORE_CREDENTIALS
+          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d | snapcraft login --with -
         continue-on-error: true
 
       - name: Register snap name (if not already registered)
@@ -326,8 +326,11 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
             exit 0
           fi
+          # Ensure we're logged in
+          export SNAPCRAFT_STORE_CREDENTIALS
+          echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d | snapcraft login --with - || true
           SNAP_FILE=$(ls *.snap | head -1)
-          snapcraft push "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
+          snapcraft upload "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
         continue-on-error: true
 
       - name: Upload snap
