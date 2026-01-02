@@ -3,15 +3,15 @@ class Shelldock < Formula
   homepage "https://github.com/OpsGuild/ShellDock"
   url "https://github.com/OpsGuild/ShellDock/archive/v1.0.tar.gz"
   version "1.0"
-  sha256 "643e74d9bd9e26b1c22848d0194648fcbfbe97e6a771c29f359137782c7cfcf0"
+  sha256 "49eb05b79d69e8a27a3693599253a4791bc935bc9f36af6ff497848e6b9d91c2"
   
   on_macos do
     if Hardware::CPU.intel?
       url "https://github.com/OpsGuild/ShellDock/releases/download/v1.0/shelldock-darwin-amd64"
-      sha256 "643e74d9bd9e26b1c22848d0194648fcbfbe97e6a771c29f359137782c7cfcf0"
+      sha256 "49eb05b79d69e8a27a3693599253a4791bc935bc9f36af6ff497848e6b9d91c2"
     else
       url "https://github.com/OpsGuild/ShellDock/releases/download/v1.0/shelldock-darwin-arm64"
-      sha256 "07d0fe92fc9e3eda34a069721083956959b43d2ae9b4c191dd165a9f843d54b1"
+      sha256 "cad34bc18f768d8d67147a5e9ba807cf683113640bfaefb1755ffcc279735397"
     end
   end
   
