@@ -4,33 +4,567 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
 
+env:
+  VERSION: ${{ github.ref_name == '' && github.event.inputs.version || github.ref_name }}
+  GO_VERSION: '1.21'
+
+# Require tests to pass before release
 jobs:
-  build:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run tests
+        run: go test -v -race ./...
+
+  build:
+    name: Build Binaries
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            binary_name: shelldock-linux-amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            binary_name: shelldock-linux-arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            binary_name: shelldock-darwin-amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            binary_name: shelldock-darwin-arm64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            binary_name: shelldock-windows-amd64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Build binary
+        run: |
+          VERSION_NUM="${VERSION#v}"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
+            -ldflags "-X main.version=${VERSION_NUM}" \
+            -o ${{ matrix.binary_name }} .
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary_name }}
+          path: ${{ matrix.binary_name }}
+
+  packages:
+    name: Build Packages
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - distro: debian
+            package_type: deb
+          - distro: fedora
+            package_type: rpm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
-      
-      - name: Build
-        run: make build-all
-      
-      - name: Create Debian package
-        run: make deb
-      
-      - name: Create RPM package
-        run: make rpm
-      
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
         with:
-          name: packages
-          path: dist/
+          name: shelldock-linux-amd64
+          path: ./build/
 
+      - name: Make binary executable
+        run: chmod +x ./build/shelldock-linux-amd64
 
+      - name: Build DEB package
+        if: matrix.package_type == 'deb'
+        run: |
+          mkdir -p dist/deb/DEBIAN
+          mkdir -p dist/deb/usr/local/bin
+          mkdir -p dist/deb/usr/share/doc/shelldock
+          mkdir -p dist/deb/usr/share/shelldock/repository
+          
+          cp ./build/shelldock-linux-amd64 dist/deb/usr/local/bin/shelldock
+          cp README.md dist/deb/usr/share/doc/shelldock/
+          cp repository/*.yaml dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
+          
+          sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/deb/control > dist/deb/DEBIAN/control
+          cp packaging/deb/postinst dist/deb/DEBIAN/postinst
+          chmod +x dist/deb/DEBIAN/postinst
+          
+          dpkg-deb --build dist/deb dist/shelldock_${{ steps.version.outputs.version }}_amd64.deb
 
+      - name: Build RPM package
+        if: matrix.package_type == 'rpm'
+        run: |
+          sudo dnf install -y rpm-build
+          mkdir -p dist/rpm/BUILD dist/rpm/BUILDROOT dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS
+          
+          cp ./build/shelldock-linux-amd64 dist/rpm/SOURCES/shelldock
+          sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
+          
+          rpmbuild --define "_topdir $(pwd)/dist/rpm" -bb dist/rpm/SPECS/shelldock.spec
 
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package_type }}-package
+          path: dist/*.${{ matrix.package_type }} dist/rpm/RPMS/*/*.rpm
+
+  snap:
+    name: Build Snap Package
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-linux-amd64
+          path: ./
+
+      - name: Setup Snapcraft
+        uses: snapcore/action-setup@v1
+        with:
+          snapcraft-channel: 'latest/stable'
+
+      - name: Create snapcraft.yaml
+        run: |
+          cat > snap/snapcraft.yaml << 'EOF'
+          name: shelldock
+          base: core22
+          version: '${{ steps.version.outputs.version }}'
+          summary: A fast, cross-platform shell command repository manager
+          description: |
+            ShellDock is a fast, cross-platform tool for managing and executing
+            saved shell commands from bundled repository or local directory.
+          grade: stable
+          confinement: strict
+          
+          apps:
+            shelldock:
+              command: shelldock
+              plugs:
+                - home
+                - network
+          
+          parts:
+            shelldock:
+              plugin: dump
+              source: .
+              organize:
+                shelldock-linux-amd64: usr/bin/shelldock
+          EOF
+
+      - name: Build snap
+        run: snapcraft --destructive-mode
+
+      - name: Upload snap
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-package
+          path: *.snap
+
+  flatpak:
+    name: Build Flatpak Package
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-linux-amd64
+          path: ./
+
+      - name: Setup Flatpak
+        uses: bilelmoussaoui/flatpak-github-actions@v7
+        with:
+          bundler: flatpak
+
+      - name: Create flatpak manifest
+        run: |
+          mkdir -p flatpak
+          cat > flatpak/com.github.opsguild.shelldock.yml << 'EOF'
+          app-id: com.github.opsguild.shelldock
+          runtime: org.freedesktop.Platform
+          runtime-version: '22.08'
+          sdk: org.freedesktop.Sdk
+          command: shelldock
+          finish-args:
+            - --share=network
+            - --filesystem=home
+          modules:
+            - name: shelldock
+              buildsystem: simple
+              build-commands:
+                - install -Dm755 shelldock-linux-amd64 /app/bin/shelldock
+              sources:
+                - type: file
+                  path: shelldock-linux-amd64
+          EOF
+
+      - name: Build flatpak
+        run: |
+          flatpak-builder build flatpak/com.github.opsguild.shelldock.yml --repo=repo
+          flatpak build-bundle repo shelldock-${{ steps.version.outputs.version }}.flatpak com.github.opsguild.shelldock
+
+      - name: Upload flatpak
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-package
+          path: *.flatpak
+
+  homebrew:
+    name: Update Homebrew Formula
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download macOS binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-darwin-amd64
+          path: ./build/
+        continue-on-error: true
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          SHA256=$(sha256sum build/shelldock-darwin-amd64 | cut -d' ' -f1)
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+
+      - name: Create Homebrew formula
+        run: |
+          mkdir -p homebrew
+          cat > homebrew/shelldock.rb << EOF
+          class Shelldock < Formula
+            desc "A fast, cross-platform shell command repository manager"
+            homepage "https://github.com/OpsGuild/ShellDock"
+            url "https://github.com/OpsGuild/ShellDock/archive/${{ github.ref_name }}.tar.gz"
+            sha256 "${{ steps.sha256.outputs.sha256 }}"
+            version "${{ steps.version.outputs.version }}"
+            
+            if OS.mac? && Hardware::CPU.intel?
+              url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-amd64"
+              sha256 "${{ steps.sha256.outputs.sha256 }}"
+            elsif OS.mac? && Hardware::CPU.arm?
+              url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-arm64"
+            end
+            
+            def install
+              bin.install "shelldock-darwin-#{Hardware::CPU.arch == "arm64" ? "arm64" : "amd64"}" => "shelldock"
+            end
+            
+            test do
+              system "#{bin}/shelldock", "--version"
+            end
+          end
+          EOF
+
+      - name: Upload formula
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-formula
+          path: homebrew/shelldock.rb
+
+  chocolatey:
+    name: Build Chocolatey Package
+    needs: [test, build]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $VERSION = "${{ github.ref_name }}"
+          } else {
+            $VERSION = "v${{ github.event.inputs.version }}"
+          }
+          $VERSION = $VERSION -replace '^v', ''
+          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-windows-amd64.exe
+          path: ./
+
+      - name: Create Chocolatey package
+        run: |
+          mkdir -p chocolatey\shelldock\tools
+          Move-Item shelldock-windows-amd64.exe chocolatey\shelldock\tools\shelldock.exe
+          
+          $nuspec = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+            <metadata>
+              <id>shelldock</id>
+              <version>${{ steps.version.outputs.version }}</version>
+              <title>ShellDock</title>
+              <authors>OpsGuild</authors>
+              <owners>OpsGuild</owners>
+              <description>A fast, cross-platform shell command repository manager</description>
+              <projectUrl>https://github.com/OpsGuild/ShellDock</projectUrl>
+              <packageSourceUrl>https://github.com/OpsGuild/ShellDock</packageSourceUrl>
+              <tags>shell commands automation</tags>
+            </metadata>
+            <files>
+              <file src="tools\**" target="tools" />
+            </files>
+          </package>
+          "@
+          
+          $nuspec | Out-File -Encoding UTF8 chocolatey\shelldock\shelldock.nuspec
+          
+          $install = @"
+          `$ErrorActionPreference = 'Stop'
+          `$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
+          Install-BinFile -Name shelldock -Path "`$toolsDir\shelldock.exe"
+          "@
+          
+          $install | Out-File -Encoding UTF8 chocolatey\shelldock\tools\chocolateyinstall.ps1
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+      - name: Build Chocolatey package
+        run: |
+          choco pack chocolatey\shelldock\shelldock.nuspec --output-directory chocolatey
+
+      - name: Upload Chocolatey package
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-package
+          path: chocolatey/*.nupkg
+
+  aur:
+    name: Update AUR Package
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shelldock-linux-amd64
+          path: ./
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          SHA256=$(sha256sum shelldock-linux-amd64 | cut -d' ' -f1)
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+
+      - name: Update PKGBUILD
+        run: |
+          cat > packaging/arch/PKGBUILD << EOF
+          # Maintainer: OpsGuild
+          pkgname=shelldock
+          pkgver=${{ steps.version.outputs.version }}
+          pkgrel=1
+          pkgdesc="A fast, cross-platform shell command repository manager"
+          arch=('x86_64' 'aarch64')
+          url="https://github.com/OpsGuild/ShellDock"
+          license=('MIT')
+          source_x86_64=("https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-linux-amd64")
+          source_aarch64=("https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-linux-arm64")
+          sha256sums_x86_64=('${{ steps.sha256.outputs.sha256 }}')
+          sha256sums_aarch64=('SKIP')
+          
+          package() {
+            install -Dm755 "\${srcdir}/shelldock-linux-\${CARCH}" "\${pkgdir}/usr/bin/shelldock"
+            install -Dm644 "\${srcdir}/README.md" "\${pkgdir}/usr/share/doc/shelldock/README.md"
+            install -d "\${pkgdir}/usr/share/shelldock/repository"
+            cp "\${srcdir}/repository"/*.yaml "\${pkgdir}/usr/share/shelldock/repository/" 2>/dev/null || true
+          }
+          EOF
+
+      - name: Upload PKGBUILD
+        uses: actions/upload-artifact@v4
+        with:
+          name: aur-package
+          path: packaging/arch/PKGBUILD
+
+  gpg-sign:
+    name: GPG Sign Packages
+    needs: [build, packages, snap, flatpak, chocolatey]
+    runs-on: ubuntu-latest
+    if: secrets.GPG_PRIVATE_KEY != ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --import
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Sign binaries
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          for file in $(find artifacts -type f \( -name "shelldock-*" -o -name "*.deb" -o -name "*.rpm" -o -name "*.snap" -o -name "*.flatpak" -o -name "*.nupkg" \)); do
+            echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor "$file"
+          done
+
+      - name: Upload signatures
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpg-signatures
+          path: artifacts/*.asc
+
+  release:
+    name: Create Release
+    needs: [test, build, packages, snap, flatpak, chocolatey, homebrew, aur, gpg-sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-assets
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-assets/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
