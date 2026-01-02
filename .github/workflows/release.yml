@@ -201,9 +201,9 @@ jobs:
           tar czf ../SOURCES/shelldock-${VERSION}.tar.gz shelldock-${VERSION}
           cd ../../..
           
-          # Create spec file with proper date
+          # Create spec file with proper date and architecture
           CHANGELOG_DATE=$(date +"%a %b %d %Y")
-          sed -e "s/VERSION/${VERSION}/g" -e "s/Wed Jan 01 2024/${CHANGELOG_DATE}/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
+          sed -e "s/VERSION/${VERSION}/g" -e "s/Wed Jan 01 2024/${CHANGELOG_DATE}/g" -e "s/BuildArch:      noarch/BuildArch:      x86_64/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
           
           rpmbuild --define "_topdir $(pwd)/dist/rpm" -bb dist/rpm/SPECS/shelldock.spec
 
@@ -245,6 +245,7 @@ jobs:
 
       - name: Create snapcraft.yaml
         run: |
+          mkdir -p snap
           cat > snap/snapcraft.yaml << 'EOF'
           name: shelldock
           base: core22
@@ -344,6 +345,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y flathub org.freedesktop.Platform//22.08 org.freedesktop.Sdk//22.08
 
       - name: Create flatpak manifest
         run: |
