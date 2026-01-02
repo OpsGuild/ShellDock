@@ -50,32 +50,49 @@ func TestLoadConfig_Default(t *testing.T) {
 }
 
 func TestLoadConfig_FromFile(t *testing.T) {
-	tmpDir := t.TempDir()
+	// Get the actual home directory that os.UserHomeDir() would return
+	actualHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("Failed to get home directory: %v", err)
+	}
 	
-	// Temporarily override HOME
-	originalHome := os.Getenv("HOME")
+	// Create config directory and file in actual home directory
+	// We'll clean it up afterwards
+	configDir := filepath.Join(actualHomeDir, ".shelldock")
+	originalConfigPath := filepath.Join(configDir, ConfigFileName)
+	
+	// Backup original config if it exists
+	var originalConfigData []byte
+	originalConfigExists := false
+	if _, err := os.Stat(originalConfigPath); err == nil {
+		originalConfigData, err = os.ReadFile(originalConfigPath)
+		if err == nil {
+			originalConfigExists = true
+		}
+	}
+	
+	// Cleanup: restore original config or remove test config
 	defer func() {
-		if originalHome != "" {
-			_ = os.Setenv("HOME", originalHome)
+		if originalConfigExists {
+			_ = os.WriteFile(originalConfigPath, originalConfigData, 0644)
+		} else {
+			_ = os.Remove(originalConfigPath)
 		}
 	}()
 	
-	_ = os.Setenv("HOME", tmpDir)
-	
-	// Create config directory and file
-	configDir := filepath.Join(tmpDir, ".shelldock")
+	// Ensure config directory exists
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		t.Fatalf("Failed to create config directory: %v", err)
 	}
-	configPath := filepath.Join(configDir, ConfigFileName)
 	
-	// Create config file
+	// Create test config file
 	configContent := "platform: ubuntu\n"
-	err := os.WriteFile(configPath, []byte(configContent), 0644)
+	err = os.WriteFile(originalConfigPath, []byte(configContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to write config file: %v", err)
 	}
 
+	// Now test LoadConfig - it should read from the file we just created
 	cfg, err := LoadConfig()
 	if err != nil {
 		t.Fatalf("LoadConfig failed: %v", err)
