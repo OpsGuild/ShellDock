@@ -10,12 +10,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ArgumentDef represents a command argument definition
+type ArgumentDef struct {
+	Name     string `yaml:"name"`               // Variable name (e.g., "username")
+	Prompt   string `yaml:"prompt,omitempty"`   // Prompt question (e.g., "Enter your name:")
+	Default  string `yaml:"default,omitempty"`  // Default value
+	Required bool   `yaml:"required,omitempty"` // Whether argument is required
+}
+
 // Command represents a single command step
 type Command struct {
 	Description string            `yaml:"description"`
-	Command     string            `yaml:"command,omitempty"`          // Single command (backward compatibility)
-	Platforms   map[string]string `yaml:"platforms,omitempty"`        // Platform-specific commands: platform -> command
+	Command     string            `yaml:"command,omitempty"`   // Single command (backward compatibility)
+	Platforms   map[string]string `yaml:"platforms,omitempty"` // Platform-specific commands: platform -> command
 	SkipOnError bool              `yaml:"skip_on_error,omitempty"`
+	Args        []ArgumentDef     `yaml:"args,omitempty"` // Argument definitions for this command
 }
 
 // CommandSet represents a collection of commands for a topic
@@ -36,8 +45,8 @@ type VersionInfo struct {
 
 // VersionedCommandSet represents a command set with multiple versions
 type VersionedCommandSet struct {
-	Name        string       `yaml:"name"`
-	Description string       `yaml:"description,omitempty"`
+	Name        string        `yaml:"name"`
+	Description string        `yaml:"description,omitempty"`
 	Versions    []VersionInfo `yaml:"versions"` // Array of versions
 }
 
@@ -65,7 +74,7 @@ func extractVersionNumber(version string) int {
 // If version is empty, returns the latest version
 func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, error) {
 	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-	
+
 	data, err := os.ReadFile(filePath)
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("command set '%s' not found", name)
@@ -83,7 +92,7 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 			latestVersion := ""
 			hasLatestFlag := false
 			highestVersionNum := 0
-			
+
 			// First, check for latest flag
 			for _, v := range versionedCmdSet.Versions {
 				if v.Latest {
@@ -92,7 +101,7 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 					break
 				}
 			}
-			
+
 			// If no latest flag, find highest version number
 			if !hasLatestFlag {
 				for _, v := range versionedCmdSet.Versions {
@@ -107,7 +116,7 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 				}
 			}
 		}
-		
+
 		// Find the requested version
 		var foundVersion *VersionInfo
 		for i := range versionedCmdSet.Versions {
@@ -118,11 +127,11 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 				break
 			}
 		}
-		
+
 		if foundVersion == nil {
 			return nil, fmt.Errorf("command set '%s' version '%s' not found", name, version)
 		}
-		
+
 		// Convert VersionInfo to CommandSet
 		cmdSet := CommandSet{
 			Name:        versionedCmdSet.Name,
@@ -130,16 +139,16 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 			Version:     foundVersion.Version,
 			Commands:    foundVersion.Commands,
 		}
-		
+
 		return &cmdSet, nil
 	}
-	
+
 	// Fallback to single version format (backward compatibility)
 	var cmdSet CommandSet
 	if err := yaml.Unmarshal(data, &cmdSet); err != nil {
 		return nil, fmt.Errorf("failed to parse command set: %w", err)
 	}
-	
+
 	// If version was specified but file is single-version format, check if it matches
 	if version != "" && version != "latest" {
 		// Support both "v1" and "1" formats
@@ -154,7 +163,7 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 // ListVersions returns all available versions for a command set
 func (r *Repository) ListVersions(name string) ([]string, error) {
 	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-	
+
 	data, err := os.ReadFile(filePath)
 	if os.IsNotExist(err) {
 		return []string{}, nil
@@ -169,7 +178,7 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 		// It's a versioned command set
 		var versions []string
 		var latestVersion string
-		
+
 		// Find latest version
 		for _, v := range versionedCmdSet.Versions {
 			if v.Latest {
@@ -177,7 +186,7 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 				break
 			}
 		}
-		
+
 		// If no latest flag, find highest version number
 		if latestVersion == "" {
 			highestVersionNum := 0
@@ -189,7 +198,7 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 				}
 			}
 		}
-		
+
 		// Build version list
 		for _, v := range versionedCmdSet.Versions {
 			if v.Version == latestVersion {
@@ -198,10 +207,10 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 				versions = append(versions, v.Version)
 			}
 		}
-		
+
 		return versions, nil
 	}
-	
+
 	// Fallback: single version format
 	var cmdSet CommandSet
 	if err := yaml.Unmarshal(data, &cmdSet); err == nil {
@@ -211,7 +220,7 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 		}
 		return []string{version + " (latest)"}, nil
 	}
-	
+
 	return []string{}, nil
 }
 
@@ -224,7 +233,7 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 	}
 
 	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", cmdSet.Name))
-	
+
 	// Determine which version to save
 	versionToSave := version
 	if versionToSave == "" || versionToSave == "latest" {
@@ -233,14 +242,14 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 			versionToSave = "v1" // Default version
 		}
 	}
-	
+
 	// Ensure version starts with 'v' if it's numeric
 	if !strings.HasPrefix(versionToSave, "v") {
 		if _, err := strconv.Atoi(versionToSave); err == nil {
 			versionToSave = "v" + versionToSave
 		}
 	}
-	
+
 	// Try to load existing versioned command set
 	var versionedCmdSet VersionedCommandSet
 	data, err := os.ReadFile(filePath)
@@ -260,7 +269,7 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 					break
 				}
 			}
-			
+
 			// Add new version if it doesn't exist
 			if !versionExists {
 				versionedCmdSet.Versions = append(versionedCmdSet.Versions, VersionInfo{
@@ -270,7 +279,7 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 					Latest:      false, // Will be set below if needed
 				})
 			}
-			
+
 			// Find highest version number to mark as latest
 			highestVersionNum := 0
 			latestVersion := ""
@@ -281,12 +290,12 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 					latestVersion = v.Version
 				}
 			}
-			
+
 			// Update latest flags
 			for i := range versionedCmdSet.Versions {
 				versionedCmdSet.Versions[i].Latest = (versionedCmdSet.Versions[i].Version == latestVersion)
 			}
-			
+
 			if versionedCmdSet.Name == "" {
 				versionedCmdSet.Name = cmdSet.Name
 			}
@@ -305,11 +314,11 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 						oldVersion = "v" + oldVersion
 					}
 				}
-				
+
 				// Determine which is latest
 				oldVersionNum := extractVersionNumber(oldVersion)
 				newVersionNum := extractVersionNumber(versionToSave)
-				
+
 				// Create versions array
 				versionedCmdSet.Versions = []VersionInfo{
 					{
@@ -376,7 +385,7 @@ func (r *Repository) ListCommandSets() ([]string, error) {
 	}
 
 	var sets []string
-	
+
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".yaml" {
 			name := entry.Name()[:len(entry.Name())-5] // Remove .yaml
@@ -390,7 +399,7 @@ func (r *Repository) ListCommandSets() ([]string, error) {
 // DeleteCommandSet removes a command set from the repository
 func (r *Repository) DeleteCommandSet(name string) error {
 	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-	
+
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return fmt.Errorf("command set '%s' not found", name)
 	}

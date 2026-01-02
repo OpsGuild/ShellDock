@@ -15,6 +15,7 @@ var (
 	rootOnlySteps string
 	rootVersionFlag string
 	rootYesFlag bool
+	rootArgsFlag string
 )
 
 var rootCmd = &cobra.Command{
@@ -56,7 +57,7 @@ Or use subcommands:
 				os.Exit(1)
 			}
 
-			executeCommandSet(cmdSet, rootSkipSteps, rootOnlySteps, rootYesFlag)
+			executeCommandSet(cmdSet, rootSkipSteps, rootOnlySteps, rootYesFlag, rootArgsFlag)
 			return
 		}
 		// Otherwise show help
@@ -75,6 +76,7 @@ func init() {
 	rootCmd.Flags().StringVar(&rootOnlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
 	rootCmd.Flags().StringVar(&rootVersionFlag, "ver", "", "Run specific version or tag (default: latest). Can also use name@version format")
 	rootCmd.Flags().BoolVarP(&rootYesFlag, "yes", "y", false, "Execute commands without prompting for confirmation")
+	rootCmd.Flags().StringVar(&rootArgsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(echoCmd)

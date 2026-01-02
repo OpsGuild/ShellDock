@@ -21,6 +21,7 @@ var (
 	onlySteps string
 	versionFlag string
 	yesFlag bool
+	argsFlag string
 )
 
 // parseStepNumbers parses comma-separated step numbers (1-indexed)
@@ -138,8 +139,147 @@ func getCommandForPlatform(cmd repo.Command, platform string) string {
 	return cmd.Command
 }
 
+// parseArgsFlag parses the --args flag value (format: key1=value1,key2=value2)
+func parseArgsFlag(argsStr string) map[string]string {
+	args := make(map[string]string)
+	if argsStr == "" {
+		return args
+	}
+	
+	parts := strings.Split(argsStr, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		
+		// Split on first = only
+		eqIdx := strings.Index(part, "=")
+		if eqIdx > 0 {
+			key := strings.TrimSpace(part[:eqIdx])
+			value := strings.TrimSpace(part[eqIdx+1:])
+			args[key] = value
+		}
+	}
+	
+	return args
+}
+
+// promptForArg prompts the user for an argument value
+func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) string {
+	// Check if already provided
+	if val, exists := providedArgs[argDef.Name]; exists {
+		return val
+	}
+	
+	// If no prompt is defined and we have a default, use it
+	if argDef.Prompt == "" {
+		if argDef.Default != "" {
+			return argDef.Default
+		}
+		// If not required and no default, return empty
+		if !argDef.Required {
+			return ""
+		}
+	}
+	
+	// Check if we're in a terminal
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		if argDef.Required {
+			fmt.Fprintf(os.Stderr, "Error: Required argument '%s' not provided and not in a terminal. Use --args flag.\n", argDef.Name)
+			return ""
+		}
+		// Not required, use default if available
+		if argDef.Default != "" {
+			return argDef.Default
+		}
+		return ""
+	}
+	
+	// Prompt for value (always prompt if prompt is defined)
+	reader := bufio.NewReader(os.Stdin)
+	prompt := argDef.Prompt
+	if prompt == "" {
+		prompt = fmt.Sprintf("Enter %s", argDef.Name)
+	}
+	
+	// Build the prompt message with default hint
+	promptMsg := prompt
+	if argDef.Default != "" {
+		promptMsg = fmt.Sprintf("%s [default: %s]", prompt, argDef.Default)
+	} else if !argDef.Required {
+		promptMsg = fmt.Sprintf("%s (optional)", prompt)
+	}
+	
+	// Add colon if not present
+	if !strings.HasSuffix(promptMsg, ":") && !strings.HasSuffix(promptMsg, "?") {
+		promptMsg = promptMsg + ": "
+	} else {
+		promptMsg = promptMsg + " "
+	}
+	
+	fmt.Print(promptMsg)
+	os.Stdout.Sync()
+	
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\nError reading input: %v\n", err)
+		// On error, use default if available
+		if argDef.Default != "" {
+			return argDef.Default
+		}
+		return ""
+	}
+	
+	value := strings.TrimSpace(response)
+	
+	// If empty response, use default if available, otherwise check required
+	if value == "" {
+		if argDef.Default != "" {
+			return argDef.Default
+		}
+		if argDef.Required {
+			fmt.Fprintf(os.Stderr, "Error: %s is required\n", argDef.Name)
+			return ""
+		}
+		return ""
+	}
+	
+	return value
+}
+
+// collectCommandArgs collects all arguments for a command
+func collectCommandArgs(cmd repo.Command, providedArgs map[string]string) map[string]string {
+	result := make(map[string]string)
+	
+	for _, argDef := range cmd.Args {
+		value := promptForArg(argDef, providedArgs)
+		if value == "" && argDef.Required {
+			fmt.Fprintf(os.Stderr, "Error: Required argument '%s' is missing\n", argDef.Name)
+			os.Exit(1)
+		}
+		if value != "" {
+			result[argDef.Name] = value
+		}
+	}
+	
+	return result
+}
+
+// substituteArgs replaces {{argName}} placeholders in command string with actual values
+func substituteArgs(command string, args map[string]string) string {
+	result := command
+	
+	for key, value := range args {
+		placeholder := fmt.Sprintf("{{%s}}", key)
+		result = strings.ReplaceAll(result, placeholder, value)
+	}
+	
+	return result
+}
+
 // executeCommandSet is the shared logic for running command sets
-func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yesFlag bool) {
+func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yesFlag bool, argsFlag string) {
 	// Get platform
 	platform, err := config.GetPlatform()
 	if err != nil {
@@ -182,6 +322,8 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	fmt.Printf("📋 Commands to execute:\n\n")
 
 	hasUnsupportedCommands := false
+	providedArgs := parseArgsFlag(argsFlag)
+	
 	for i, cmd := range commandsToRun {
 		originalNum := originalIndices[i]
 		fmt.Printf("  %d. %s\n", originalNum, cmd.Description)
@@ -197,7 +339,37 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 			}
 			hasUnsupportedCommands = true
 		} else {
-			fmt.Printf("     $ %s\n", command)
+			// Show command with placeholders or substituted values
+			previewCommand := command
+			if len(cmd.Args) > 0 {
+				// Try to substitute with provided args, or show placeholders
+				previewArgs := make(map[string]string)
+				for _, argDef := range cmd.Args {
+					if val, exists := providedArgs[argDef.Name]; exists {
+						previewArgs[argDef.Name] = val
+					} else if argDef.Default != "" {
+						previewArgs[argDef.Name] = argDef.Default
+					} else {
+						previewArgs[argDef.Name] = fmt.Sprintf("{{%s}}", argDef.Name)
+					}
+				}
+				previewCommand = substituteArgs(command, previewArgs)
+			}
+			fmt.Printf("     $ %s\n", previewCommand)
+			
+			// Show which arguments will be needed
+			if len(cmd.Args) > 0 {
+				argsToPrompt := []string{}
+				for _, argDef := range cmd.Args {
+					// Show all args that have prompts defined (even if they have defaults)
+					if _, exists := providedArgs[argDef.Name]; !exists && argDef.Prompt != "" {
+						argsToPrompt = append(argsToPrompt, argDef.Name)
+					}
+				}
+				if len(argsToPrompt) > 0 {
+					fmt.Printf("     📝 Will prompt for: %s\n", strings.Join(argsToPrompt, ", "))
+				}
+			}
 		}
 		fmt.Println()
 	}
@@ -253,6 +425,12 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 			fmt.Printf("⚠️  Skipping: No command available for platform '%s'\n\n", platform)
 			continue
 		}
+		
+		// Collect arguments for this command
+		cmdArgs := collectCommandArgs(cmd, providedArgs)
+		
+		// Substitute arguments in command
+		command = substituteArgs(command, cmdArgs)
 		
 		fmt.Printf("[%d/%d] %s (step %d)\n", i+1, len(commandsToRun), cmd.Description, originalNum)
 		fmt.Printf("$ %s\n", command)
@@ -313,7 +491,7 @@ Or run only specific steps with --only:
 			os.Exit(1)
 		}
 
-		executeCommandSet(cmdSet, skipSteps, onlySteps, yesFlag)
+		executeCommandSet(cmdSet, skipSteps, onlySteps, yesFlag, argsFlag)
 	},
 }
 
@@ -323,5 +501,6 @@ func init() {
 	runCmd.Flags().StringVar(&onlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
 	runCmd.Flags().StringVar(&versionFlag, "ver", "", "Run specific version or tag (default: latest)")
 	runCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "Execute commands without prompting for confirmation")
+	runCmd.Flags().StringVar(&argsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 }
 
