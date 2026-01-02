@@ -52,7 +52,9 @@ test_fail() {
 
 # Setup test environment
 setup_test_env() {
-    cd /home/odun/ShellDock
+    # Get the project root directory (where this script is located)
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    cd "$PROJECT_ROOT"
     cp test/test-clean.yaml "$TEST_DIR/.shelldock/test.yaml"
     cp examples/docker.yaml "$TEST_DIR/.shelldock/docker.yaml" 2>/dev/null || true
 }
@@ -333,7 +335,8 @@ fi
 
 test_start "--local flag: error if not in local (even if in bundled)"
 # Try to get docker with --local flag (should fail if not in local)
-if sd --local docker 2>&1 | grep -q "not found in local directory\|Error"; then
+# Use 'show' command to avoid prompting
+if sd show --local docker 2>&1 | grep -q "not found in local directory\|Error\|not found"; then
     test_pass
 else
     test_fail "--local flag error" "Should show error when not in local"
