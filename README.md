@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="static/images/logo.jpg" alt="ShellDock Logo" style="max-width: 100%; height: auto;">
-  
-  # ShellDock
-  
-  A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.
+  <img src="static/images/logo.jpg" alt="ShellDock Logo" width="1344" height="768">
 </div>
+
+# ShellDock
+
+A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.
 
 ## Table of Contents
 
