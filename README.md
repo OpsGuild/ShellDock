@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="static/images/logo.jpg" alt="ShellDock Logo" width="200">
+  <img src="static/images/logo.jpg" alt="ShellDock Logo" style="max-width: 100%; height: auto;">
   
   # ShellDock
   
