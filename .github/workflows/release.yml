@@ -70,8 +70,10 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Extract version
+      - name: Extract version (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         id: version
+        shell: bash
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${{ github.ref_name }}"
@@ -80,6 +82,20 @@ jobs:
           fi
           echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Extract version (Windows)
+        if: matrix.os == 'windows-latest'
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $VERSION = "${{ github.ref_name }}"
+          } else {
+            $VERSION = "v${{ github.event.inputs.version }}"
+          }
+          $VERSION_NUM = $VERSION -replace '^v', ''
+          echo "version=$VERSION_NUM" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $env:GITHUB_ENV
 
       - name: Build binary (Linux/macOS)
         if: matrix.os != 'windows-latest'
