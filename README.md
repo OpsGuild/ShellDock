@@ -45,27 +45,67 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 
 ### Quick Install
 
+Choose the installation method that best fits your system:
 
-#### Local Installation (Development)
+#### Debian/Ubuntu (apt) - Recommended
 
-For installing from the local source code:
-
-```bash
-# From the project root directory
-bash scripts/install-local.sh
-```
-
-This will build and install ShellDock from the current source code.
-
-#### Debian/Ubuntu (apt)
+**Option 1: One-Line Install Script (Easiest)**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
-sudo apt update
-sudo apt install shelldock
+```
+
+This script automatically:
+- Detects your architecture (amd64 or arm64)
+- Downloads the latest .deb package
+- Installs ShellDock
+- Fixes any dependencies
+
+**Option 2: Manual .deb Installation**
+
+```bash
+# Download the latest .deb package for your architecture
+# For amd64:
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock_*_amd64.deb
+
+# For arm64:
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock_*_arm64.deb
+
+# Install
+sudo dpkg -i shelldock_*_*.deb
+
+# Fix dependencies if needed
+sudo apt-get install -f
+```
+
+**Option 3: Direct Binary (No Package Manager)**
+
+```bash
+# Download binary
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-linux-amd64
+# or for ARM64
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-linux-arm64
+
+# Install
+chmod +x shelldock-linux-*
+sudo mv shelldock-linux-* /usr/local/bin/shelldock
 ```
 
 #### RedHat/CentOS/Fedora (yum/dnf)
+
+**Option 1: Direct .rpm Package**
+
+```bash
+# Download the latest .rpm package
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-*-1.x86_64.rpm
+
+# Install
+sudo rpm -i shelldock-*-1.x86_64.rpm
+# or for Fedora
+sudo dnf install shelldock-*-1.x86_64.rpm
+```
+
+**Option 2: Install Script**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-yum.sh | sudo bash
@@ -74,15 +114,73 @@ sudo yum install shelldock
 sudo dnf install shelldock
 ```
 
-#### Arch Linux
+#### Arch Linux (pacman)
+
+**Option 1: AUR (Arch User Repository) - Recommended**
+
+```bash
+# Using yay
+yay -S shelldock
+
+# Using paru
+paru -S shelldock
+
+# Manual installation
+git clone https://aur.archlinux.org/shelldock.git
+cd shelldock
+makepkg -si
+```
+
+**Option 2: Install Script**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-arch.sh | bash
 ```
 
-#### Generic Linux/macOS
+#### macOS
 
-The quickest way to install ShellDock on Linux or macOS (once published):
+**Option 1: Homebrew**
+
+```bash
+brew install shelldock/tap/shelldock
+```
+
+**Option 2: Direct Binary**
+
+```bash
+# Download binary
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-amd64
+# or for Apple Silicon
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-arm64
+
+# Make executable and install
+chmod +x shelldock-darwin-*
+sudo mv shelldock-darwin-* /usr/local/bin/shelldock
+```
+
+#### Windows
+
+**Option 1: Chocolatey**
+
+```powershell
+choco install shelldock
+```
+
+**Option 2: Direct Binary**
+
+```powershell
+# Download using PowerShell
+Invoke-WebRequest -Uri "https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
+
+# Add to PATH or move to a directory in your PATH
+# Example: Move to C:\Program Files\shelldock\
+New-Item -ItemType Directory -Path "C:\Program Files\shelldock" -Force
+Move-Item shelldock.exe "C:\Program Files\shelldock\"
+```
+
+#### Generic Linux/macOS (Universal Installer)
+
+The quickest way to install ShellDock on any Linux or macOS system:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install.sh | bash
@@ -104,6 +202,17 @@ This script will:
 Run 'shelldock --help' to get started
 Run 'shelldock manage' to open the interactive UI
 ```
+
+#### Local Installation (Development)
+
+For installing from the local source code:
+
+```bash
+# From the project root directory
+bash scripts/install-local.sh
+```
+
+This will build and install ShellDock from the current source code.
 
 ### Build from Source
 
@@ -154,22 +263,56 @@ Installation complete!
 
 ### Package Manager Installation
 
+Detailed installation instructions for each package manager:
+
 #### Debian/Ubuntu (apt)
 
-1. **Download the .deb package:**
-   ```bash
-   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock_1.0.0_amd64.deb
-   ```
+**Using APT Repository (Recommended for automatic updates):**
 
-2. **Install using dpkg:**
-   ```bash
-   sudo dpkg -i shelldock_1.0.0_amd64.deb
-   ```
+> **Note:** The APT repository is included in each release. For production use, consider hosting it on GitHub Pages or your own server for better performance.
 
-   If you encounter dependency issues:
-   ```bash
-   sudo apt-get install -f
-   ```
+```bash
+# 1. Download and add GPG key from the latest release
+# Replace VERSION with the latest version (e.g., v1.0.0)
+VERSION="v1.0.0"
+curl -fsSL https://github.com/OpsGuild/ShellDock/releases/download/${VERSION}/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/shelldock-archive-keyring.gpg
+
+# 2. Add repository
+echo "deb [signed-by=/usr/share/keyrings/shelldock-archive-keyring.gpg] https://github.com/OpsGuild/ShellDock/releases/download/${VERSION}/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/shelldock.list
+
+# 3. Update and install
+sudo apt update
+sudo apt install shelldock
+```
+
+**Alternative: Using GitHub Pages (if configured):**
+
+If you host the APT repository on GitHub Pages, use:
+
+```bash
+# Add GPG key
+curl -fsSL https://opsguild.github.io/ShellDock/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/shelldock-archive-keyring.gpg
+
+# Add repository
+echo "deb [signed-by=/usr/share/keyrings/shelldock-archive-keyring.gpg] https://opsguild.github.io/ShellDock/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/shelldock.list
+
+# Install
+sudo apt update
+sudo apt install shelldock
+```
+
+**Using .deb Package:**
+
+```bash
+# Download
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock_*_amd64.deb
+
+# Install
+sudo dpkg -i shelldock_*_amd64.deb
+
+# Fix dependencies if needed
+sudo apt-get install -f
+```
 
 **Example Output:**
 ```
@@ -183,23 +326,17 @@ ShellDock installed successfully!
 
 #### RedHat/CentOS/Fedora (yum/dnf)
 
-1. **Download the .rpm package:**
-   ```bash
-   # For CentOS/RHEL
-   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-1.0.0-1.x86_64.rpm
-   
-   # For Fedora
-   wget https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-1.0.0-1.fc38.x86_64.rpm
-   ```
+**Using .rpm Package:**
 
-2. **Install using rpm:**
-   ```bash
-   # CentOS/RHEL
-   sudo rpm -i shelldock-1.0.0-1.x86_64.rpm
-   
-   # Fedora
-   sudo dnf install shelldock-1.0.0-1.fc38.x86_64.rpm
-   ```
+```bash
+# Download
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-*-1.x86_64.rpm
+
+# Install
+sudo rpm -i shelldock-*-1.x86_64.rpm
+# or for Fedora
+sudo dnf install shelldock-*-1.x86_64.rpm
+```
 
 **Example Output:**
 ```
@@ -211,21 +348,20 @@ ShellDock installed successfully!
 
 #### Arch Linux (pacman)
 
-1. **Using AUR helper (recommended):**
-   ```bash
-   # Using yay
-   yay -S shelldock
-   
-   # Using paru
-   paru -S shelldock
-   ```
+**Using AUR (Arch User Repository):**
 
-2. **Manual AUR installation:**
-   ```bash
-   git clone https://aur.archlinux.org/shelldock.git
-   cd shelldock
-   makepkg -si
-   ```
+```bash
+# Using yay (recommended)
+yay -S shelldock
+
+# Using paru
+paru -S shelldock
+
+# Manual installation
+git clone https://aur.archlinux.org/shelldock.git
+cd shelldock
+makepkg -si
+```
 
 **Example Output:**
 ```
@@ -240,23 +376,63 @@ Total Installed Size:  5.23 MiB
 :: Proceed with installation? [Y/n]
 ```
 
-#### macOS (Homebrew)
+#### macOS
+
+**Using Homebrew:**
 
 ```bash
 brew install shelldock/tap/shelldock
 ```
 
+**Using Direct Binary:**
+
+```bash
+# For Intel Macs
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-amd64
+chmod +x shelldock-darwin-amd64
+sudo mv shelldock-darwin-amd64 /usr/local/bin/shelldock
+
+# For Apple Silicon (M1/M2/M3)
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-arm64
+chmod +x shelldock-darwin-arm64
+sudo mv shelldock-darwin-arm64 /usr/local/bin/shelldock
+```
+
 #### Windows
 
-1. **Download the Windows binary:**
-   ```powershell
-   # Using PowerShell
-   Invoke-WebRequest -Uri "https://github.com/OpsGuild/ShellDock/releases/download/v1.0.0/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
-   ```
+**Using Chocolatey:**
 
-2. **Add to PATH:**
-   - Move `shelldock.exe` to a directory in your PATH (e.g., `C:\Program Files\shelldock\`)
-   - Or add the directory to your system PATH
+```powershell
+choco install shelldock
+```
+
+**Using Direct Binary:**
+
+```powershell
+# Download
+Invoke-WebRequest -Uri "https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
+
+# Add to PATH (example)
+New-Item -ItemType Directory -Path "C:\Program Files\shelldock" -Force
+Move-Item shelldock.exe "C:\Program Files\shelldock\"
+# Add C:\Program Files\shelldock to your system PATH
+```
+
+#### Snap (Linux)
+
+```bash
+sudo snap install shelldock
+```
+
+#### Flatpak (Linux)
+
+```bash
+# Install from Flathub (if published)
+flatpak install flathub com.github.opsguild.shelldock
+
+# Or install from downloaded .flatpak file
+flatpak install shelldock-*.flatpak
+```
 
 ## Configuration
 
