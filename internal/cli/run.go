@@ -303,6 +303,12 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 			fmt.Fprintf(os.Stderr, "Error: No commands to execute after filtering\n")
 			os.Exit(1)
 		}
+	} else {
+		// Initialize originalIndices with sequential numbers when no filtering
+		originalIndices = make([]int, len(commandsToRun))
+		for i := range commandsToRun {
+			originalIndices[i] = i + 1 // 1-indexed
+		}
 	}
 	
 	fmt.Printf("\n📦 Command Set: %s\n", cmdSet.Name)

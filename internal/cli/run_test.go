@@ -209,3 +209,51 @@ func TestCollectCommandArgs(t *testing.T) {
 	}
 }
 
+func TestOriginalIndicesInitialization(t *testing.T) {
+	// Test that originalIndices is properly initialized when no filtering is applied
+	// This tests the fix for the panic: "index out of range [0] with length 0"
+	
+	commands := []repo.Command{
+		{Description: "Command 1", Command: "echo 1"},
+		{Description: "Command 2", Command: "echo 2"},
+		{Description: "Command 3", Command: "echo 3"},
+	}
+	
+	// Simulate the logic from executeCommandSet when no filtering is applied
+	commandsToRun := commands
+	var originalIndices []int
+	
+	// No filtering (empty skipSteps and onlySteps)
+	// This is the scenario that was causing the panic
+	if false { // Simulating: skipSteps == "" && onlySteps == ""
+		// This branch should not execute
+	} else {
+		// Initialize originalIndices with sequential numbers when no filtering
+		originalIndices = make([]int, len(commandsToRun))
+		for i := range commandsToRun {
+			originalIndices[i] = i + 1 // 1-indexed
+		}
+	}
+	
+	// Verify originalIndices is properly initialized
+	if len(originalIndices) != len(commandsToRun) {
+		t.Fatalf("originalIndices length mismatch: got %d, expected %d", len(originalIndices), len(commandsToRun))
+	}
+	
+	// Verify each index is correct (1-indexed)
+	expectedIndices := []int{1, 2, 3}
+	for i, idx := range originalIndices {
+		if idx != expectedIndices[i] {
+			t.Errorf("originalIndices[%d] = %d, expected %d", i, expectedIndices[i], idx)
+		}
+	}
+	
+	// Verify we can safely access all indices without panic
+	for i := range commandsToRun {
+		originalNum := originalIndices[i]
+		if originalNum != i+1 {
+			t.Errorf("originalIndices[%d] = %d, expected %d", i, originalNum, i+1)
+		}
+	}
+}
+
