@@ -188,8 +188,22 @@ jobs:
           sudo apt-get install -y rpm
           mkdir -p dist/rpm/BUILD dist/rpm/BUILDROOT dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS
           
-          cp ./build/shelldock-linux-amd64 dist/rpm/SOURCES/shelldock
-          sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
+          # Create source tarball structure
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist/rpm/tmp/shelldock-${VERSION}
+          cp ./build/shelldock-linux-amd64 dist/rpm/tmp/shelldock-${VERSION}/shelldock
+          cp README.md dist/rpm/tmp/shelldock-${VERSION}/
+          mkdir -p dist/rpm/tmp/shelldock-${VERSION}/repository
+          cp repository/*.yaml dist/rpm/tmp/shelldock-${VERSION}/repository/ 2>/dev/null || true
+          
+          # Create tarball
+          cd dist/rpm/tmp
+          tar czf ../SOURCES/shelldock-${VERSION}.tar.gz shelldock-${VERSION}
+          cd ../../..
+          
+          # Create spec file with proper date
+          CHANGELOG_DATE=$(date +"%a %b %d %Y")
+          sed -e "s/VERSION/${VERSION}/g" -e "s/Wed Jan 01 2024/${CHANGELOG_DATE}/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
           
           rpmbuild --define "_topdir $(pwd)/dist/rpm" -bb dist/rpm/SPECS/shelldock.spec
 
@@ -226,9 +240,8 @@ jobs:
           path: ./
 
       - name: Setup Snapcraft
-        uses: snapcore/action-setup@v1
-        with:
-          snapcraft-channel: 'latest/stable'
+        run: |
+          sudo snap install snapcraft --classic
 
       - name: Create snapcraft.yaml
         run: |
@@ -328,9 +341,9 @@ jobs:
           path: ./
 
       - name: Setup Flatpak
-        uses: bilelmoussaoui/flatpak-github-actions@v7
-        with:
-          bundler: flatpak
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
 
       - name: Create flatpak manifest
         run: |
