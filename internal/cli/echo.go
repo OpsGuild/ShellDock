@@ -64,11 +64,11 @@ Examples:
 
 		// Filter commands if flags are provided
 		commandsToRun := cmdSet.Commands
-		var originalIndices []int
 
 		if echoSkipFlag != "" || echoOnlyFlag != "" {
 			var err error
-			commandsToRun, originalIndices, err = filterCommands(cmdSet.Commands, echoSkipFlag, echoOnlyFlag)
+			var _ []int // originalIndices not needed for echo
+			commandsToRun, _, err = filterCommands(cmdSet.Commands, echoSkipFlag, echoOnlyFlag)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				os.Exit(1)

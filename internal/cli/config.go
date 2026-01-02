@@ -48,9 +48,10 @@ Use "auto" to automatically detect the platform and distribution.`,
 		platform := args[0]
 		
 		// Allow any platform string, but validate common ones
-		if platform == "auto" {
+		switch platform {
+		case "auto":
 			// This is always valid
-		} else if platform == "linux" {
+		case "linux":
 			// Warn that linux is ambiguous
 			fmt.Fprintf(os.Stderr, "Warning: 'linux' is ambiguous. Consider using a specific distribution like 'ubuntu', 'centos', 'fedora', etc.\n")
 			fmt.Fprintf(os.Stderr, "Detected distribution: %s\n", config.DetectLinuxDistribution())
@@ -66,10 +67,11 @@ Use "auto" to automatically detect the platform and distribution.`,
 		}
 
 		fmt.Printf("Platform set to: %s\n", platform)
-		if platform == "auto" {
+		switch platform {
+		case "auto":
 			detected := config.DetectPlatform()
 			fmt.Printf("Auto-detected platform: %s\n", detected)
-		} else if platform == "linux" {
+		case "linux":
 			detected := config.DetectLinuxDistribution()
 			fmt.Printf("Note: Using generic 'linux'. Detected distribution: %s\n", detected)
 			fmt.Printf("Consider setting platform to '%s' for better compatibility.\n", detected)

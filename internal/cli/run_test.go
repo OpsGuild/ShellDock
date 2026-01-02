@@ -78,7 +78,7 @@ func TestFilterCommands(t *testing.T) {
 	}
 
 	// Test only
-	filtered, indices, err = filterCommands(commands, "", "2,4")
+	filtered, _, err = filterCommands(commands, "", "2,4")
 	if err != nil {
 		t.Fatalf("filterCommands failed: %v", err)
 	}

@@ -13,11 +13,11 @@ func TestNewManager(t *testing.T) {
 	}
 
 	if manager == nil {
-		t.Error("Expected non-nil manager")
+		t.Fatal("Expected non-nil manager")
 	}
 
 	if manager.localRepo == nil {
-		t.Error("Expected non-nil localRepo")
+		t.Fatal("Expected non-nil localRepo")
 	}
 }
 
@@ -30,7 +30,7 @@ func TestGetCommandSet_LocalFirst(t *testing.T) {
 	originalHome := os.Getenv("HOME")
 	defer func() {
 		if originalHome != "" {
-			os.Setenv("HOME", originalHome)
+			_ = os.Setenv("HOME", originalHome)
 		}
 	}()
 
@@ -137,7 +137,9 @@ versions:
     commands: []
 `
 	filePath := filepath.Join(tmpLocal, "test.yaml")
-	os.WriteFile(filePath, []byte(yamlContent), 0644)
+	if err := os.WriteFile(filePath, []byte(yamlContent), 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
 
 	manager := &Manager{
 		localRepo:   localRepo,

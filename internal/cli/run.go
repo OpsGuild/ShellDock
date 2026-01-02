@@ -219,7 +219,7 @@ func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) strin
 	}
 	
 	fmt.Print(promptMsg)
-	os.Stdout.Sync()
+	_ = os.Stdout.Sync()
 	
 	response, err := reader.ReadString('\n')
 	if err != nil {
@@ -327,7 +327,7 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		command := getCommandForPlatform(cmd, platform)
 		if command == "" {
 			fmt.Printf("     ⚠️  No command available for platform '%s'\n", platform)
-			if cmd.Platforms != nil && len(cmd.Platforms) > 0 {
+			if len(cmd.Platforms) > 0 {
 				availablePlatforms := make([]string, 0, len(cmd.Platforms))
 				for p := range cmd.Platforms {
 					availablePlatforms = append(availablePlatforms, p)
@@ -392,7 +392,7 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		fmt.Print("Do you want to execute these commands? (y/N): ")
 		
 		// Ensure the prompt is displayed immediately
-		os.Stdout.Sync()
+		_ = os.Stdout.Sync()
 		
 		// Read the response - this will block until user presses Enter
 		response, err := reader.ReadString('\n')
