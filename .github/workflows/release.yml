@@ -85,7 +85,7 @@ jobs:
 
       - name: Extract version (Windows)
         if: matrix.os == 'windows-latest'
-        id: version
+        id: version-windows
         shell: pwsh
         run: |
           if ("${{ github.ref_type }}" -eq "tag") {
@@ -111,7 +111,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          VERSION_NUM: ${{ steps.version.outputs.version }}
+          VERSION_NUM: ${{ steps.version-windows.outputs.version }}
         shell: pwsh
         run: |
           go build -ldflags "-X main.version=$env:VERSION_NUM" -o ${{ matrix.binary_name }} .
