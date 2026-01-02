@@ -60,12 +60,22 @@ func NewManager() (*Manager, error) {
 
 // GetCommandSet retrieves a command set, checking local first, then bundled repository
 // version can be empty (latest), "latest", or a specific version/tag
-// preferLocal flag is kept for backward compatibility but doesn't change behavior
+// preferLocal: if true, only check local repository (skip bundled)
 func (m *Manager) GetCommandSet(name string, preferLocal bool, version string) (*CommandSet, error) {
-	// Always check local first, then bundled (regardless of preferLocal flag)
+	// Check local first
 	if m.localRepo.Exists(name) {
 		return m.localRepo.GetCommandSet(name, version)
 	}
+	
+	// If --local flag is set, don't check bundled
+	if preferLocal {
+		if version != "" {
+			return nil, fmt.Errorf("command set '%s' version '%s' not found in local directory", name, version)
+		}
+		return nil, fmt.Errorf("command set '%s' not found in local directory", name)
+	}
+	
+	// Check bundled repository
 	if m.bundledRepo.Exists(name) {
 		return m.bundledRepo.GetCommandSet(name, version)
 	}

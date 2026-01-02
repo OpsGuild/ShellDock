@@ -32,7 +32,7 @@ Or use subcommands:
   shelldock run docker
   shelldock list
   shelldock manage`,
-	Version: "1.0.0",
+	Version: "dev",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// If a command set name is provided, run it
@@ -66,7 +66,8 @@ Or use subcommands:
 }
 
 // Execute runs the root command
-func Execute() error {
+func Execute(version string) error {
+	rootCmd.Version = version
 	return rootCmd.Execute()
 }
 
