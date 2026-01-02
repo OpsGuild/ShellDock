@@ -245,23 +245,37 @@ jobs:
         run: snapcraft --destructive-mode
 
       - name: Login to Snap Store
-        if: secrets.SNAP_STORE_CREDENTIALS != ''
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "SNAP_STORE_CREDENTIALS not set, skipping Snap Store login"
+            exit 0
+          fi
           echo "$SNAPCRAFT_STORE_CREDENTIALS" | base64 -d > snapcraft_credentials.txt
           snapcraft login --with snapcraft_credentials.txt
           rm -f snapcraft_credentials.txt
+        continue-on-error: true
 
       - name: Register snap name (if not already registered)
-        if: secrets.SNAP_STORE_CREDENTIALS != ''
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "SNAP_STORE_CREDENTIALS not set, skipping registration"
+            exit 0
+          fi
           snapcraft register shelldock || echo "Snap name already registered or registration failed"
         continue-on-error: true
 
       - name: Publish to Snap Store
-        if: secrets.SNAP_STORE_CREDENTIALS != ''
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
+          if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
+            echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
+            exit 0
+          fi
           SNAP_FILE=$(ls *.snap | head -1)
           snapcraft push "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
         continue-on-error: true
@@ -329,11 +343,16 @@ jobs:
           flatpak build-bundle repo shelldock-${{ steps.version.outputs.version }}.flatpak com.github.opsguild.shelldock
 
       - name: Publish to Flathub (if configured)
-        if: secrets.FLATHUB_SSH_KEY != ''
+        env:
+          FLATHUB_SSH_KEY: ${{ secrets.FLATHUB_SSH_KEY }}
         run: |
+          if [ -z "$FLATHUB_SSH_KEY" ]; then
+            echo "FLATHUB_SSH_KEY not set, skipping Flathub publish"
+            exit 0
+          fi
           # Setup SSH
           mkdir -p ~/.ssh
-          echo "${{ secrets.FLATHUB_SSH_KEY }}" > ~/.ssh/flathub_key
+          echo "$FLATHUB_SSH_KEY" > ~/.ssh/flathub_key
           chmod 600 ~/.ssh/flathub_key
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           
@@ -526,13 +545,25 @@ jobs:
           choco pack chocolatey\shelldock\shelldock.nuspec --output-directory chocolatey
 
       - name: Set Chocolatey API key
-        if: secrets.CHOCOLATEY_API_KEY != ''
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        shell: pwsh
         run: |
-          choco apikey --key "${{ secrets.CHOCOLATEY_API_KEY }}" --source https://push.chocolatey.org/
+          if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
+            Write-Host "CHOCOLATEY_API_KEY not set, skipping API key setup"
+            exit 0
+          }
+          choco apikey --key "$env:CHOCOLATEY_API_KEY" --source https://push.chocolatey.org/
 
       - name: Publish to Chocolatey
-        if: secrets.CHOCOLATEY_API_KEY != ''
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        shell: pwsh
         run: |
+          if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
+            Write-Host "CHOCOLATEY_API_KEY not set, skipping publish"
+            exit 0
+          }
           $package = Get-ChildItem chocolatey\*.nupkg | Select-Object -First 1
           choco push $package.FullName --source https://push.chocolatey.org/ --force
         continue-on-error: true
@@ -604,7 +635,6 @@ jobs:
     name: GPG Sign Packages
     needs: [build, packages, snap, flatpak, chocolatey]
     runs-on: ubuntu-latest
-    if: secrets.GPG_PRIVATE_KEY != ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -614,8 +644,13 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping GPG signing"
+            exit 0
+          fi
           echo "$GPG_PRIVATE_KEY" | gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --import
           gpg --list-secret-keys --keyid-format LONG
+        continue-on-error: true
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -624,11 +659,17 @@ jobs:
 
       - name: Sign binaries
         env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
+          if [ -z "$GPG_PRIVATE_KEY" ]; then
+            echo "GPG_PRIVATE_KEY not set, skipping signing"
+            exit 0
+          fi
           for file in $(find artifacts -type f \( -name "shelldock-*" -o -name "*.deb" -o -name "*.rpm" -o -name "*.snap" -o -name "*.flatpak" -o -name "*.nupkg" \)); do
             echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor "$file"
           done
+        continue-on-error: true
 
       - name: Upload signatures
         uses: actions/upload-artifact@v4
