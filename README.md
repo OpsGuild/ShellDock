@@ -7,6 +7,7 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 - [Features](#features)
 - [Installation](#installation)
   - [Quick Install](#quick-install)
+  - [Updating ShellDock](#updating-shelldock)
   - [Build from Source](#build-from-source)
   - [Package Manager Installation](#package-manager-installation)
 - [Configuration](#configuration)
@@ -215,6 +216,142 @@ sudo cp shelldock /usr/local/bin/
 ```
 
 This will build and install ShellDock from the current source code.
+
+### Updating ShellDock
+
+The update method depends on how you installed ShellDock:
+
+#### If Installed via Quick Install Script
+
+Simply re-run the installation script - it will download and install the latest version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install.sh | bash
+```
+
+#### If Installed via APT Repository
+
+```bash
+sudo apt update
+sudo apt upgrade shelldock
+```
+
+#### If Installed via .deb Package
+
+Re-download and install the latest .deb package:
+
+```bash
+# For amd64
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock_*_amd64.deb
+sudo dpkg -i shelldock_*_amd64.deb
+sudo apt-get install -f
+
+# For arm64
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock_*_arm64.deb
+sudo dpkg -i shelldock_*_arm64.deb
+sudo apt-get install -f
+```
+
+Or use the install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
+```
+
+#### If Installed via .rpm Package
+
+Re-download and install the latest .rpm package:
+
+```bash
+wget https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-*-1.x86_64.rpm
+sudo rpm -Uvh shelldock-*-1.x86_64.rpm
+# or for Fedora
+sudo dnf upgrade shelldock-*-1.x86_64.rpm
+```
+
+#### If Installed via AUR (Arch Linux)
+
+```bash
+# Using yay
+yay -Syu shelldock
+
+# Using paru
+paru -Syu shelldock
+
+# Manual update
+cd ~/shelldock  # or wherever you cloned it
+git pull
+makepkg -si
+```
+
+#### If Installed via Homebrew (macOS)
+
+```bash
+brew upgrade shelldock
+```
+
+#### If Installed via Snap
+
+```bash
+sudo snap refresh shelldock
+```
+
+#### If Installed via Flatpak
+
+```bash
+flatpak update com.github.opsguild.shelldock
+```
+
+#### If Installed via Chocolatey (Windows)
+
+```powershell
+choco upgrade shelldock
+```
+
+#### If Installed via Direct Binary
+
+Re-download and replace the binary:
+
+**Linux:**
+```bash
+# Download latest binary
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-linux-amd64
+# or for ARM64
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-linux-arm64
+
+# Replace existing binary
+chmod +x shelldock-linux-*
+sudo mv shelldock-linux-* /usr/local/bin/shelldock
+```
+
+**macOS:**
+```bash
+# Download latest binary
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-amd64
+# or for Apple Silicon
+curl -LO https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-darwin-arm64
+
+# Replace existing binary
+chmod +x shelldock-darwin-*
+sudo mv shelldock-darwin-* /usr/local/bin/shelldock
+```
+
+**Windows:**
+```powershell
+# Download latest binary
+Invoke-WebRequest -Uri "https://github.com/OpsGuild/ShellDock/releases/latest/download/shelldock-windows-amd64.exe" -OutFile "shelldock.exe"
+
+# Replace existing binary (adjust path as needed)
+Move-Item -Force shelldock.exe "C:\Program Files\shelldock\shelldock.exe"
+```
+
+#### Check Current Version
+
+To check your current version:
+
+```bash
+shelldock --version
+```
 
 ### Build from Source
 
