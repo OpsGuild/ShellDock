@@ -8,6 +8,7 @@ A fast, cross-platform shell command repository manager. Save, organize, and exe
 - [Installation](#installation)
   - [Quick Install](#quick-install)
   - [Updating ShellDock](#updating-shelldock)
+  - [Uninstalling ShellDock](#uninstalling-shelldock)
   - [Build from Source](#build-from-source)
   - [Package Manager Installation](#package-manager-installation)
 - [Configuration](#configuration)
@@ -352,6 +353,138 @@ To check your current version:
 ```bash
 shelldock --version
 ```
+
+### Uninstalling ShellDock
+
+The uninstall method depends on how you installed ShellDock:
+
+#### If Installed via Quick Install Script
+
+Remove the binary and configuration:
+
+```bash
+# Remove binary
+sudo rm -f /usr/local/bin/shelldock
+
+# Remove configuration (optional)
+rm -rf ~/.shelldock
+```
+
+#### If Installed via APT Repository
+
+```bash
+sudo apt remove shelldock
+sudo apt purge shelldock  # Also removes configuration files
+```
+
+#### If Installed via .deb Package
+
+```bash
+sudo dpkg -r shelldock
+# Or to also remove configuration files:
+sudo dpkg --purge shelldock
+```
+
+#### If Installed via .rpm Package
+
+```bash
+# For RPM-based systems
+sudo rpm -e shelldock
+
+# Or for Fedora/DNF
+sudo dnf remove shelldock
+```
+
+#### If Installed via AUR (Arch Linux)
+
+```bash
+# Using yay
+yay -Rns shelldock
+
+# Using paru
+paru -Rns shelldock
+
+# Using pacman (if installed manually)
+sudo pacman -Rns shelldock
+```
+
+#### If Installed via Homebrew (macOS)
+
+```bash
+brew uninstall shelldock
+
+# To also remove the tap (if you no longer need it):
+brew untap OpsGuild/tap
+```
+
+#### If Installed via Snap
+
+```bash
+sudo snap remove shelldock
+```
+
+#### If Installed via Flatpak
+
+```bash
+flatpak uninstall com.github.opsguild.shelldock
+```
+
+#### If Installed via Chocolatey (Windows)
+
+```powershell
+choco uninstall shelldock
+```
+
+#### If Installed via Direct Binary
+
+**Linux:**
+```bash
+# Remove binary
+sudo rm -f /usr/local/bin/shelldock
+
+# Remove configuration (optional)
+rm -rf ~/.shelldock
+```
+
+**macOS:**
+```bash
+# Remove binary
+sudo rm -f /usr/local/bin/shelldock
+
+# Remove configuration (optional)
+rm -rf ~/.shelldock
+```
+
+**Windows:**
+```powershell
+# Remove binary (adjust path as needed)
+Remove-Item "C:\Program Files\shelldock\shelldock.exe" -Force
+
+# Remove directory if empty
+Remove-Item "C:\Program Files\shelldock" -Force -ErrorAction SilentlyContinue
+
+# Remove configuration (optional)
+Remove-Item "$env:USERPROFILE\.shelldock" -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+#### Remove Configuration Files
+
+After uninstalling, you may want to remove configuration files:
+
+**Linux/macOS:**
+```bash
+rm -rf ~/.shelldock
+```
+
+**Windows:**
+```powershell
+Remove-Item "$env:USERPROFILE\.shelldock" -Recurse -Force
+```
+
+**Note:** Configuration files are stored in `~/.shelldock/` (or `%USERPROFILE%\.shelldock\` on Windows) and contain:
+- Platform settings (`.sdrc`)
+- Local command sets (`*.yaml` files)
+- Any custom configurations
 
 ### Build from Source
 
