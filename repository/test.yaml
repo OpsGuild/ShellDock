@@ -1,0 +1,73 @@
+name: test
+description: ShellDock installation and functionality test suite
+versions:
+  - version: "v1"
+    latest: true
+    description: Test ShellDock installation and basic functionality
+    commands:
+      - description: Display current date and time
+        platforms:
+          ubuntu: date
+          debian: date
+          centos: date
+          rhel: date
+          fedora: date
+          arch: date
+          alpine: date
+          darwin: date
+          windows: Get-Date
+        command: date
+        skip_on_error: false
+      - description: Display system information
+        platforms:
+          ubuntu: uname -a
+          debian: uname -a
+          centos: uname -a
+          rhel: uname -a
+          fedora: uname -a
+          arch: uname -a
+          alpine: uname -a
+          darwin: uname -a
+          windows: systeminfo | Select-String "OS Name","OS Version"
+        command: uname -a
+        skip_on_error: true
+      - description: Display current working directory
+        platforms:
+          ubuntu: pwd
+          debian: pwd
+          centos: pwd
+          rhel: pwd
+          fedora: pwd
+          arch: pwd
+          alpine: pwd
+          darwin: pwd
+          windows: Get-Location
+        command: pwd
+        skip_on_error: false
+      - description: List files in current directory
+        platforms:
+          ubuntu: ls -la
+          debian: ls -la
+          centos: ls -la
+          rhel: ls -la
+          fedora: ls -la
+          arch: ls -la
+          alpine: ls -la
+          darwin: ls -la
+          windows: Get-ChildItem
+        command: ls -la
+        skip_on_error: false
+      - description: Test echo command
+        platforms:
+          ubuntu: echo "ShellDock test successful on Linux"
+          debian: echo "ShellDock test successful on Linux"
+          centos: echo "ShellDock test successful on Linux"
+          rhel: echo "ShellDock test successful on Linux"
+          fedora: echo "ShellDock test successful on Linux"
+          arch: echo "ShellDock test successful on Linux"
+          alpine: echo "ShellDock test successful on Linux"
+          darwin: echo "ShellDock test successful on macOS"
+          windows: Write-Host "ShellDock test successful on Windows"
+        command: echo "ShellDock test successful"
+        skip_on_error: false
+
