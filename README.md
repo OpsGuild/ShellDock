@@ -1,6 +1,10 @@
-# ShellDock
-
-A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.
+<div align="center">
+  <img src="static/images/logo.jpg" alt="ShellDock Logo" width="200">
+  
+  # ShellDock
+  
+  A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.
+</div>
 
 ## Table of Contents
 
