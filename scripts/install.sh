@@ -4,12 +4,23 @@
 
 set -e
 
-VERSION="1.0.0"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="shelldock"
 GITHUB_REPO="OpsGuild/ShellDock"
+GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 
-echo "🚀 Installing ShellDock v${VERSION}..."
+# Get latest release version
+echo "🔍 Checking for latest release..."
+LATEST_VERSION=$(curl -s "${GITHUB_API}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+
+if [ -z "$LATEST_VERSION" ]; then
+    echo "❌ Could not determine latest version"
+    echo "   Please install manually from: https://github.com/${GITHUB_REPO}/releases"
+    exit 1
+fi
+
+VERSION_NUMBER=${LATEST_VERSION#v}  # Remove 'v' prefix if present
+echo "🚀 Installing ShellDock ${LATEST_VERSION}..."
 
 # Detect OS
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -32,8 +43,8 @@ else
     exit 1
 fi
 
-# Download URL (update this to your actual release URL)
-DOWNLOAD_URL="https://github.com/OpsGuild/ShellDock/releases/download/v${VERSION}/shelldock-${OS}-${ARCH}"
+# Download URL
+DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/shelldock-${OS}-${ARCH}"
 
 echo "📥 Downloading from ${DOWNLOAD_URL}..."
 
