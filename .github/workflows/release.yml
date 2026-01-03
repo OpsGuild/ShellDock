@@ -746,6 +746,7 @@ jobs:
           path: ./
 
       - name: Create Chocolatey package
+        shell: pwsh
         run: |
           mkdir -p chocolatey\shelldock\tools
           Move-Item shelldock-windows-amd64.exe chocolatey\shelldock\tools\shelldock.exe
@@ -755,106 +756,45 @@ jobs:
             Copy-Item "static\images\icon.jpg" "chocolatey\shelldock\tools\icon.jpg"
           }
           
-          # Create LICENSE.txt (MIT License)
-          $license = @"
-MIT License
-
-Copyright (c) 2024 OpsGuild
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-For the latest license information, visit:
-https://github.com/OpsGuild/ShellDock/blob/master/LICENSE
-"@
-          $license | Out-File -Encoding UTF8 chocolatey\shelldock\tools\LICENSE.txt
+          # Copy LICENSE.txt from root LICENSE file
+          if (Test-Path "LICENSE") {
+            Copy-Item "LICENSE" "chocolatey\shelldock\tools\LICENSE.txt"
+          } else {
+            Write-Warning "LICENSE file not found, creating default MIT license"
+            "MIT License`n`nCopyright (c) 2024 OpsGuild" | Out-File -Encoding UTF8 chocolatey\shelldock\tools\LICENSE.txt
+          }
           
-          # Create VERIFICATION.txt
-          $verification = @"
-VERIFICATION
-Verification is intended to assist the Chocolatey moderators and community
-in verifying that this package's contents are trustworthy.
-
-The software is open source and available at:
-https://github.com/OpsGuild/ShellDock
-
-The source code repository is:
-https://github.com/OpsGuild/ShellDock
-
-The binary is built from source and published to GitHub Releases:
-https://github.com/OpsGuild/ShellDock/releases
-
-You can verify the binary by:
-1. Checking the GitHub Releases page for the version
-2. Comparing the SHA256 hash with the release notes
-3. Reviewing the source code at the repository URL above
-
-The maintainer of this package is the same as the software author (OpsGuild).
-"@
-          $verification | Out-File -Encoding UTF8 chocolatey\shelldock\tools\VERIFICATION.txt
+          # Copy VERIFICATION.txt from packaging directory
+          if (Test-Path "packaging\chocolatey\VERIFICATION.txt") {
+            Copy-Item "packaging\chocolatey\VERIFICATION.txt" "chocolatey\shelldock\tools\VERIFICATION.txt"
+          } else {
+            Write-Warning "VERIFICATION.txt not found, creating default"
+            "VERIFICATION`n`nThe software is open source and available at:`nhttps://github.com/OpsGuild/ShellDock" | Out-File -Encoding UTF8 chocolatey\shelldock\tools\VERIFICATION.txt
+          }
           
-          # Create chocolateyUninstall.ps1
-          $uninstall = @"
-`$ErrorActionPreference = 'Stop'
-`$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
-Remove-BinFile -Name shelldock
-"@
-          $uninstall | Out-File -Encoding UTF8 chocolatey\shelldock\tools\chocolateyUninstall.ps1
+          # Copy chocolateyUninstall.ps1 from packaging directory
+          if (Test-Path "packaging\chocolatey\chocolateyUninstall.ps1") {
+            Copy-Item "packaging\chocolatey\chocolateyUninstall.ps1" "chocolatey\shelldock\tools\chocolateyUninstall.ps1"
+          } else {
+            Write-Warning "chocolateyUninstall.ps1 not found"
+          }
           
-          # Create nuspec with all required fields
-          $nuspec = @"
-          <?xml version="1.0" encoding="utf-8"?>
-          <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
-            <metadata>
-              <id>shelldock</id>
-              <version>${{ steps.version.outputs.version }}</version>
-              <title>ShellDock</title>
-              <authors>OpsGuild</authors>
-              <owners>OpsGuild</owners>
-              <summary>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</summary>
-              <description>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</description>
-              <projectUrl>https://github.com/OpsGuild/ShellDock</projectUrl>
-              <packageSourceUrl>https://github.com/OpsGuild/ShellDock</packageSourceUrl>
-              <licenseUrl>https://github.com/OpsGuild/ShellDock/blob/master/LICENSE</licenseUrl>
-              <releaseNotes>https://github.com/OpsGuild/ShellDock/releases</releaseNotes>
-              <docsUrl>https://github.com/OpsGuild/ShellDock/blob/master/README.md</docsUrl>
-              <bugTrackerUrl>https://github.com/OpsGuild/ShellDock/issues</bugTrackerUrl>
-              <projectSourceUrl>https://github.com/OpsGuild/ShellDock</projectSourceUrl>
-              <iconUrl>https://raw.githubusercontent.com/OpsGuild/ShellDock/master/static/images/icon.jpg</iconUrl>
-              <tags>shell commands automation cli tool</tags>
-            </metadata>
-            <files>
-              <file src="tools\**" target="tools" />
-              <file src="tools\icon.jpg" target="tools" />
-            </files>
-          </package>
-          "@
+          # Copy chocolateyInstall.ps1 from packaging directory
+          if (Test-Path "packaging\chocolatey\chocolateyInstall.ps1") {
+            Copy-Item "packaging\chocolatey\chocolateyInstall.ps1" "chocolatey\shelldock\tools\chocolateyinstall.ps1"
+          } else {
+            Write-Warning "chocolateyInstall.ps1 not found"
+          }
           
+          # Create nuspec with dynamic version from template
+          $VERSION = "${{ steps.version.outputs.version }}"
+          $nuspec = Get-Content "packaging\chocolatey\shelldock.nuspec.template" -Raw -ErrorAction SilentlyContinue
+          if (-not $nuspec) {
+            Write-Error "nuspec template not found at packaging\chocolatey\shelldock.nuspec.template"
+            exit 1
+          }
+          $nuspec = $nuspec -replace 'VERSION_PLACEHOLDER', $VERSION
           $nuspec | Out-File -Encoding UTF8 chocolatey\shelldock\shelldock.nuspec
-          
-          # Create chocolateyInstall.ps1
-          $install = @"
-          `$ErrorActionPreference = 'Stop'
-          `$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
-          Install-BinFile -Name shelldock -Path "`$toolsDir\shelldock.exe"
-          "@
-          
-          $install | Out-File -Encoding UTF8 chocolatey\shelldock\tools\chocolateyinstall.ps1
 
       - name: Install Chocolatey
         run: |
