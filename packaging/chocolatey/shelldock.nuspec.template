@@ -20,7 +20,6 @@
   </metadata>
   <files>
     <file src="tools\**" target="tools" />
-    <file src="tools\icon.jpg" target="tools" />
   </files>
 </package>
 
