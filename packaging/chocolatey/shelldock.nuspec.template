@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>shelldock</id>
+    <version>VERSION_PLACEHOLDER</version>
+    <title>ShellDock</title>
+    <authors>OpsGuild</authors>
+    <owners>OpsGuild</owners>
+    <summary>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</summary>
+    <description>A fast, cross-platform shell command repository manager. Save, organize, and execute shell commands from bundled repository or local directory with platform-specific support and versioning.</description>
+    <projectUrl>https://github.com/OpsGuild/ShellDock</projectUrl>
+    <packageSourceUrl>https://github.com/OpsGuild/ShellDock</packageSourceUrl>
+    <licenseUrl>https://github.com/OpsGuild/ShellDock/blob/master/LICENSE</licenseUrl>
+    <releaseNotes>https://github.com/OpsGuild/ShellDock/releases</releaseNotes>
+    <docsUrl>https://github.com/OpsGuild/ShellDock/blob/master/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/OpsGuild/ShellDock/issues</bugTrackerUrl>
+    <projectSourceUrl>https://github.com/OpsGuild/ShellDock</projectSourceUrl>
+    <iconUrl>https://raw.githubusercontent.com/OpsGuild/ShellDock/master/static/images/icon.jpg</iconUrl>
+    <tags>shell commands automation cli tool</tags>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+    <file src="tools\icon.jpg" target="tools" />
+  </files>
+</package>
+

@@ -1,0 +1,20 @@
+VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+The software is open source and available at:
+https://github.com/OpsGuild/ShellDock
+
+The source code repository is:
+https://github.com/OpsGuild/ShellDock
+
+The binary is built from source and published to GitHub Releases:
+https://github.com/OpsGuild/ShellDock/releases
+
+You can verify the binary by:
+1. Checking the GitHub Releases page for the version
+2. Comparing the SHA256 hash with the release notes
+3. Reviewing the source code at the repository URL above
+
+The maintainer of this package is the same as the software author (OpsGuild).
+
