@@ -428,43 +428,29 @@ jobs:
           sudo snap install core22
           snapcraft --destructive-mode
 
-      - name: Login to Snap Store
+      - name: Register snap name (if not already registered)
         env:
           SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
           set +x  # Prevent command echoing to avoid exposing credentials
           if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
-            echo "SNAP_STORE_CREDENTIALS not set, skipping Snap Store login"
-            exit 0
-          fi
-          # Decode base64 credentials to temp file
-          CREDS_FILE=$(mktemp)
-          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          # Unset SNAPCRAFT_STORE_CREDENTIALS before login (snapcraft doesn't allow it set during login)
-          unset SNAPCRAFT_STORE_CREDENTIALS
-          # Login using the credentials file directly
-          snapcraft login --with "$CREDS_FILE" || echo "Login failed or already logged in"
-          # Securely remove temp file
-          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
-        continue-on-error: true
-
-      - name: Register snap name (if not already registered)
-        env:
-          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
-        run: |
-          set +x  # Prevent command echoing
-          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
             echo "SNAP_STORE_CREDENTIALS not set, skipping registration"
             exit 0
           fi
-          # Decode credentials to temp file
-          CREDS_FILE=$(mktemp)
-          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          # Unset env var and use file for login
+          # Decode base64 credentials and export as SNAPCRAFT_STORE_CREDENTIALS
+          export SNAPCRAFT_STORE_CREDENTIALS=$(echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d)
+          # Verify authentication works
+          if ! snapcraft whoami > /dev/null 2>&1; then
+            echo "Authentication failed. Ensure SNAP_STORE_CREDENTIALS contains base64-encoded output of 'snapcraft export-login credentials.txt'"
+            echo "To generate credentials, run: snapcraft export-login credentials.txt"
+            echo "Then base64 encode it: base64 credentials.txt"
+            echo "Then copy the base64 output to the GitHub secret"
+            unset SNAPCRAFT_STORE_CREDENTIALS
+            exit 1
+          fi
+          # Register snap name (no login needed, credentials are in env var)
+          snapcraft register shelldock 2>&1 | grep -v "SNAPCRAFT_STORE_CREDENTIALS" || echo "Snap name already registered or registration failed"
           unset SNAPCRAFT_STORE_CREDENTIALS
-          snapcraft login --with "$CREDS_FILE" || echo "Already logged in"
-          snapcraft register shelldock || echo "Snap name already registered or registration failed"
-          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
         continue-on-error: true
 
       - name: Publish to Snap Store
@@ -476,21 +462,27 @@ jobs:
             echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
             exit 0
           fi
-          # Decode credentials to temp file
-          CREDS_FILE=$(mktemp)
-          echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d > "$CREDS_FILE" 2>/dev/null
-          # Unset env var before login (required by snapcraft)
-          unset SNAPCRAFT_STORE_CREDENTIALS
-          # Login using credentials file
-          snapcraft login --with "$CREDS_FILE" || echo "Login failed or already logged in"
-          SNAP_FILE=$(ls *.snap | head -1)
-          if [ -n "$SNAP_FILE" ]; then
-            snapcraft upload "$SNAP_FILE" --release stable || echo "Publish failed (may already be published)"
-          else
-            echo "No snap file found to upload"
+          # Decode base64 credentials and export as SNAPCRAFT_STORE_CREDENTIALS
+          export SNAPCRAFT_STORE_CREDENTIALS=$(echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d)
+          # Verify authentication works
+          if ! snapcraft whoami > /dev/null 2>&1; then
+            echo "Authentication failed. Ensure SNAP_STORE_CREDENTIALS contains base64-encoded output of 'snapcraft export-login credentials.txt'"
+            echo "To generate credentials, run: snapcraft export-login credentials.txt"
+            echo "Then base64 encode it: base64 credentials.txt"
+            echo "Then copy the base64 output to the GitHub secret"
+            unset SNAPCRAFT_STORE_CREDENTIALS
+            exit 1
           fi
-          # Securely remove temp file
-          shred -u "$CREDS_FILE" 2>/dev/null || rm -f "$CREDS_FILE"
+          # Find snap file
+          SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
+          if [ -z "$SNAP_FILE" ]; then
+            echo "No snap file found to upload"
+            unset SNAPCRAFT_STORE_CREDENTIALS
+            exit 0
+          fi
+          # Upload snap (credentials are in environment variable, no login needed)
+          snapcraft upload "$SNAP_FILE" --release stable 2>&1 | grep -v "SNAPCRAFT_STORE_CREDENTIALS" || echo "Publish failed (may already be published)"
+          unset SNAPCRAFT_STORE_CREDENTIALS
         continue-on-error: true
 
       - name: Upload snap
@@ -687,9 +679,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Determine the default branch
+          DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}' || echo "main")
+          # Checkout the default branch or create it if it doesn't exist locally
+          git checkout -b $DEFAULT_BRANCH origin/$DEFAULT_BRANCH 2>/dev/null || git checkout $DEFAULT_BRANCH || git checkout -b $DEFAULT_BRANCH
           git add Formula/shelldock.rb
-          git diff --staged --quiet || git commit -m "Update Homebrew formula to ${{ github.ref_name }}"
-          git push origin HEAD:main || git push origin HEAD:master
+          if ! git diff --staged --quiet; then
+            git commit -m "Update Homebrew formula to ${{ github.ref_name }}"
+            git push origin refs/heads/$DEFAULT_BRANCH:refs/heads/$DEFAULT_BRANCH
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Push to Homebrew tap (if repository exists)
         env:
@@ -706,6 +706,10 @@ jobs:
             exit 0
           }
           cd homebrew-tap
+          # Determine the default branch
+          DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}' || echo "main")
+          # Checkout the default branch
+          git checkout $DEFAULT_BRANCH 2>/dev/null || git checkout -b $DEFAULT_BRANCH
           # Copy formula
           mkdir -p Formula
           cp ../Formula/shelldock.rb Formula/
@@ -713,8 +717,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/shelldock.rb
-          git diff --staged --quiet || git commit -m "Update shelldock to ${{ github.ref_name }}"
-          git push origin main || git push origin master
+          if ! git diff --staged --quiet; then
+            git commit -m "Update shelldock to ${{ github.ref_name }}"
+            git push origin refs/heads/$DEFAULT_BRANCH:refs/heads/$DEFAULT_BRANCH
+          else
+            echo "No changes to commit"
+          fi
         continue-on-error: true
 
   chocolatey:
