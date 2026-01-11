@@ -78,7 +78,7 @@ deb: build
 	@mkdir -p dist/deb/usr/share/shelldock/repository
 	@cp $(BUILD_DIR)/$(BINARY_NAME) dist/deb/usr/local/bin/
 	@cp README.md dist/deb/usr/share/doc/shelldock/
-	@cp repository/*.yaml dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
+	@cp -r repository/. dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
 	@cat packaging/deb/control | sed "s/VERSION/$(VERSION)/g" > dist/deb/DEBIAN/control
 	@cp packaging/deb/postinst dist/deb/DEBIAN/postinst
 	@chmod +x dist/deb/DEBIAN/postinst

@@ -456,3 +456,8 @@ func (r *Repository) DeleteCommandSet(name string) error {
 func (r *Repository) Exists(name string) bool {
 	return r.findCommandSetFile(name) != ""
 }
+
+// GetPath returns the repository path
+func (r *Repository) GetPath() string {
+	return r.path
+}
