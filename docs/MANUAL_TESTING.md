@@ -68,6 +68,19 @@ This guide walks through testing all ShellDock features manually.
 ```
 **Expected:** Shows v1 commands
 
+#### Test: Show version using --version flag
+```bash
+./shelldock show test --version v1
+```
+**Expected:** Shows v1 commands (--version is alias for --ver)
+
+#### Test: Show version using tag
+```bash
+./shelldock show certbot@certonly
+./shelldock show certbot --version nginx
+```
+**Expected:** Shows correct version matching the tag
+
 #### Test: Error handling - non-existent version
 ```bash
 ./shelldock show test@v999

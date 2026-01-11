@@ -796,7 +796,7 @@ Available Commands:
 
 Flags:
   -h, --help      help for shelldock
-  -l, --local     Only check local repository (skip cloud
+  -l, --local     Only check local repository (skip bundled
   -v, --version   version for shelldock
 ```
 
@@ -1111,8 +1111,9 @@ sudo systemctl start docker
 **Other options:**
 ```bash
 shelldock echo docker --local          # Only from local repository
-shelldock echo docker --ver v2         # Specific version
+shelldock echo docker --version v2     # Specific version
 shelldock echo docker@v2               # Version using @ syntax
+shelldock echo certbot@certonly        # Using tag
 ```
 
 This is useful for:
@@ -1129,8 +1130,9 @@ shelldock echo docker --skip 1,2
 # Run only specific steps
 shelldock echo docker --only 3,4
 
-# Use specific version
-shelldock echo docker --ver v1
+# Use specific version or tag
+shelldock echo docker --version v1
+shelldock echo certbot --version certonly  # Using tag
 
 # From local repository only
 shelldock echo docker --local
@@ -1202,23 +1204,37 @@ Available versions for 'docker':
   - v2
   * v3 (latest)
 
-Use 'shelldock docker@<version>' or 'shelldock docker --ver <version>' to run a specific version
+Use 'shelldock docker@<version>' or 'shelldock docker --version <version>' to run a specific version or tag
 ```
 
-#### Run Specific Version
+**Example Output with Tags:**
+```
+Available versions for 'certbot':
 
-Using `@` syntax:
+  - v1 [certonly]
+  - v2 [nginx] (latest)
+
+Use 'shelldock certbot@<version>' or 'shelldock certbot --version <version>' to run a specific version or tag
+```
+
+#### Run Specific Version or Tag
+
+Using `@` syntax (supports both version and tag):
 
 ```bash
 shelldock docker@v1
 shelldock docker@v2
+shelldock certbot@certonly    # Using tag
+shelldock certbot@nginx       # Using tag
 ```
 
-Using `--ver` flag:
+Using `--version` flag (or `--ver` alias):
 
 ```bash
-shelldock docker --ver v1
-shelldock run docker --ver v2
+shelldock docker --version v1
+shelldock run docker --version v2
+shelldock certbot --version certonly   # Using tag
+shelldock run certbot --ver nginx      # Using --ver alias
 ```
 
 **Example Output:**
@@ -1234,11 +1250,13 @@ shelldock run docker --ver v2
 ...
 ```
 
-#### Show Specific Version
+#### Show Specific Version or Tag
 
 ```bash
 shelldock show docker@v1
-shelldock show docker --ver v2
+shelldock show docker --version v2
+shelldock show certbot@certonly     # Using tag
+shelldock show certbot --ver nginx  # Using --ver alias
 ```
 
 ### Platform Support
@@ -1307,7 +1325,7 @@ Run a command set directly.
 - `-l, --local` - Only check local repository (skip bundled repository)
 - `--skip <steps>` - Skip specific steps (comma-separated or range)
 - `--only <steps>` - Run only specific steps (comma-separated or range)
-- `--ver <version>` - Run specific version (e.g., v1, v2)
+- `--version <version>` or `--ver <version>` - Run specific version or tag (e.g., v1, v2, certonly, nginx)
 - `-y, --yes` - Execute commands without prompting for confirmation
 - `--args <key=value,...>` - Provide dynamic arguments (e.g., `--args name=John,email=john@example.com`)
 
@@ -1318,7 +1336,8 @@ shelldock docker --local
 shelldock docker --skip 1,2,3
 shelldock docker --only 1-3
 shelldock docker@v1
-shelldock docker --ver v1
+shelldock docker --version v1
+shelldock certbot@certonly        # Using tag
 shelldock docker --yes
 shelldock docker -y
 ```
@@ -1342,7 +1361,7 @@ Preview commands without executing them.
 
 **Flags:**
 - `-l, --local` - Only check local repository
-- `--ver <version>` - Show specific version
+- `--version <version>` or `--ver <version>` - Show specific version or tag
 
 **Examples:**
 ```bash
@@ -1353,7 +1372,7 @@ shelldock show docker@v1
 
 ### `shelldock list`
 
-List all available command sets from both cloud and local repositories.
+List all available command sets from both bundled and local repositories.
 
 **Example:**
 ```bash
@@ -1455,6 +1474,38 @@ versions:
           fedora: sudo dnf install -y docker
           arch: sudo pacman -S docker
           darwin: brew install --cask docker
+```
+
+### Version Tags
+
+You can add optional tags to versions for easier identification. Tags allow you to reference versions by meaningful names instead of version numbers:
+
+```yaml
+name: certbot
+description: Certbot SSL certificate tool installation
+versions:
+  - version: "v1"
+    tag: certonly
+    description: Certbot standalone installation
+    commands:
+      - description: Install Certbot
+        command: sudo apt-get install -y certbot
+  - version: "v2"
+    tag: nginx
+    latest: true
+    description: Certbot with Nginx plugin installation
+    commands:
+      - description: Install Certbot with Nginx plugin
+        command: sudo apt-get install -y certbot python3-certbot-nginx
+```
+
+You can then run using either the version or tag:
+
+```bash
+shelldock certbot@v1          # By version
+shelldock certbot@certonly    # By tag
+shelldock certbot@nginx       # By tag
+shelldock certbot --version certonly  # Using --version flag
 ```
 <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
 read_file
@@ -1662,24 +1713,62 @@ shelldock docker --skip 1-3
 
 ## Repository Structure
 
+### Bundled Repository
+
+Location: `/usr/share/shelldock/repository/` (or relative to executable)
+
+The bundled repository is organized into subdirectories by category:
+
+```
+repository/
+├── devops/                  # Container & process management
+│   ├── docker.yaml
+│   ├── kubernetes.yaml
+│   └── pm2.yaml
+├── editors/                 # Text editors & IDEs
+│   └── nvim.yaml
+├── languages/               # Programming languages
+│   ├── go.yaml
+│   ├── nodejs.yaml
+│   ├── python.yaml
+│   └── rust.yaml
+├── security/                # Security & firewall
+│   ├── openssh.yaml
+│   └── ufw.yaml
+├── system/                  # System utilities
+│   ├── swap.yaml
+│   └── sysinfo.yaml
+├── vcs/                     # Version control
+│   └── git.yaml
+├── web/                     # Web servers & SSL
+│   ├── certbot.yaml
+│   └── nginx.yaml
+└── test.yaml                # Test command set
+```
+
+**Note:** Subdirectories are transparent to users. Commands are accessed by name only (e.g., `shelldock run docker`), not by path.
+
 ### Local Repository
 
 Location: `~/.shelldock/`
 
-Structure:
+Your custom command sets are stored here. Subdirectories are also supported:
+
 ```
 ~/.shelldock/
 ├── .sdrc                    # Configuration file
-├── docker.yaml              # Command set file
-├── nodejs.yaml
-└── my-custom-setup.yaml
+├── my-commands.yaml         # Custom command set (root level)
+└── mytools/                 # Custom subdirectory
+    └── my-setup.yaml
 ```
 
-### Cloud Cache
+### Repository Priority
 
-Location: `~/.cache/shelldock/cloud/`
+When you run a command, ShellDock checks:
+1. **Local repository** (`~/.shelldock/`) - checked first
+2. **Bundled repository** - checked if not found locally
 
-Cached command sets from the bundled repository.
+This allows you to override bundled commands with your own versions.
 
 ## Development
 

@@ -38,7 +38,7 @@ var versionsCmd = &cobra.Command{
 				fmt.Printf("  - %s\n", version)
 			}
 		}
-		fmt.Printf("\nUse 'shelldock %s@<version>' or 'shelldock %s --version <version>' to run a specific version\n", name, name)
+		fmt.Printf("\nUse 'shelldock %s@<version>' or 'shelldock %s --version <version>' to run a specific version or tag\n", name, name)
 	},
 }
 

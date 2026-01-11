@@ -1,0 +1,45 @@
+name: certbot
+description: Certbot SSL certificate tool installation
+versions:
+  - version: "v1"
+    tag: certonly
+    latest: false
+    description: Certbot standalone installation
+    commands:
+      - description: Install Certbot
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y certbot
+          debian: sudo apt-get update && sudo apt-get install -y certbot
+          centos: sudo yum install -y epel-release && sudo yum install -y certbot
+          rhel: sudo yum install -y epel-release && sudo yum install -y certbot
+          fedora: sudo dnf install -y certbot
+          arch: sudo pacman -S --noconfirm certbot
+          darwin: brew install certbot
+        command: sudo apt-get update && sudo apt-get install -y certbot
+        skip_on_error: false
+      - description: Verify Certbot installation
+        command: certbot --version
+        skip_on_error: false
+  - version: "v2"
+    tag: nginx
+    latest: true
+    description: Certbot with Nginx plugin installation
+    commands:
+      - description: Install Certbot with Nginx plugin
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+          debian: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+          centos: sudo yum install -y epel-release && sudo yum install -y certbot python3-certbot-nginx
+          rhel: sudo yum install -y epel-release && sudo yum install -y certbot python3-certbot-nginx
+          fedora: sudo dnf install -y certbot python3-certbot-nginx
+          arch: sudo pacman -S --noconfirm certbot certbot-nginx
+          darwin: brew install certbot
+        command: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+        skip_on_error: false
+      - description: Verify Certbot installation
+        command: certbot --version
+        skip_on_error: false
+      - description: List installed plugins
+        command: certbot plugins
+        skip_on_error: true
+

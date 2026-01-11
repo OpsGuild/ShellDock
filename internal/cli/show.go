@@ -110,7 +110,8 @@ func getCommandForPlatformShow(cmd repo.Command, platform string) string {
 }
 
 func init() {
-		showCmd.Flags().BoolVarP(&showLocalFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
+	showCmd.Flags().BoolVarP(&showLocalFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
 	showCmd.Flags().StringVar(&showVersionFlag, "ver", "", "Show specific version or tag (default: latest). Can also use name@version format")
+	showCmd.Flags().StringVar(&showVersionFlag, "version", "", "Show specific version or tag (default: latest) - alias for --ver")
 }
 

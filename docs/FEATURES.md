@@ -14,7 +14,7 @@ shelldock run docker     # Explicit run command
 shelldock list           # List all command sets
 shelldock show docker    # Preview commands without executing
 shelldock manage         # Interactive TUI for managing commands
-shelldock sync           # Sync from cloud repository
+shelldock sync           # Sync from remote repository
 ```
 
 ### 3. Step Filtering
@@ -44,10 +44,22 @@ Do you want to execute these commands? (y/N):
 ```
 
 ### 5. Repository Priority
-- **Default**: Cloud repository first, then local
-- **With `--local` flag**: Local repository first, then cloud
+- **Default**: Local repository first, then bundled repository
+- **With `--local` flag**: Only check local repository (skip bundled)
 
-### 6. Command Set Format
+### 6. Bundled Repository Structure
+The bundled repository is organized into subdirectories by category:
+- `devops/` - Docker, Kubernetes, PM2
+- `editors/` - Neovim
+- `languages/` - Go, Node.js, Python, Rust
+- `security/` - OpenSSH, UFW
+- `system/` - Swap, System info
+- `vcs/` - Git
+- `web/` - Nginx, Certbot
+
+**Note:** Subdirectories are transparent - use `shelldock run docker`, not `shelldock run devops/docker`.
+
+### 7. Command Set Format
 Command sets are stored as YAML files:
 ```yaml
 name: docker

@@ -529,10 +529,11 @@ Or run only specific steps with --only:
 }
 
 func init() {
-		runCmd.Flags().BoolVarP(&localFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
+	runCmd.Flags().BoolVarP(&localFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
 	runCmd.Flags().StringVar(&skipSteps, "skip", "", "Skip specific steps (comma-separated or range, e.g., 1,2,3 or 1-3)")
 	runCmd.Flags().StringVar(&onlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
 	runCmd.Flags().StringVar(&versionFlag, "ver", "", "Run specific version or tag (default: latest)")
+	runCmd.Flags().StringVar(&versionFlag, "version", "", "Run specific version or tag (default: latest) - alias for --ver")
 	runCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "Execute commands without prompting for confirmation")
 	runCmd.Flags().StringVar(&argsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 }

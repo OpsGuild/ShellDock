@@ -38,6 +38,7 @@ type CommandSet struct {
 // VersionInfo represents a single version of a command set
 type VersionInfo struct {
 	Version     string    `yaml:"version"`
+	Tag         string    `yaml:"tag,omitempty"`    // Optional tag for this version (e.g., "certonly", "nginx")
 	Description string    `yaml:"description"`
 	Latest      bool      `yaml:"latest,omitempty"` // Mark this version as latest
 	Commands    []Command `yaml:"commands"`
@@ -72,13 +73,14 @@ func extractVersionNumber(version string) int {
 
 // GetCommandSet retrieves a command set by name and optional version
 // If version is empty, returns the latest version
+// Supports subdirectories in repository
 func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, error) {
-	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-
-	data, err := os.ReadFile(filePath)
-	if os.IsNotExist(err) {
+	filePath := r.findCommandSetFile(name)
+	if filePath == "" {
 		return nil, fmt.Errorf("command set '%s' not found", name)
 	}
+
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read command set: %w", err)
 	}
@@ -117,19 +119,24 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 			}
 		}
 
-		// Find the requested version
+		// Find the requested version (match by version number or tag)
 		var foundVersion *VersionInfo
 		for i := range versionedCmdSet.Versions {
-			// Support both "v1" and "1" formats
-			v := versionedCmdSet.Versions[i].Version
-			if v == version || strings.TrimPrefix(v, "v") == strings.TrimPrefix(version, "v") {
+			v := versionedCmdSet.Versions[i]
+			// Support both "v1" and "1" formats for version
+			if v.Version == version || strings.TrimPrefix(v.Version, "v") == strings.TrimPrefix(version, "v") {
+				foundVersion = &versionedCmdSet.Versions[i]
+				break
+			}
+			// Also match by tag (case-insensitive)
+			if v.Tag != "" && strings.EqualFold(v.Tag, version) {
 				foundVersion = &versionedCmdSet.Versions[i]
 				break
 			}
 		}
 
 		if foundVersion == nil {
-			return nil, fmt.Errorf("command set '%s' version '%s' not found", name, version)
+			return nil, fmt.Errorf("command set '%s' version or tag '%s' not found", name, version)
 		}
 
 		// Convert VersionInfo to CommandSet
@@ -160,14 +167,14 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 	return &cmdSet, nil
 }
 
-// ListVersions returns all available versions for a command set
+// ListVersions returns all available versions for a command set (supports subdirectories)
 func (r *Repository) ListVersions(name string) ([]string, error) {
-	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-
-	data, err := os.ReadFile(filePath)
-	if os.IsNotExist(err) {
+	filePath := r.findCommandSetFile(name)
+	if filePath == "" {
 		return []string{}, nil
 	}
+
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read command set: %w", err)
 	}
@@ -201,10 +208,15 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 
 		// Build version list
 		for _, v := range versionedCmdSet.Versions {
+			versionStr := v.Version
+			// Include tag if present
+			if v.Tag != "" {
+				versionStr = fmt.Sprintf("%s [%s]", v.Version, v.Tag)
+			}
 			if v.Version == latestVersion {
-				versions = append(versions, v.Version+" (latest)")
+				versions = append(versions, versionStr+" (latest)")
 			} else {
-				versions = append(versions, v.Version)
+				versions = append(versions, versionStr)
 			}
 		}
 
@@ -373,34 +385,63 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 	return nil
 }
 
-// ListCommandSets returns all available command sets
+// findCommandSetFile finds the yaml file for a command set (supports subdirectories)
+func (r *Repository) findCommandSetFile(name string) string {
+	// First check root directory
+	rootPath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
+	if _, err := os.Stat(rootPath); err == nil {
+		return rootPath
+	}
+
+	// Search in subdirectories
+	var foundPath string
+	filepath.WalkDir(r.path, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // Continue on errors
+		}
+		if !d.IsDir() && filepath.Ext(d.Name()) == ".yaml" {
+			baseName := d.Name()[:len(d.Name())-5] // Remove .yaml
+			if baseName == name {
+				foundPath = path
+				return filepath.SkipAll // Found it, stop walking
+			}
+		}
+		return nil
+	})
+
+	return foundPath
+}
+
+// ListCommandSets returns all available command sets (supports subdirectories)
 func (r *Repository) ListCommandSets() ([]string, error) {
 	if _, err := os.Stat(r.path); os.IsNotExist(err) {
 		return []string{}, nil
 	}
 
-	entries, err := os.ReadDir(r.path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read repository: %w", err)
-	}
-
 	var sets []string
 
-	for _, entry := range entries {
-		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".yaml" {
-			name := entry.Name()[:len(entry.Name())-5] // Remove .yaml
+	err := filepath.WalkDir(r.path, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // Continue on errors
+		}
+		if !d.IsDir() && filepath.Ext(d.Name()) == ".yaml" {
+			name := d.Name()[:len(d.Name())-5] // Remove .yaml
 			sets = append(sets, name)
 		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read repository: %w", err)
 	}
 
 	return sets, nil
 }
 
-// DeleteCommandSet removes a command set from the repository
+// DeleteCommandSet removes a command set from the repository (supports subdirectories)
 func (r *Repository) DeleteCommandSet(name string) error {
-	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	filePath := r.findCommandSetFile(name)
+	if filePath == "" {
 		return fmt.Errorf("command set '%s' not found", name)
 	}
 
@@ -411,9 +452,7 @@ func (r *Repository) DeleteCommandSet(name string) error {
 	return nil
 }
 
-// Exists checks if a command set exists
+// Exists checks if a command set exists (supports subdirectories)
 func (r *Repository) Exists(name string) bool {
-	filePath := filepath.Join(r.path, fmt.Sprintf("%s.yaml", name))
-	_, err := os.Stat(filePath)
-	return err == nil
+	return r.findCommandSetFile(name) != ""
 }

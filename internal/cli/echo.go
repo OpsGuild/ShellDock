@@ -94,6 +94,7 @@ Examples:
 func init() {
 	echoCmd.Flags().BoolVarP(&echoLocalFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
 	echoCmd.Flags().StringVar(&echoVersionFlag, "ver", "", "Show specific version or tag (default: latest). Can also use name@version format")
+	echoCmd.Flags().StringVar(&echoVersionFlag, "version", "", "Show specific version or tag (default: latest) - alias for --ver")
 	echoCmd.Flags().StringVar(&echoSkipFlag, "skip", "", "Skip specific steps (e.g., --skip 1,2,3 or --skip 1-3)")
 	echoCmd.Flags().StringVar(&echoOnlyFlag, "only", "", "Run only specific steps (e.g., --only 1,2,3 or --only 1-3)")
 }

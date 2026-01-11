@@ -21,10 +21,10 @@ sudo cp shelldock /usr/local/bin/
 ### 1. Run a Command Set
 
 ```bash
-# Run from cloud (default) or local repository
+# Run from bundled or local repository
 shelldock docker
 
-# Explicitly use local repository
+# Explicitly use only local repository
 shelldock --local docker
 shelldock -l docker
 ```
@@ -106,8 +106,25 @@ makepkg -si
 
 ## Repository Locations
 
-- **Local Repository**: `~/.shelldock/`
-- **Cloud Cache**: `~/.cache/shelldock/cloud/`
+- **Local Repository**: `~/.shelldock/` - Your custom command sets
+- **Bundled Repository**: `/usr/share/shelldock/repository/` - Pre-installed command sets
+
+### Bundled Repository Structure
+
+The bundled repository is organized into subdirectories:
+
+```
+repository/
+├── devops/      # docker, kubernetes, pm2
+├── editors/     # nvim
+├── languages/   # go, nodejs, python, rust
+├── security/    # openssh, ufw
+├── system/      # swap, sysinfo
+├── vcs/         # git
+└── web/         # nginx, certbot
+```
+
+**Note:** Subdirectories are transparent - just use `shelldock run docker`, not the full path.
 
 ## Command Set Format
 
