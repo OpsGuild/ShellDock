@@ -395,7 +395,7 @@ func (r *Repository) findCommandSetFile(name string) string {
 
 	// Search in subdirectories
 	var foundPath string
-	filepath.WalkDir(r.path, func(path string, d os.DirEntry, err error) error {
+	_ = filepath.WalkDir(r.path, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil // Continue on errors
 		}
