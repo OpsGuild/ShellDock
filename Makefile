@@ -55,8 +55,19 @@ build-all:
 	@GOOS=linux GOARCH=arm64 go build -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 .
 	@GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
 	@GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
-	@GOOS=windows GOARCH=amd64 go build -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+	@echo "Building Windows binary..."
+	@if command -v goversioninfo >/dev/null 2>&1; then \
+		echo "Adding Windows version info..."; \
+		goversioninfo -64 -o resource.syso packaging/chocolatey/versioninfo.json && \
+		GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-X main.version=$(VERSION)" -buildmode=exe -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe . && \
+		rm -f resource.syso; \
+	else \
+		GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-X main.version=$(VERSION)" -buildmode=exe -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .; \
+	fi
 	@echo "Cross-platform builds complete!"
+	@echo ""
+	@echo "Note: To reduce false positives, consider code signing the Windows binary:"
+	@echo "  signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe"
 
 # Debian/Ubuntu package
 deb: build

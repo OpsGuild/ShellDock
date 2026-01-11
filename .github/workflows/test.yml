@@ -125,6 +125,12 @@ jobs:
         run: |
           go build -o shelldock-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} .
 
+      - name: Install goversioninfo (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         env:
@@ -132,7 +138,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         shell: pwsh
         run: |
-          go build -o shelldock-${{ matrix.goos }}-${{ matrix.goarch }}.exe .
+          .\scripts\build-windows.ps1 -Version "0.0.0-test" -OutputName "shelldock-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

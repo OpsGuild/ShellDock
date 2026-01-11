@@ -113,15 +113,19 @@ jobs:
           VERSION_NUM="${VERSION#v}"
           go build -ldflags "-X main.version=${VERSION_NUM}" -o ${{ matrix.binary_name }} .
 
+      - name: Install goversioninfo (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+
       - name: Build binary (Windows)
         if: matrix.os == 'windows-latest'
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          VERSION_NUM: ${{ steps.version-windows.outputs.version }}
         shell: pwsh
         run: |
-          go build -ldflags "-X main.version=$env:VERSION_NUM" -o ${{ matrix.binary_name }} .
+          .\scripts\build-windows.ps1 -Version "${{ steps.version-windows.outputs.version }}" -OutputName "${{ matrix.binary_name }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -358,7 +362,7 @@ jobs:
           path: apt-repo/
 
   snap:
-    name: Build Snap Package
+    name: Build and Publish Snap
     needs: [test, build]
     runs-on: ubuntu-latest
     if: ${{ vars.SKIP_SNAP != 'true' && (needs.test.result == 'success' && needs.build.result == 'success') }}
@@ -392,100 +396,25 @@ jobs:
       - name: Create snapcraft.yaml
         run: |
           mkdir -p snap
-          cat > snap/snapcraft.yaml << 'EOF'
-          name: shelldock
-          base: core22
-          version: '${{ steps.version.outputs.version }}'
-          summary: A fast, cross-platform shell command repository manager
-          description: |
-            ShellDock is a fast, cross-platform tool for managing and executing
-            saved shell commands from bundled repository or local directory.
-          grade: stable
-          confinement: strict
-          title: ShellDock
-          license: MIT
-          contact: https://github.com/OpsGuild/ShellDock
-          website: https://github.com/OpsGuild/ShellDock
-          source-code: https://github.com/OpsGuild/ShellDock
-          
-          apps:
-            shelldock:
-              command: usr/bin/shelldock
-              plugs:
-                - home
-                - network
-          
-          parts:
-            shelldock:
-              plugin: dump
-              source: .
-              organize:
-                shelldock-linux-amd64: usr/bin/shelldock
-          EOF
+          sed "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.version }}/g" \
+            packaging/snap/snapcraft.yaml.template > snap/snapcraft.yaml
+          echo "Generated snapcraft.yaml:"
+          cat snap/snapcraft.yaml
 
       - name: Build snap
         run: |
           sudo snap install core22
           snapcraft --destructive-mode
 
-      - name: Register snap name (if not already registered)
-        env:
-          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
-        run: |
-          set +x  # Prevent command echoing to avoid exposing credentials
-          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
-            echo "SNAP_STORE_CREDENTIALS not set, skipping registration"
-            exit 0
-          fi
-          # Decode base64 credentials and export as SNAPCRAFT_STORE_CREDENTIALS
-          export SNAPCRAFT_STORE_CREDENTIALS=$(echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d)
-          # Verify authentication works
-          if ! snapcraft whoami > /dev/null 2>&1; then
-            echo "Authentication failed. Ensure SNAP_STORE_CREDENTIALS contains base64-encoded output of 'snapcraft export-login credentials.txt'"
-            echo "To generate credentials, run: snapcraft export-login credentials.txt"
-            echo "Then base64 encode it: base64 credentials.txt"
-            echo "Then copy the base64 output to the GitHub secret"
-            unset SNAPCRAFT_STORE_CREDENTIALS
-            exit 1
-          fi
-          # Register snap name (no login needed, credentials are in env var)
-          snapcraft register shelldock 2>&1 | grep -v "SNAPCRAFT_STORE_CREDENTIALS" || echo "Snap name already registered or registration failed"
-          unset SNAPCRAFT_STORE_CREDENTIALS
-        continue-on-error: true
-
       - name: Publish to Snap Store
         env:
-          SNAP_STORE_CREDENTIALS_B64: ${{ secrets.SNAP_STORE_CREDENTIALS }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_CREDENTIALS }}
         run: |
-          set +x  # Prevent command echoing to avoid exposing credentials
-          if [ -z "$SNAP_STORE_CREDENTIALS_B64" ]; then
-            echo "SNAP_STORE_CREDENTIALS not set, skipping publish"
-            exit 0
-          fi
-          # Decode base64 credentials and export as SNAPCRAFT_STORE_CREDENTIALS
-          export SNAPCRAFT_STORE_CREDENTIALS=$(echo "$SNAP_STORE_CREDENTIALS_B64" | base64 -d)
-          # Verify authentication works
-          if ! snapcraft whoami > /dev/null 2>&1; then
-            echo "Authentication failed. Ensure SNAP_STORE_CREDENTIALS contains base64-encoded output of 'snapcraft export-login credentials.txt'"
-            echo "To generate credentials, run: snapcraft export-login credentials.txt"
-            echo "Then base64 encode it: base64 credentials.txt"
-            echo "Then copy the base64 output to the GitHub secret"
-            unset SNAPCRAFT_STORE_CREDENTIALS
-            exit 1
-          fi
-          # Find snap file
-          SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
-          if [ -z "$SNAP_FILE" ]; then
-            echo "No snap file found to upload"
-            unset SNAPCRAFT_STORE_CREDENTIALS
-            exit 0
-          fi
-          # Upload snap (credentials are in environment variable, no login needed)
-          snapcraft upload "$SNAP_FILE" --release stable 2>&1 | grep -v "SNAPCRAFT_STORE_CREDENTIALS" || echo "Publish failed (may already be published)"
-          unset SNAPCRAFT_STORE_CREDENTIALS
+          chmod +x scripts/publish-snap.sh
+          ./scripts/publish-snap.sh
         continue-on-error: true
 
-      - name: Upload snap
+      - name: Upload snap artifact
         uses: actions/upload-artifact@v4
         with:
           name: snap-package
@@ -527,24 +456,7 @@ jobs:
         run: |
           mkdir -p flatpak
           cp shelldock-linux-amd64 flatpak/
-          cat > flatpak/com.github.opsguild.shelldock.yml << 'EOF'
-          app-id: com.github.opsguild.shelldock
-          runtime: org.freedesktop.Platform
-          runtime-version: '22.08'
-          sdk: org.freedesktop.Sdk
-          command: shelldock
-          finish-args:
-            - --share=network
-            - --filesystem=home
-          modules:
-            - name: shelldock
-              buildsystem: simple
-              build-commands:
-                - install -Dm755 shelldock-linux-amd64 /app/bin/shelldock
-              sources:
-                - type: file
-                  path: shelldock-linux-amd64
-          EOF
+          cp packaging/flatpak/com.github.opsguild.shelldock.yml flatpak/
 
       - name: Build flatpak
         run: |
@@ -675,23 +587,7 @@ jobs:
           end
           EOF
 
-      - name: Commit and push formula to main repo
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Determine the default branch
-          DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}' || echo "main")
-          # Checkout the default branch or create it if it doesn't exist locally
-          git checkout -b $DEFAULT_BRANCH origin/$DEFAULT_BRANCH 2>/dev/null || git checkout $DEFAULT_BRANCH || git checkout -b $DEFAULT_BRANCH
-          git add Formula/shelldock.rb
-          if ! git diff --staged --quiet; then
-            git commit -m "Update Homebrew formula to ${{ github.ref_name }}"
-            git push origin refs/heads/$DEFAULT_BRANCH:refs/heads/$DEFAULT_BRANCH
-          else
-            echo "No changes to commit"
-          fi
-
-      - name: Push to Homebrew tap (if repository exists)
+      - name: Push to Homebrew tap
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
@@ -873,92 +769,24 @@ jobs:
 
       - name: Update PKGBUILD
         run: |
-          cat > packaging/arch/PKGBUILD << EOF
-          # Maintainer: OpsGuild
-          pkgname=shelldock
-          pkgver=${{ steps.version.outputs.version }}
-          pkgrel=1
-          pkgdesc="A fast, cross-platform shell command repository manager"
-          arch=('x86_64' 'aarch64')
-          url="https://github.com/OpsGuild/ShellDock"
-          license=('MIT')
-          source_x86_64=("https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-linux-amd64")
-          source_aarch64=("https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-linux-arm64")
-          sha256sums_x86_64=('${{ steps.sha256.outputs.sha256 }}')
-          sha256sums_aarch64=('SKIP')
-          
-          package() {
-            install -Dm755 "\${srcdir}/shelldock-linux-\${CARCH}" "\${pkgdir}/usr/bin/shelldock"
-            install -Dm644 "\${srcdir}/README.md" "\${pkgdir}/usr/share/doc/shelldock/README.md"
-            install -d "\${pkgdir}/usr/share/shelldock/repository"
-            cp "\${srcdir}/repository"/*.yaml "\${pkgdir}/usr/share/shelldock/repository/" 2>/dev/null || true
-          }
-          EOF
+          # Generate PKGBUILD from template
+          sed -e "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.version }}/g" \
+              -e "s/SHA256_PLACEHOLDER/${{ steps.sha256.outputs.sha256 }}/g" \
+            packaging/arch/PKGBUILD.template > packaging/arch/PKGBUILD
+          echo "Generated PKGBUILD:"
+          cat packaging/arch/PKGBUILD
 
       - name: Generate .SRCINFO
         run: |
-          cd packaging/arch
-          # Use Docker with Arch Linux to generate .SRCINFO properly
-          docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux/base:latest bash -c "
-            pacman -Sy --noconfirm base-devel
-            makepkg --printsrcinfo > .SRCINFO
-          " || {
-            # Fallback: Generate .SRCINFO manually if Docker fails
-            source PKGBUILD
-            {
-              echo "pkgbase = $pkgname"
-              echo "	pkgdesc = $pkgdesc"
-              echo "	pkgver = $pkgver"
-              echo "	pkgrel = $pkgrel"
-              echo "	url = $url"
-              echo "	arch = ${arch[@]}"
-              echo "	license = ${license[@]}"
-              for i in "${!source_x86_64[@]}"; do
-                echo "	source_x86_64 = ${source_x86_64[$i]}"
-              done
-              for i in "${!source_aarch64[@]}"; do
-                echo "	source_aarch64 = ${source_aarch64[$i]}"
-              done
-              for i in "${!sha256sums_x86_64[@]}"; do
-                echo "	sha256sums_x86_64 = ${sha256sums_x86_64[$i]}"
-              done
-              for i in "${!sha256sums_aarch64[@]}"; do
-                echo "	sha256sums_aarch64 = ${sha256sums_aarch64[$i]}"
-              done
-            } > .SRCINFO
-          }
+          chmod +x scripts/generate-srcinfo.sh
+          ./scripts/generate-srcinfo.sh "${{ steps.version.outputs.version }}" "${{ steps.sha256.outputs.sha256 }}"
 
       - name: Publish to AUR
         env:
           AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
         run: |
-          if [ -z "$AUR_SSH_KEY" ]; then
-            echo "AUR_SSH_KEY not set, skipping AUR publish"
-            exit 0
-          fi
-          # Setup SSH
-          mkdir -p ~/.ssh
-          echo "$AUR_SSH_KEY" > ~/.ssh/aur_key
-          chmod 600 ~/.ssh/aur_key
-          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
-          
-          # Configure git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Clone AUR repository
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git clone ssh://aur@aur.archlinux.org/shelldock.git aur-repo || echo "AUR repo may not exist yet"
-          
-          if [ -d aur-repo ]; then
-            cd aur-repo
-            # Copy PKGBUILD and .SRCINFO
-            cp ../packaging/arch/PKGBUILD .
-            cp ../packaging/arch/.SRCINFO .
-            
-            # Commit and push
-            git add PKGBUILD .SRCINFO
-            git diff --staged --quiet || (git commit -m "Update to ${{ github.ref_name }}" && GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git push origin master)
-          fi
+          chmod +x scripts/publish-aur.sh
+          ./scripts/publish-aur.sh "${{ steps.version.outputs.version }}"
         continue-on-error: true
 
       - name: Upload PKGBUILD
