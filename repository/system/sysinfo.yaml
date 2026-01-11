@@ -1,0 +1,76 @@
+name: sysinfo
+description: Display comprehensive system information and stats
+versions:
+  - version: "v1"
+    latest: true
+    description: Verbose system stats and diagnostics
+    commands:
+      - description: Display hostname and system identity
+        platforms:
+          linux: echo "=== HOSTNAME ===" && hostname -f 2>/dev/null || hostname
+          darwin: echo "=== HOSTNAME ===" && hostname && scutil --get ComputerName 2>/dev/null
+        command: echo "=== HOSTNAME ===" && hostname
+        skip_on_error: true
+      - description: Display OS and kernel information
+        platforms:
+          linux: echo "=== OS & KERNEL ===" && cat /etc/os-release 2>/dev/null | head -5 && uname -srm
+          darwin: echo "=== OS & KERNEL ===" && sw_vers && uname -srm
+        command: echo "=== OS & KERNEL ===" && uname -a
+        skip_on_error: true
+      - description: Display system uptime
+        platforms:
+          linux: echo "=== UPTIME ===" && uptime -p 2>/dev/null || uptime
+          darwin: echo "=== UPTIME ===" && uptime
+        command: echo "=== UPTIME ===" && uptime
+        skip_on_error: true
+      - description: Display memory usage
+        platforms:
+          linux: echo "=== MEMORY USAGE ===" && free -h
+          darwin: echo "=== MEMORY USAGE ===" && top -l 1 -s 0 | grep PhysMem
+        command: echo "=== MEMORY USAGE ===" && free -h
+        skip_on_error: true
+      - description: Display disk usage
+        platforms:
+          linux: echo "=== DISK USAGE ===" && df -h --total 2>/dev/null || df -h
+          darwin: echo "=== DISK USAGE ===" && df -h
+        command: echo "=== DISK USAGE ===" && df -h
+        skip_on_error: true
+      - description: Display largest directories in current path
+        command: echo "=== LARGEST DIRECTORIES ===" && du -sh * 2>/dev/null | sort -rh | head -10
+        skip_on_error: true
+      - description: Display CPU information
+        platforms:
+          linux: echo "=== CPU INFO ===" && lscpu 2>/dev/null | head -15 || cat /proc/cpuinfo | head -15
+          darwin: echo "=== CPU INFO ===" && sysctl -n machdep.cpu.brand_string && sysctl hw.ncpu hw.physicalcpu
+        command: echo "=== CPU INFO ===" && lscpu 2>/dev/null || cat /proc/cpuinfo | head -15
+        skip_on_error: true
+      - description: Display load average
+        platforms:
+          linux: echo "=== LOAD AVERAGE ===" && cat /proc/loadavg
+          darwin: echo "=== LOAD AVERAGE ===" && sysctl -n vm.loadavg
+        command: echo "=== LOAD AVERAGE ===" && cat /proc/loadavg
+        skip_on_error: true
+      - description: Display network interfaces
+        platforms:
+          linux: echo "=== NETWORK INTERFACES ===" && ip -br addr 2>/dev/null || ifconfig -a
+          darwin: echo "=== NETWORK INTERFACES ===" && ifconfig | head -30
+        command: echo "=== NETWORK INTERFACES ===" && ip -br addr 2>/dev/null || ifconfig
+        skip_on_error: true
+      - description: Display running processes summary
+        platforms:
+          linux: echo "=== TOP PROCESSES (by CPU) ===" && ps aux --sort=-%cpu | head -11
+          darwin: echo "=== TOP PROCESSES (by CPU) ===" && ps aux -r | head -11
+        command: echo "=== TOP PROCESSES ===" && ps aux --sort=-%cpu | head -11
+        skip_on_error: true
+      - description: Display logged in users
+        platforms:
+          linux: echo "=== LOGGED IN USERS ===" && who -a 2>/dev/null || who
+          darwin: echo "=== LOGGED IN USERS ===" && who
+        command: echo "=== LOGGED IN USERS ===" && who
+        skip_on_error: true
+      - description: Display listening ports
+        platforms:
+          linux: echo "=== LISTENING PORTS ===" && ss -tuln 2>/dev/null || netstat -tuln
+          darwin: echo "=== LISTENING PORTS ===" && netstat -an | grep LISTEN | head -15
+        command: echo "=== LISTENING PORTS ===" && ss -tuln 2>/dev/null || netstat -tuln
+        skip_on_error: true

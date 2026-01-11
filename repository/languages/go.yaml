@@ -1,0 +1,25 @@
+name: go
+description: Go programming language installation (latest stable)
+versions:
+  - version: "v1"
+    latest: true
+    description: Go installation from official releases
+    commands:
+      - description: Install Go (latest stable)
+        platforms:
+          ubuntu: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          debian: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          centos: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          rhel: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          fedora: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          arch: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+          darwin: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).darwin-arm64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.darwin-arm64.tar.gz && rm go*.darwin-arm64.tar.gz'
+        command: 'curl -LO "https://go.dev/dl/$(curl -s https://go.dev/VERSION?m=text | head -1).linux-amd64.tar.gz" && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go*.linux-amd64.tar.gz && rm go*.linux-amd64.tar.gz'
+        skip_on_error: false
+      - description: Add Go to PATH (add to shell config)
+        command: 'echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc && echo "export PATH=\$PATH:\$HOME/go/bin" >> ~/.bashrc'
+        skip_on_error: true
+      - description: Verify Go installation
+        command: /usr/local/go/bin/go version
+        skip_on_error: false
+

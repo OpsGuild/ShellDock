@@ -1,0 +1,17 @@
+name: rust
+description: Rust programming language installation via rustup
+versions:
+  - version: "v1"
+    latest: true
+    description: Rust installation using official rustup installer
+    commands:
+      - description: Install Rust via rustup
+        command: 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+        skip_on_error: false
+      - description: Source cargo environment
+        command: 'source "$HOME/.cargo/env" 2>/dev/null || true'
+        skip_on_error: true
+      - description: Verify Rust installation
+        command: '$HOME/.cargo/bin/rustc --version && $HOME/.cargo/bin/cargo --version'
+        skip_on_error: false
+

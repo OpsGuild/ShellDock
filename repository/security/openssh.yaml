@@ -1,0 +1,41 @@
+name: openssh
+description: OpenSSH server installation and configuration
+versions:
+  - version: "v1"
+    latest: true
+    description: OpenSSH server installation and setup
+    commands:
+      - description: Install OpenSSH server
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y openssh-server
+          debian: sudo apt-get update && sudo apt-get install -y openssh-server
+          centos: sudo yum install -y openssh-server
+          rhel: sudo yum install -y openssh-server
+          fedora: sudo dnf install -y openssh-server
+          arch: sudo pacman -S --noconfirm openssh
+          darwin: echo "OpenSSH is pre-installed on macOS"
+        command: sudo apt-get update && sudo apt-get install -y openssh-server
+        skip_on_error: false
+      - description: Enable and start SSH service
+        platforms:
+          ubuntu: sudo systemctl enable ssh && sudo systemctl start ssh
+          debian: sudo systemctl enable ssh && sudo systemctl start ssh
+          centos: sudo systemctl enable sshd && sudo systemctl start sshd
+          rhel: sudo systemctl enable sshd && sudo systemctl start sshd
+          fedora: sudo systemctl enable sshd && sudo systemctl start sshd
+          arch: sudo systemctl enable sshd && sudo systemctl start sshd
+          darwin: sudo systemsetup -setremotelogin on
+        command: sudo systemctl enable ssh && sudo systemctl start ssh
+        skip_on_error: false
+      - description: Verify SSH service status
+        platforms:
+          ubuntu: sudo systemctl status ssh --no-pager
+          debian: sudo systemctl status ssh --no-pager
+          centos: sudo systemctl status sshd --no-pager
+          rhel: sudo systemctl status sshd --no-pager
+          fedora: sudo systemctl status sshd --no-pager
+          arch: sudo systemctl status sshd --no-pager
+          darwin: sudo systemsetup -getremotelogin
+        command: sudo systemctl status ssh --no-pager
+        skip_on_error: false
+

@@ -1,0 +1,32 @@
+name: git
+description: Git installation and basic configuration
+versions:
+  - version: "v1"
+    latest: true
+    description: Git installation and setup
+    commands:
+      - description: Install Git
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y git
+          debian: sudo apt-get update && sudo apt-get install -y git
+          centos: sudo yum install -y git
+          rhel: sudo yum install -y git
+          fedora: sudo dnf install -y git
+          arch: sudo pacman -S git
+          darwin: brew install git
+        command: sudo apt-get update && sudo apt-get install -y git
+        skip_on_error: false
+      - description: Verify Git installation
+        command: git --version
+        skip_on_error: false
+      - description: Configure Git (set your name and email)
+        command: git config --global user.name "{{name}}" && git config --global user.email "{{email}}"
+        skip_on_error: true
+        args:
+          - name: name
+            prompt: "Enter your Git user name"
+            required: true
+          - name: email
+            prompt: "Enter your Git email address"
+            required: true
+

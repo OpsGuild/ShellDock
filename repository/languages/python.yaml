@@ -1,0 +1,36 @@
+name: python
+description: Python development environment setup
+versions:
+  - version: "v1"
+    latest: true
+    description: Python 3 and pip installation
+    commands:
+      - description: Install Python 3 and pip
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+          debian: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+          centos: sudo yum install -y python3 python3-pip
+          rhel: sudo yum install -y python3 python3-pip
+          fedora: sudo dnf install -y python3 python3-pip
+          arch: sudo pacman -S python python-pip
+          darwin: brew install python3
+        command: sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv
+        skip_on_error: false
+      - description: Upgrade pip
+        command: python3 -m pip install --upgrade pip
+        skip_on_error: true
+      - description: Install common Python packages
+        command: python3 -m pip install --user {{packages}}
+        skip_on_error: true
+        args:
+          - name: packages
+            prompt: "Enter Python package names to install (space-separated, e.g., virtualenv pipenv)"
+            default: "virtualenv pipenv"
+            required: false
+      - description: Verify Python installation
+        command: python3 --version && pip3 --version
+        skip_on_error: false
+
+
+
+

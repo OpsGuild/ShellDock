@@ -1,0 +1,23 @@
+name: pm2
+description: PM2 process manager for Node.js applications
+versions:
+  - version: "v1"
+    latest: true
+    description: PM2 installation and setup
+    commands:
+      - description: Install PM2 globally
+        platforms:
+          linux: sudo npm install -g pm2
+          darwin: npm install -g pm2
+        command: sudo npm install -g pm2
+        skip_on_error: false
+      - description: Setup PM2 startup script
+        platforms:
+          linux: pm2 startup systemd -u $USER --hp $HOME
+          darwin: pm2 startup launchd -u $USER --hp $HOME
+        command: pm2 startup systemd -u $USER --hp $HOME
+        skip_on_error: true
+      - description: Verify PM2 installation
+        command: pm2 --version
+        skip_on_error: false
+

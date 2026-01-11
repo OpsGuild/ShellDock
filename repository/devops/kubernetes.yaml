@@ -1,0 +1,30 @@
+name: kubernetes
+description: Kubernetes tools installation (kubectl, k9s, helm)
+versions:
+  - version: "v1"
+    latest: true
+    description: Install Kubernetes CLI tools
+    commands:
+      - description: Install kubectl
+        platforms:
+          ubuntu: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+          debian: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+          centos: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+          rhel: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+          fedora: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+          arch: sudo pacman -S kubectl
+          darwin: brew install kubectl
+        command: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+      - description: Verify kubectl installation
+        command: kubectl version --client
+        skip_on_error: false
+      - description: Install Helm
+        platforms:
+          linux: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          darwin: brew install helm
+        command: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        skip_on_error: true
+
+
+
+

@@ -1,0 +1,31 @@
+name: nginx
+description: Nginx web server installation and setup
+versions:
+  - version: "v1"
+    latest: true
+    description: Nginx installation and basic configuration
+    commands:
+      - description: Install Nginx
+        platforms:
+          ubuntu: sudo apt-get update && sudo apt-get install -y nginx
+          debian: sudo apt-get update && sudo apt-get install -y nginx
+          centos: sudo yum install -y epel-release && sudo yum install -y nginx
+          rhel: sudo yum install -y epel-release && sudo yum install -y nginx
+          fedora: sudo dnf install -y nginx
+          arch: sudo pacman -S --noconfirm nginx
+          darwin: brew install nginx
+        command: sudo apt-get update && sudo apt-get install -y nginx
+        skip_on_error: false
+      - description: Enable and start Nginx service
+        platforms:
+          linux: sudo systemctl enable nginx && sudo systemctl start nginx
+          darwin: brew services start nginx
+        command: sudo systemctl enable nginx && sudo systemctl start nginx
+        skip_on_error: false
+      - description: Verify Nginx is running
+        command: sudo systemctl status nginx --no-pager || nginx -v
+        skip_on_error: false
+      - description: Check Nginx version
+        command: nginx -v
+        skip_on_error: false
+

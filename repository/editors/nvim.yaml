@@ -1,0 +1,24 @@
+name: nvim
+description: Neovim nightly installation (latest build from GitHub)
+versions:
+  - version: "v1"
+    latest: true
+    description: Neovim nightly installation from GitHub releases
+    commands:
+      - description: Install Neovim nightly
+        platforms:
+          ubuntu: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          debian: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          centos: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          rhel: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          fedora: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          arch: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+          darwin: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-arm64.tar.gz && sudo rm -rf /opt/nvim && sudo mkdir -p /opt && sudo tar -C /opt -xzf nvim-macos-arm64.tar.gz && sudo mv /opt/nvim-macos-arm64 /opt/nvim && rm nvim-macos-arm64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+        command: 'curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz && sudo rm -rf /opt/nvim && sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz && sudo mv /opt/nvim-linux-x86_64 /opt/nvim && rm nvim-linux-x86_64.tar.gz && sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim'
+        skip_on_error: false
+      - description: Verify Neovim installation
+        command: /usr/local/bin/nvim --version | head -3
+        skip_on_error: false
+      - description: Create Neovim config directory
+        command: mkdir -p ~/.config/nvim
+        skip_on_error: true
