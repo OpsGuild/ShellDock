@@ -70,16 +70,106 @@ echo "📦 Installing repository files..."
 REPO_DIR="/usr/share/shelldock/repository"
 sudo mkdir -p "${REPO_DIR}"
 
-# Download repository files from GitHub
-REPO_FILES=("docker.yaml" "git.yaml" "kubernetes.yaml" "nodejs.yaml" "python.yaml" "swap.yaml")
-for file in "${REPO_FILES[@]}"; do
-    REPO_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/master/repository/${file}"
-    if command -v curl &> /dev/null; then
-        sudo curl -sL -o "${REPO_DIR}/${file}" "${REPO_URL}" || echo "⚠️  Warning: Could not download ${file}"
-    elif command -v wget &> /dev/null; then
-        sudo wget -q -O "${REPO_DIR}/${file}" "${REPO_URL}" || echo "⚠️  Warning: Could not download ${file}"
-    fi
-done
+# Function to recursively download all .yaml files from repository directory
+# Uses pure bash - no dependencies on Python, jq, or other tools
+download_repo_files() {
+    local ref="master"
+    
+    # Function to process a directory recursively
+    process_dir() {
+        local dir_path="$1"
+        local dir_api_url="${GITHUB_API}/contents/${dir_path}"
+        
+        # Get directory contents
+        local response
+        if command -v curl &> /dev/null; then
+            response=$(curl -sL "${dir_api_url}?ref=${ref}")
+        else
+            response=$(wget -q -O - "${dir_api_url}?ref=${ref}")
+        fi
+        
+        if ! echo "${response}" | grep -q '"type"'; then
+            return 1
+        fi
+        
+        # Extract all path values (handles both single-line and multi-line JSON)
+        local paths
+        paths=$(echo "${response}" | sed -n 's/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        
+        # Extract all type values
+        local types
+        types=$(echo "${response}" | sed -n 's/.*"type"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        
+        # Convert to arrays (handles empty lines)
+        local path_array=()
+        local type_array=()
+        
+        while IFS= read -r line; do
+            [ -n "${line}" ] && path_array+=("${line}")
+        done <<< "${paths}"
+        
+        while IFS= read -r line; do
+            [ -n "${line}" ] && type_array+=("${line}")
+        done <<< "${types}"
+        
+        # Process entries (assuming path and type arrays are in same order)
+        # This works because GitHub API returns them in consistent order
+        local i
+        local max_len=${#path_array[@]}
+        [ ${#type_array[@]} -lt ${max_len} ] && max_len=${#type_array[@]}
+        
+        for ((i=0; i<max_len; i++)); do
+            local item_path="${path_array[$i]}"
+            local item_type="${type_array[$i]}"
+            
+            [ -z "${item_path}" ] || [ -z "${item_type}" ] && continue
+            
+            # Skip test files
+            [[ "${item_path}" == *"test.yaml" ]] && continue
+            
+            if [ "${item_type}" = "file" ] && [[ "${item_path}" == *.yaml ]]; then
+                # Calculate relative path from repository/
+                local rel_path="${item_path#repository/}"
+                local file_dir
+                file_dir=$(dirname "${rel_path}")
+                local filename
+                filename=$(basename "${rel_path}")
+                
+                # Create subdirectory if needed
+                if [ "${file_dir}" != "." ] && [ "${file_dir}" != "repository" ]; then
+                    sudo mkdir -p "${REPO_DIR}/${file_dir}"
+                fi
+                
+                # Determine local path
+                local local_path
+                if [ "${file_dir}" != "." ] && [ "${file_dir}" != "repository" ]; then
+                    local_path="${REPO_DIR}/${file_dir}/${filename}"
+                else
+                    local_path="${REPO_DIR}/${filename}"
+                fi
+                
+                # Download file
+                local raw_url="https://raw.githubusercontent.com/${GITHUB_REPO}/master/${item_path}"
+                echo "  📥 Downloading ${rel_path}..."
+                
+                if command -v curl &> /dev/null; then
+                    sudo curl -sL -o "${local_path}" "${raw_url}" || echo "⚠️  Warning: Could not download ${item_path}"
+                else
+                    sudo wget -q -O "${local_path}" "${raw_url}" || echo "⚠️  Warning: Could not download ${item_path}"
+                fi
+            elif [ "${item_type}" = "dir" ]; then
+                # Recursively process subdirectories
+                process_dir "${item_path}"
+            fi
+        done
+    }
+    
+    # Start processing from repository directory
+    process_dir "repository"
+}
+
+# Download all repository files dynamically
+download_repo_files
 
 # Verify installation
 if command -v ${BINARY_NAME} &> /dev/null; then
