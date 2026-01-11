@@ -1,0 +1,31 @@
+name: shelldock
+base: core22
+version: 'VERSION_PLACEHOLDER'
+summary: A fast, cross-platform shell command repository manager
+description: |
+  ShellDock is a fast, cross-platform tool for managing and executing
+  saved shell commands from bundled repository or local directory.
+grade: stable
+confinement: strict
+title: ShellDock
+license: MIT
+contact: https://github.com/OpsGuild/ShellDock
+website: https://github.com/OpsGuild/ShellDock
+source-code: https://github.com/OpsGuild/ShellDock
+issues: https://github.com/OpsGuild/ShellDock/issues
+donation: https://github.com/sponsors/OpsGuild
+
+apps:
+  shelldock:
+    command: usr/bin/shelldock
+    plugs:
+      - home
+      - network
+
+parts:
+  shelldock:
+    plugin: dump
+    source: .
+    organize:
+      shelldock-linux-amd64: usr/bin/shelldock
+

@@ -1,0 +1,17 @@
+app-id: com.github.opsguild.shelldock
+runtime: org.freedesktop.Platform
+runtime-version: '22.08'
+sdk: org.freedesktop.Sdk
+command: shelldock
+finish-args:
+  - --share=network
+  - --filesystem=home
+modules:
+  - name: shelldock
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 shelldock-linux-amd64 /app/bin/shelldock
+    sources:
+      - type: file
+        path: shelldock-linux-amd64
+

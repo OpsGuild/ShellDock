@@ -15,6 +15,33 @@ You can verify the binary by:
 1. Checking the GitHub Releases page for the version
 2. Comparing the SHA256 hash with the release notes
 3. Reviewing the source code at the repository URL above
+4. Building from source yourself using: go build -o shelldock.exe .
 
 The maintainer of this package is the same as the software author (OpsGuild).
+
+FALSE POSITIVE VIRUS DETECTIONS
+================================
+This Go binary may trigger false positive detections from some antivirus vendors
+due to the nature of statically compiled Go executables. Common false positives include:
+
+- MaxSecure: Trojan.Malware.300983.susgen
+- McAfee Scanner: Ti!564D7A04CFFB
+- Skyhigh (SWG): BehavesLike.Win64.Scarlet.wh
+
+These are FALSE POSITIVES. The software is:
+- Open source (MIT License)
+- Built from publicly available source code
+- Published on GitHub Releases with checksums
+- Used by many users without issues
+
+To verify authenticity:
+1. Check the SHA256 checksum matches the GitHub release
+2. Review the source code at https://github.com/OpsGuild/ShellDock
+3. Build from source yourself if concerned
+4. Report false positives to the antivirus vendors
+
+The binary is built using standard Go toolchain:
+  go build -ldflags "-X main.version=VERSION" -o shelldock.exe .
+
+No obfuscation, packing, or suspicious techniques are used.
 
