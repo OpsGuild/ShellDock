@@ -464,9 +464,18 @@ jobs:
         run: |
           mkdir -p flatpak
           cp shelldock-linux-amd64 flatpak/
-          # Copy repository with all subdirectories
-          cp -r repository/. flatpak/repository/ 2>/dev/null || true
+          # Copy repository with all subdirectories to flatpak directory
+          # flatpak-builder looks for sources relative to the manifest file location
+          cp -r repository flatpak/ 2>/dev/null || (echo "Warning: repository directory not found" && mkdir -p flatpak/repository)
           cp packaging/flatpak/com.github.opsguild.shelldock.yml flatpak/
+          
+          # Verify repository was copied
+          if [ -d "flatpak/repository" ]; then
+            echo "✅ Repository directory copied to flatpak/"
+            ls -la flatpak/repository/ | head -10
+          else
+            echo "⚠️  Warning: Repository directory not found in flatpak/"
+          fi
 
       - name: Build flatpak
         run: |

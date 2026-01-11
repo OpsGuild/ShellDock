@@ -12,7 +12,7 @@ modules:
     build-commands:
       - install -Dm755 shelldock-linux-amd64 /app/bin/shelldock
       - install -d /app/share/shelldock/repository
-      - cp -r repository/. /app/share/shelldock/repository/
+      - if [ -d repository ]; then cp -r repository/. /app/share/shelldock/repository/; else echo "Warning: repository directory not found"; fi
     sources:
       - type: file
         path: shelldock-linux-amd64
