@@ -591,31 +591,64 @@ jobs:
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          set +x  # Prevent token from being logged
           if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
             echo "HOMEBREW_TAP_TOKEN not set, skipping tap push"
             echo "To enable Homebrew tap, create https://github.com/OpsGuild/homebrew-tap and add HOMEBREW_TAP_TOKEN"
             exit 0
           fi
-          # Clone tap repository
-          git clone https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git homebrew-tap || {
-            echo "Homebrew tap repository not found. Create it at https://github.com/OpsGuild/homebrew-tap"
-            exit 0
-          }
+          
+          # Verify token format (fine-grained tokens start with github_pat_)
+          if [[ "$HOMEBREW_TAP_TOKEN" != github_pat_* ]]; then
+            echo "⚠️  Warning: Token doesn't appear to be a fine-grained token (should start with 'github_pat_')"
+            echo "If using a classic token, ensure it has 'repo' scope"
+          fi
+          
+          # Clone tap repository with token
+          echo "Cloning homebrew-tap repository..."
+          if ! git clone https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git homebrew-tap; then
+            echo "❌ Failed to clone homebrew-tap repository"
+            echo "Verify:"
+            echo "  1. Repository exists at https://github.com/OpsGuild/homebrew-tap"
+            echo "  2. Token has 'Contents: Read and write' permission for the repository"
+            echo "  3. If organization has SSO, token must be authorized for SSO"
+            exit 1
+          fi
+          
           cd homebrew-tap
+          
           # Determine the default branch
           DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}' || echo "main")
+          echo "Using branch: $DEFAULT_BRANCH"
+          
           # Checkout the default branch
           git checkout $DEFAULT_BRANCH 2>/dev/null || git checkout -b $DEFAULT_BRANCH
+          
+          # Update remote URL to include token for push operations
+          git remote set-url origin https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git
+          
           # Copy formula
           mkdir -p Formula
           cp ../Formula/shelldock.rb Formula/
+          
           # Commit and push
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/shelldock.rb
+          
           if ! git diff --staged --quiet; then
             git commit -m "Update shelldock to ${{ github.ref_name }}"
-            git push origin refs/heads/$DEFAULT_BRANCH:refs/heads/$DEFAULT_BRANCH
+            echo "Pushing to homebrew-tap..."
+            # Push with token explicitly in URL
+            if ! git push https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git refs/heads/$DEFAULT_BRANCH:refs/heads/$DEFAULT_BRANCH; then
+              echo "❌ Failed to push to homebrew-tap"
+              echo "Verify:"
+              echo "  1. Token has 'Contents: Read and write' permission"
+              echo "  2. Token is authorized for SSO (if organization uses SSO)"
+              echo "  3. Repository exists and is accessible"
+              exit 1
+            fi
+            echo "✅ Successfully pushed to homebrew-tap"
           else
             echo "No changes to commit"
           fi

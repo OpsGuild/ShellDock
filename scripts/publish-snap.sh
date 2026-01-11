@@ -19,23 +19,39 @@ if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
     echo "   snapcraft export-login --snaps=shelldock --acls=package_upload,package_release credentials.txt"
     echo ""
     echo "3. Copy the ENTIRE contents of credentials.txt to GitHub secret SNAP_STORE_CREDENTIALS"
-    echo "   (Do NOT base64 encode it - use the raw content)"
+    echo "   (It will be base64-encoded JSON - use it as-is)"
     echo "============================================="
     exit 0
 fi
 
+# Modern snapcraft uses base64-encoded JSON credentials
+# Verify it's the correct format (starts with eyJ which is base64 for {"t":)
+if ! echo "$SNAPCRAFT_STORE_CREDENTIALS" | grep -q "^eyJ"; then
+    echo "⚠️  Warning: Credentials don't appear to be in the expected format"
+    echo "Modern snapcraft expects base64-encoded JSON credentials"
+    echo ""
+    echo "To get the correct format:"
+    echo "  1. Run: snapcraft export-login --snaps=shelldock --acls=package_upload,package_release credentials.txt"
+    echo "  2. Copy the ENTIRE contents of credentials.txt (base64-encoded JSON)"
+    echo "  3. Paste that content into GitHub secret SNAP_STORE_CREDENTIALS"
+    echo ""
+    echo "The credentials should be a single line of base64-encoded JSON"
+    exit 1
+fi
+
+# Export to environment variable (snapcraft automatically reads this)
+export SNAPCRAFT_STORE_CREDENTIALS
+
 # Verify authentication works
-echo "Verifying Snap Store authentication..."
+echo "✅ Verifying Snap Store authentication..."
 if ! snapcraft whoami 2>/dev/null; then
-    echo "Authentication failed."
+    echo "❌ Authentication verification failed"
     echo ""
     echo "=== TROUBLESHOOTING ==="
-    echo "Make sure SNAP_STORE_CREDENTIALS contains the raw output of:"
-    echo "  snapcraft export-login --snaps=shelldock --acls=package_upload,package_release credentials.txt"
+    echo "1. Credentials may have expired - regenerate them"
+    echo "2. Check that the snap name 'shelldock' is registered"
+    echo "3. Verify credentials have correct permissions"
     echo ""
-    echo "The credential should start with '[login.ubuntu.com]' and be multi-line."
-    echo "Do NOT base64 encode it."
-    echo "======================="
     exit 1
 fi
 
