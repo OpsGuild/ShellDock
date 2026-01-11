@@ -28,4 +28,5 @@ parts:
     source: .
     organize:
       shelldock-linux-amd64: usr/bin/shelldock
+      repository: usr/share/shelldock/repository
 

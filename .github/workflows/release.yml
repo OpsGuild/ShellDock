@@ -185,7 +185,8 @@ jobs:
           
           cp ./build/shelldock-linux-amd64 dist/deb/usr/local/bin/shelldock
           cp README.md dist/deb/usr/share/doc/shelldock/
-          cp repository/*.yaml dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
+          # Copy repository with all subdirectories
+          cp -r repository/. dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
           
           sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/deb/control > dist/deb/DEBIAN/control
           cp packaging/deb/postinst dist/deb/DEBIAN/postinst
@@ -205,8 +206,8 @@ jobs:
           mkdir -p dist/rpm/tmp/shelldock-${VERSION}
           cp ./build/shelldock-linux-amd64 dist/rpm/tmp/shelldock-${VERSION}/shelldock
           cp README.md dist/rpm/tmp/shelldock-${VERSION}/
-          mkdir -p dist/rpm/tmp/shelldock-${VERSION}/repository
-          cp repository/*.yaml dist/rpm/tmp/shelldock-${VERSION}/repository/ 2>/dev/null || true
+          # Copy repository with all subdirectories
+          cp -r repository/. dist/rpm/tmp/shelldock-${VERSION}/repository/ 2>/dev/null || true
           
           # Create tarball
           cd dist/rpm/tmp
@@ -400,6 +401,13 @@ jobs:
             packaging/snap/snapcraft.yaml.template > snap/snapcraft.yaml
           echo "Generated snapcraft.yaml:"
           cat snap/snapcraft.yaml
+          
+          # Verify repository directory exists for snap
+          if [ ! -d "repository" ]; then
+            echo "⚠️  Warning: repository directory not found"
+          else
+            echo "✅ Repository directory found, will be included in snap"
+          fi
 
       - name: Build snap
         run: |
@@ -456,6 +464,8 @@ jobs:
         run: |
           mkdir -p flatpak
           cp shelldock-linux-amd64 flatpak/
+          # Copy repository with all subdirectories
+          cp -r repository/. flatpak/repository/ 2>/dev/null || true
           cp packaging/flatpak/com.github.opsguild.shelldock.yml flatpak/
 
       - name: Build flatpak
@@ -687,6 +697,15 @@ jobs:
         run: |
           mkdir -p chocolatey\shelldock\tools
           Move-Item shelldock-windows-amd64.exe chocolatey\shelldock\tools\shelldock.exe
+          
+          # Copy repository with all subdirectories
+          if (Test-Path "repository") {
+            New-Item -ItemType Directory -Path "chocolatey\shelldock\tools\repository" -Force | Out-Null
+            Copy-Item -Path "repository\*" -Destination "chocolatey\shelldock\tools\repository\" -Recurse -Force
+            Write-Host "✅ Repository files copied to Chocolatey package"
+          } else {
+            Write-Warning "Repository directory not found"
+          }
           
           # Copy icon if it exists
           if (Test-Path "static\images\icon.jpg") {

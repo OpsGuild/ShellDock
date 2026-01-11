@@ -7,3 +7,11 @@ $ErrorActionPreference = 'Stop'
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 Install-BinFile -Name shelldock -Path "$toolsDir\shelldock.exe"
 
+# Copy repository files to tools directory (ShellDock looks for repository relative to executable)
+if (Test-Path "$toolsDir\repository") {
+    Write-Host "Repository files found, ensuring they are accessible"
+    # Repository is already in tools directory from package creation
+} else {
+    Write-Warning "Repository directory not found in package"
+}
+

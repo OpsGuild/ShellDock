@@ -11,7 +11,11 @@ modules:
     buildsystem: simple
     build-commands:
       - install -Dm755 shelldock-linux-amd64 /app/bin/shelldock
+      - install -d /app/share/shelldock/repository
+      - cp -r repository/. /app/share/shelldock/repository/
     sources:
       - type: file
         path: shelldock-linux-amd64
+      - type: dir
+        path: repository
 

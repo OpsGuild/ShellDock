@@ -35,12 +35,12 @@ mkdir -p %{buildroot}/usr/share/doc/shelldock
 cp README.md %{buildroot}/usr/share/doc/shelldock/
 
 mkdir -p %{buildroot}/usr/share/shelldock/repository
-cp repository/*.yaml %{buildroot}/usr/share/shelldock/repository/ 2>/dev/null || true
+cp -r repository/. %{buildroot}/usr/share/shelldock/repository/ 2>/dev/null || true
 
 %files
 /usr/local/bin/shelldock
 /usr/share/doc/shelldock/README.md
-/usr/share/shelldock/repository/*.yaml
+/usr/share/shelldock/repository
 
 %changelog
 * Wed Jan 01 2024 ShellDock Team <team@shelldock.io> - VERSION
