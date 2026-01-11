@@ -37,7 +37,7 @@ fi
 # Install required dependencies
 echo "📦 Installing required packages..."
 # Update package list, ignoring errors from bad repositories
-apt-get update -qq -o Acquire::Check-Valid-Until=false 2>/dev/null || apt-get update -qq 2>/dev/null || true
+apt-get update -qq
 apt-get install -y -qq curl wget
 
 # Detect architecture
