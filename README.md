@@ -170,12 +170,13 @@ curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/i
 
 #### macOS
 
-**Option 1: Homebrew**
+**Option 1: Homebrew (Recommended)**
 
 ```bash
-brew tap OpsGuild/tap
-brew install shelldock
+brew install OpsGuild/tap/shelldock
 ```
+
+This automatically taps the `OpsGuild/tap` repository and installs ShellDock. The formula is maintained in a dedicated [Homebrew tap repository](https://github.com/OpsGuild/homebrew-tap) and is automatically updated with each release.
 
 **Option 2: Direct Binary**
 
@@ -294,6 +295,8 @@ makepkg -si
 ```bash
 brew upgrade shelldock
 ```
+
+The Homebrew formula is automatically updated in the [OpsGuild/homebrew-tap](https://github.com/OpsGuild/homebrew-tap) repository with each release, so `brew upgrade` will always get the latest version.
 
 #### If Installed via Snap
 
@@ -420,6 +423,8 @@ brew uninstall shelldock
 # To also remove the tap (if you no longer need it):
 brew untap OpsGuild/tap
 ```
+
+**Note:** The Homebrew formula is maintained in the [OpsGuild/homebrew-tap](https://github.com/OpsGuild/homebrew-tap) repository, which is automatically updated by the release workflow.
 
 #### If Installed via Snap
 
@@ -658,8 +663,10 @@ Total Installed Size:  5.23 MiB
 **Using Homebrew:**
 
 ```bash
-brew install shelldock/tap/shelldock
+brew install OpsGuild/tap/shelldock
 ```
+
+The Homebrew formula is maintained in the [OpsGuild/homebrew-tap](https://github.com/OpsGuild/homebrew-tap) repository and is automatically updated with each release.
 
 **Using Direct Binary:**
 
