@@ -50,12 +50,16 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		// Check if we have write permissions
-		if _, err := os.Stat(bundledPath); err != nil {
-			fmt.Printf("❌ Error: Cannot access bundled repository at %s\n", bundledPath)
-			fmt.Println("💡 You may need to run with sudo to update the bundled repository")
+		// Check if we have write permissions by trying to create a temp file
+		tempFile := filepath.Join(bundledPath, ".sync_test")
+		f, err := os.Create(tempFile)
+		if err != nil {
+			fmt.Printf("❌ Error: No write permission for bundled repository at %s\n", bundledPath)
+			fmt.Println("💡 You must run with sudo to update the bundled repository: sudo shelldock sync")
 			return
 		}
+		f.Close()
+		os.Remove(tempFile)
 
 		// Sync repository files
 		count, err := syncRepository(bundledPath)
@@ -64,7 +68,7 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("✅ Sync complete! Updated %d command set(s)\n", count)
+		fmt.Printf("✅ Sync complete! Updated %d command set(s) in %s\n", count, bundledPath)
 	},
 }
 

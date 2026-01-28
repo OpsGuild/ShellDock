@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"runtime"
+	
 	"golang.org/x/term"
 
 	"github.com/shelldock/shelldock/internal/config"
@@ -124,18 +126,28 @@ func filterCommands(commands []repo.Command, skipSteps, onlySteps string) ([]rep
 // getCommandForPlatform returns the command for the specified platform
 // Returns empty string if no command is available for the platform
 func getCommandForPlatform(cmd repo.Command, platform string) string {
-	// If platforms map exists and has entry for this platform, use it
-	if cmd.Platforms != nil {
+	if cmd.Platforms != nil && len(cmd.Platforms) > 0 {
+		// 1. Try exact match
 		if platformCmd, exists := cmd.Platforms[platform]; exists {
 			return platformCmd
 		}
-		// If platforms map exists but no entry for this platform, and no fallback command
-		if cmd.Command == "" {
-			return "" // No command available for this platform
+
+		// 2. Linux hierarchy: if it's a distro, fall back to "linux"
+		// If platform is not darwin or windows, we treat it as a potential linux distro
+		if platform != "darwin" && platform != "windows" {
+			if linuxCmd, exists := cmd.Platforms["linux"]; exists {
+				return linuxCmd
+			}
+		}
+
+		// 3. Safety for Windows/Darwin: if Platforms is defined but no match was found,
+		// do NOT fall back to generic cmd.Command as it's likely Unix-specific.
+		if platform == "windows" {
+			return ""
 		}
 	}
 
-	// Fallback to generic command
+	// 4. Fallback to generic command (only if no platforms defined or as final fallback for non-Windows)
 	return cmd.Command
 }
 
@@ -468,7 +480,13 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		fmt.Printf("[%d/%d] %s (step %d)\n", i+1, len(commandsToRun), cmd.Description, originalNum)
 		fmt.Printf("$ %s\n", command)
 
-		execCmd := exec.Command("sh", "-c", command)
+		var execCmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			execCmd = exec.Command("powershell", "-Command", command)
+		} else {
+			execCmd = exec.Command("sh", "-c", command)
+		}
+		
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 		execCmd.Stdin = os.Stdin
