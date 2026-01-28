@@ -58,8 +58,8 @@ var syncCmd = &cobra.Command{
 			fmt.Println("💡 You must run with sudo to update the bundled repository: sudo shelldock sync")
 			return
 		}
-		f.Close()
-		os.Remove(tempFile)
+		_ = f.Close()
+		_ = os.Remove(tempFile)
 
 		// Sync repository files
 		count, err := syncRepository(bundledPath)
@@ -96,13 +96,16 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to fetch directory listing: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
+	// Check status code
 	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
 		return 0, fmt.Errorf("failed to fetch directory: HTTP %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	if err != nil {
 		return 0, fmt.Errorf("failed to read response: %w", err)
 	}
@@ -157,18 +160,23 @@ func downloadFile(url, filePath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
 		return fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
 	file, err := os.Create(filePath)
 	if err != nil {
+		_ = resp.Body.Close()
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, resp.Body)
+	_ = resp.Body.Close()
 	return err
 }

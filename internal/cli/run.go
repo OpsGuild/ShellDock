@@ -126,7 +126,7 @@ func filterCommands(commands []repo.Command, skipSteps, onlySteps string) ([]rep
 // getCommandForPlatform returns the command for the specified platform
 // Returns empty string if no command is available for the platform
 func getCommandForPlatform(cmd repo.Command, platform string) string {
-	if cmd.Platforms != nil && len(cmd.Platforms) > 0 {
+	if len(cmd.Platforms) > 0 {
 		// 1. Try exact match
 		if platformCmd, exists := cmd.Platforms[platform]; exists {
 			return platformCmd
