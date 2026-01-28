@@ -7,70 +7,83 @@ versions:
     commands:
       - description: Display hostname and system identity
         platforms:
-          linux: echo "=== HOSTNAME ===" && hostname -f 2>/dev/null || hostname
-          darwin: echo "=== HOSTNAME ===" && hostname && scutil --get ComputerName 2>/dev/null
-        command: echo "=== HOSTNAME ===" && hostname
+          linux: echo "=== SYSTEM IDENTITY ===" && hostnamectl 2>/dev/null || hostname -f 2>/dev/null || hostname
+          darwin: echo "=== SYSTEM IDENTITY ===" && hostname && scutil --get ComputerName 2>/dev/null
+          windows: echo "=== SYSTEM IDENTITY ==="; hostname
+        command: echo "=== SYSTEM IDENTITY ===" && hostnamectl 2>/dev/null || hostname
         skip_on_error: true
       - description: Display OS and kernel information
         platforms:
           linux: echo "=== OS & KERNEL ===" && cat /etc/os-release 2>/dev/null | head -5 && uname -srm
           darwin: echo "=== OS & KERNEL ===" && sw_vers && uname -srm
+          windows: echo "=== OS & KERNEL ==="; Get-ComputerInfo | Select-Object OsName, OsVersion, WindowsVersion
         command: echo "=== OS & KERNEL ===" && uname -a
         skip_on_error: true
       - description: Display system uptime
         platforms:
           linux: echo "=== UPTIME ===" && uptime -p 2>/dev/null || uptime
           darwin: echo "=== UPTIME ===" && uptime
+          windows: echo "=== UPTIME ==="; (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
         command: echo "=== UPTIME ===" && uptime
         skip_on_error: true
       - description: Display memory usage
         platforms:
           linux: echo "=== MEMORY USAGE ===" && free -h
           darwin: echo "=== MEMORY USAGE ===" && top -l 1 -s 0 | grep PhysMem
+          windows: echo "=== MEMORY USAGE ==="; Get-CimInstance Win32_ComputerSystem | Select-Object @{Name="TotalMemoryGB";Expression={$_.TotalPhysicalMemory/1GB}}
         command: echo "=== MEMORY USAGE ===" && free -h
         skip_on_error: true
       - description: Display disk usage
         platforms:
           linux: echo "=== DISK USAGE ===" && df -h --total 2>/dev/null || df -h
           darwin: echo "=== DISK USAGE ===" && df -h
+          windows: echo "=== DISK USAGE ==="; Get-PSDrive -PSProvider FileSystem
         command: echo "=== DISK USAGE ===" && df -h
         skip_on_error: true
       - description: Display largest directories in current path
+        platforms:
+          windows: echo "=== LARGEST DIRECTORIES ==="; Get-ChildItem -Directory | Sort-Object Length -Descending | Select-Object -First 10
         command: echo "=== LARGEST DIRECTORIES ===" && du -sh * 2>/dev/null | sort -rh | head -10
         skip_on_error: true
       - description: Display CPU information
         platforms:
           linux: echo "=== CPU INFO ===" && lscpu 2>/dev/null | head -15 || cat /proc/cpuinfo | head -15
           darwin: echo "=== CPU INFO ===" && sysctl -n machdep.cpu.brand_string && sysctl hw.ncpu hw.physicalcpu
+          windows: echo "=== CPU INFO ==="; Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors
         command: echo "=== CPU INFO ===" && lscpu 2>/dev/null || cat /proc/cpuinfo | head -15
         skip_on_error: true
       - description: Display load average
         platforms:
           linux: echo "=== LOAD AVERAGE ===" && cat /proc/loadavg
           darwin: echo "=== LOAD AVERAGE ===" && sysctl -n vm.loadavg
+          windows: echo "=== LOAD AVERAGE (CPU %) ==="; Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average | Select-Object Average
         command: echo "=== LOAD AVERAGE ===" && cat /proc/loadavg
         skip_on_error: true
       - description: Display network interfaces
         platforms:
           linux: echo "=== NETWORK INTERFACES ===" && ip -br addr 2>/dev/null || ifconfig -a
           darwin: echo "=== NETWORK INTERFACES ===" && ifconfig | head -30
+          windows: echo "=== NETWORK INTERFACES ==="; Get-NetAdapter | Select-Object Name, InterfaceDescription, Status, MacAddress
         command: echo "=== NETWORK INTERFACES ===" && ip -br addr 2>/dev/null || ifconfig
         skip_on_error: true
       - description: Display running processes summary
         platforms:
           linux: echo "=== TOP PROCESSES (by CPU) ===" && ps aux --sort=-%cpu | head -11
           darwin: echo "=== TOP PROCESSES (by CPU) ===" && ps aux -r | head -11
+          windows: echo "=== TOP PROCESSES (by CPU) ==="; Get-Process | Sort-Object CPU -Descending | Select-Object -First 10
         command: echo "=== TOP PROCESSES ===" && ps aux --sort=-%cpu | head -11
         skip_on_error: true
       - description: Display logged in users
         platforms:
           linux: echo "=== LOGGED IN USERS ===" && who -a 2>/dev/null || who
           darwin: echo "=== LOGGED IN USERS ===" && who
+          windows: echo "=== LOGGED IN USERS ==="; Get-CimInstance Win32_ComputerSystem | Select-Object UserName
         command: echo "=== LOGGED IN USERS ===" && who
         skip_on_error: true
       - description: Display listening ports
         platforms:
           linux: echo "=== LISTENING PORTS ===" && ss -tuln 2>/dev/null || netstat -tuln
           darwin: echo "=== LISTENING PORTS ===" && netstat -an | grep LISTEN | head -15
+          windows: echo "=== LISTENING PORTS ==="; Get-NetTCPConnection -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess
         command: echo "=== LISTENING PORTS ===" && ss -tuln 2>/dev/null || netstat -tuln
         skip_on_error: true
