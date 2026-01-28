@@ -67,7 +67,7 @@ description: Docker setup commands
 version: "1.0.0"
 commands:
   - description: Install Docker
-    command: sudo apt-get install docker
+    command: apt-get install docker
     skip_on_error: false  # optional
 ```
 
