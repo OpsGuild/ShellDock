@@ -7,14 +7,14 @@ versions:
     commands:
       - description: Install Git
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y git
-          debian: sudo apt-get update && sudo apt-get install -y git
-          centos: sudo yum install -y git
-          rhel: sudo yum install -y git
-          fedora: sudo dnf install -y git
-          arch: sudo pacman -S git
+          ubuntu: apt-get update && apt-get install -y git
+          debian: apt-get update && apt-get install -y git
+          centos: yum install -y git
+          rhel: yum install -y git
+          fedora: dnf install -y git
+          arch: pacman -S git
           darwin: brew install git
-        command: sudo apt-get update && sudo apt-get install -y git
+        command: apt-get update && apt-get install -y git
         skip_on_error: false
       - description: Verify Git installation
         command: git --version

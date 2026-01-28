@@ -7,25 +7,25 @@ versions:
     commands:
       - description: Install UFW
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y ufw
-          debian: sudo apt-get update && sudo apt-get install -y ufw
-          centos: sudo yum install -y epel-release && sudo yum install -y ufw
-          rhel: sudo yum install -y epel-release && sudo yum install -y ufw
-          fedora: sudo dnf install -y ufw
-          arch: sudo pacman -S --noconfirm ufw
+          ubuntu: apt-get update && apt-get install -y ufw
+          debian: apt-get update && apt-get install -y ufw
+          centos: yum install -y epel-release && yum install -y ufw
+          rhel: yum install -y epel-release && yum install -y ufw
+          fedora: dnf install -y ufw
+          arch: pacman -S --noconfirm ufw
           darwin: brew install ufw
-        command: sudo apt-get update && sudo apt-get install -y ufw
+        command: apt-get update && apt-get install -y ufw
         skip_on_error: false
       - description: Set default policies (deny incoming, allow outgoing)
-        command: sudo ufw default deny incoming && sudo ufw default allow outgoing
+        command: ufw default deny incoming && ufw default allow outgoing
         skip_on_error: false
       - description: Allow SSH connections (port 22)
-        command: sudo ufw allow ssh
+        command: ufw allow ssh
         skip_on_error: false
       - description: Enable UFW
-        command: sudo ufw --force enable
+        command: ufw --force enable
         skip_on_error: false
       - description: Verify UFW status
-        command: sudo ufw status verbose
+        command: ufw status verbose
         skip_on_error: false
 

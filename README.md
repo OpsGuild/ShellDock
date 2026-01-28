@@ -844,16 +844,16 @@ shelldock docker
 📋 Commands to execute:
 
   1. Update package index
-     $ sudo apt-get update
+     $ apt-get update
 
   2. Install Docker
      $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
 
   3. Start Docker service
-     $ sudo systemctl start docker
+     $ systemctl start docker
 
   4. Enable Docker on boot
-     $ sudo systemctl enable docker
+     $ systemctl enable docker
 
 Do you want to execute these commands? (y/N): 
 ```
@@ -902,7 +902,7 @@ shelldock git --args name="John Doe",email="john@example.com"
 📋 Commands to execute:
 
   1. Install Git
-     $ sudo apt-get update && sudo apt-get install -y git
+     $ apt-get update && apt-get install -y git
 
   2. Verify Git installation
      $ git --version
@@ -928,7 +928,7 @@ shelldock git
 📋 Commands to execute:
 
   1. Install Git
-     $ sudo apt-get update && sudo apt-get install -y git
+     $ apt-get update && apt-get install -y git
 
   2. Verify Git installation
      $ git --version
@@ -942,7 +942,7 @@ Do you want to execute these commands? (y/N): y
 🚀 Executing commands...
 
 [1/3] Install Git (step 1)
-$ sudo apt-get update && sudo apt-get install -y git
+$ apt-get update && apt-get install -y git
 ✅ Success
 
 [2/3] Verify Git installation (step 2)
@@ -1003,7 +1003,7 @@ shelldock docker --skip 1-3
 📋 Commands to execute:
 
   4. Enable Docker on boot
-     $ sudo systemctl enable docker
+     $ systemctl enable docker
 
 Do you want to execute these commands? (y/N):
 ```
@@ -1032,10 +1032,10 @@ shelldock docker --only 1-3
 📋 Commands to execute:
 
   1. Update package index
-     $ sudo apt-get update
+     $ apt-get update
 
   3. Start Docker service
-     $ sudo systemctl start docker
+     $ systemctl start docker
 
 Do you want to execute these commands? (y/N):
 ```
@@ -1059,19 +1059,19 @@ shelldock show docker
 📋 Commands:
 
   1. Update package index
-     $ sudo apt-get update
+     $ apt-get update
      📱 Other platforms:
-        centos: sudo yum check-update || true
-        fedora: sudo dnf check-update || true
-        arch: sudo pacman -Sy
+        centos: yum check-update || true
+        fedora: dnf check-update || true
+        arch: pacman -Sy
         darwin: brew update
 
   2. Install Docker
      $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
      📱 Other platforms:
-        centos: sudo yum install -y docker
-        fedora: sudo dnf install -y docker
-        arch: sudo pacman -S docker
+        centos: yum install -y docker
+        fedora: dnf install -y docker
+        arch: pacman -S docker
         darwin: brew install --cask docker
 
 💡 To execute these commands, run: shelldock docker
@@ -1087,10 +1087,10 @@ shelldock echo docker
 
 **Example Output:**
 ```
-sudo apt-get update
+apt-get update
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-sudo systemctl start docker
-sudo systemctl enable docker
+systemctl start docker
+systemctl enable docker
 ```
 
 **With --skip flag:**
@@ -1100,8 +1100,8 @@ shelldock echo docker --skip 1,2
 
 **Example Output:**
 ```
-sudo systemctl start docker
-sudo systemctl enable docker
+systemctl start docker
+systemctl enable docker
 ```
 
 **With --only flag:**
@@ -1111,8 +1111,8 @@ shelldock echo docker --only 1,3
 
 **Example Output:**
 ```
-sudo apt-get update
-sudo systemctl start docker
+apt-get update
+systemctl start docker
 ```
 
 **Other options:**
@@ -1149,15 +1149,15 @@ shelldock echo docker --local
 ```bash
 $ shelldock echo docker --skip 1
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-sudo systemctl start docker
-sudo systemctl enable docker
+systemctl start docker
+systemctl enable docker
 ```
 
 **Example with --only:**
 ```bash
 $ shelldock echo docker --only 2,3
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-sudo systemctl start docker
+systemctl start docker
 ```
 
 #### Interactive Management UI
@@ -1253,7 +1253,7 @@ shelldock run certbot --ver nginx      # Using --ver alias
 📋 Commands to execute:
 
   1. Update package index
-     $ sudo apt-get update
+     $ apt-get update
 ...
 ```
 
@@ -1274,17 +1274,17 @@ ShellDock automatically detects your platform and uses the appropriate commands.
 
 When you run `shelldock docker` on Ubuntu, it uses:
 ```bash
-sudo apt-get update
+apt-get update
 ```
 
 On CentOS, it automatically uses:
 ```bash
-sudo yum check-update || true
+yum check-update || true
 ```
 
 On Fedora:
 ```bash
-sudo dnf check-update || true
+dnf check-update || true
 ```
 
 The platform is detected from:
@@ -1426,11 +1426,11 @@ shelldock config set centos
 
 ### `shelldock sync`
 
-Sync command sets from bundled repository (placeholder for future implementation).
+Sync command sets from the cloud repository to the bundled repository (requires `sudo`).
 
 **Example:**
 ```bash
-shelldock sync
+sudo shelldock sync
 ```
 
 ## Command Set Format
@@ -1445,12 +1445,12 @@ description: Docker installation and setup commands
 version: "v1"
 commands:
   - description: Update package index
-    command: sudo apt-get update
+    command: apt-get update
   - description: Install Docker
     command: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
     skip_on_error: false
   - description: Start Docker service
-    command: sudo systemctl start docker
+    command: systemctl start docker
     skip_on_error: true
 ```
 
@@ -1477,9 +1477,9 @@ versions:
       - description: Install Docker
         platforms:
           ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-          centos: sudo yum install -y docker
-          fedora: sudo dnf install -y docker
-          arch: sudo pacman -S docker
+          centos: yum install -y docker
+          fedora: dnf install -y docker
+          arch: pacman -S docker
           darwin: brew install --cask docker
 ```
 
@@ -1496,14 +1496,14 @@ versions:
     description: Certbot standalone installation
     commands:
       - description: Install Certbot
-        command: sudo apt-get install -y certbot
+        command: apt-get install -y certbot
   - version: "v2"
     tag: nginx
     latest: true
     description: Certbot with Nginx plugin installation
     commands:
       - description: Install Certbot with Nginx plugin
-        command: sudo apt-get install -y certbot python3-certbot-nginx
+        command: apt-get install -y certbot python3-certbot-nginx
 ```
 
 You can then run using either the version or tag:
@@ -1528,20 +1528,20 @@ version: "v1"
 commands:
   - description: Update package index
     platforms:
-      ubuntu: sudo apt-get update
-      debian: sudo apt-get update
-      centos: sudo yum check-update || true
-      rhel: sudo yum check-update || true
-      fedora: sudo dnf check-update || true
-      arch: sudo pacman -Sy
+      ubuntu: apt-get update
+      debian: apt-get update
+      centos: yum check-update || true
+      rhel: yum check-update || true
+      fedora: dnf check-update || true
+      arch: pacman -Sy
       darwin: brew update
       windows: choco upgrade chocolatey
   - description: Install Docker
     platforms:
       ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-      centos: sudo yum install -y docker
-      fedora: sudo dnf install -y docker
-      arch: sudo pacman -S docker
+      centos: yum install -y docker
+      fedora: dnf install -y docker
+      arch: pacman -S docker
       darwin: brew install --cask docker
       windows: choco install docker-desktop
 ```
@@ -1635,16 +1635,16 @@ version: "v1"
 commands:
   - description: Update package index
     platforms:
-      ubuntu: sudo apt-get update
-      centos: sudo yum check-update || true
-      fedora: sudo dnf check-update || true
+      ubuntu: apt-get update
+      centos: yum check-update || true
+      fedora: dnf check-update || true
   - description: Install Docker
     platforms:
       ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-      centos: sudo yum install -y docker
-      fedora: sudo dnf install -y docker
+      centos: yum install -y docker
+      fedora: dnf install -y docker
   - description: Start Docker service
-    command: sudo systemctl start docker
+    command: systemctl start docker
     skip_on_error: true
 ```
 
@@ -1662,20 +1662,20 @@ shelldock docker
 📋 Commands to execute:
 
   1. Update package index
-     $ sudo apt-get update
+     $ apt-get update
 
   2. Install Docker
      $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
 
   3. Start Docker service
-     $ sudo systemctl start docker
+     $ systemctl start docker
 
 Do you want to execute these commands? (y/N): y
 
 🚀 Executing commands...
 
 [1/3] Update package index (step 1)
-$ sudo apt-get update
+$ apt-get update
 Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
 ...
 ✅ Success
@@ -1686,7 +1686,7 @@ $ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
 ✅ Success
 
 [3/3] Start Docker service (step 3)
-$ sudo systemctl start docker
+$ systemctl start docker
 ✅ Success
 
 🎉 All commands executed successfully!

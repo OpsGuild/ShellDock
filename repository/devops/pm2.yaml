@@ -7,9 +7,9 @@ versions:
     commands:
       - description: Install PM2 globally
         platforms:
-          linux: sudo npm install -g pm2
+          linux: npm install -g pm2
           darwin: npm install -g pm2
-        command: sudo npm install -g pm2
+        command: npm install -g pm2
         skip_on_error: false
       - description: Setup PM2 startup script
         platforms:

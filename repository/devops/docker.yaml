@@ -7,40 +7,40 @@ versions:
     commands:
       - description: Update package index
         platforms:
-          ubuntu: sudo apt-get update
-          debian: sudo apt-get update
-          centos: sudo yum check-update || true
-          rhel: sudo yum check-update || true
-          fedora: sudo dnf check-update || true
-          arch: sudo pacman -Sy
+          ubuntu: apt-get update
+          debian: apt-get update
+          centos: yum check-update || true
+          rhel: yum check-update || true
+          fedora: dnf check-update || true
+          arch: pacman -Sy
           darwin: brew update
-        command: sudo apt-get update
+        command: apt-get update
         skip_on_error: true
       - description: Install Docker
         platforms:
-          ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-          debian: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-          centos: sudo yum install -y docker
-          rhel: sudo yum install -y docker
-          fedora: sudo dnf install -y docker
-          arch: sudo pacman -S docker
+          ubuntu: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+          debian: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+          centos: yum install -y docker
+          rhel: yum install -y docker
+          fedora: dnf install -y docker
+          arch: pacman -S docker
           darwin: brew install --cask docker
-        command: curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+        command: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
       - description: Start Docker service
         platforms:
-          linux: sudo systemctl start docker
+          linux: systemctl start docker
           darwin: open -a Docker
-        command: sudo systemctl start docker
+        command: systemctl start docker
         skip_on_error: true
       - description: Enable Docker on boot
         platforms:
-          linux: sudo systemctl enable docker
-        command: sudo systemctl enable docker
+          linux: systemctl enable docker
+        command: systemctl enable docker
         skip_on_error: true
       - description: Add current user to docker group (Linux only)
         platforms:
-          linux: sudo usermod -aG docker $USER
-        command: sudo usermod -aG docker $USER
+          linux: usermod -aG docker $USER
+        command: usermod -aG docker $USER
         skip_on_error: true
 
 

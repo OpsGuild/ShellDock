@@ -8,14 +8,14 @@ versions:
     commands:
       - description: Install Certbot
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y certbot
-          debian: sudo apt-get update && sudo apt-get install -y certbot
-          centos: sudo yum install -y epel-release && sudo yum install -y certbot
-          rhel: sudo yum install -y epel-release && sudo yum install -y certbot
-          fedora: sudo dnf install -y certbot
-          arch: sudo pacman -S --noconfirm certbot
+          ubuntu: apt-get update && apt-get install -y certbot
+          debian: apt-get update && apt-get install -y certbot
+          centos: yum install -y epel-release && yum install -y certbot
+          rhel: yum install -y epel-release && yum install -y certbot
+          fedora: dnf install -y certbot
+          arch: pacman -S --noconfirm certbot
           darwin: brew install certbot
-        command: sudo apt-get update && sudo apt-get install -y certbot
+        command: apt-get update && apt-get install -y certbot
         skip_on_error: false
       - description: Verify Certbot installation
         command: certbot --version
@@ -27,14 +27,14 @@ versions:
     commands:
       - description: Install Certbot with Nginx plugin
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
-          debian: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
-          centos: sudo yum install -y epel-release && sudo yum install -y certbot python3-certbot-nginx
-          rhel: sudo yum install -y epel-release && sudo yum install -y certbot python3-certbot-nginx
-          fedora: sudo dnf install -y certbot python3-certbot-nginx
-          arch: sudo pacman -S --noconfirm certbot certbot-nginx
+          ubuntu: apt-get update && apt-get install -y certbot python3-certbot-nginx
+          debian: apt-get update && apt-get install -y certbot python3-certbot-nginx
+          centos: yum install -y epel-release && yum install -y certbot python3-certbot-nginx
+          rhel: yum install -y epel-release && yum install -y certbot python3-certbot-nginx
+          fedora: dnf install -y certbot python3-certbot-nginx
+          arch: pacman -S --noconfirm certbot certbot-nginx
           darwin: brew install certbot
-        command: sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+        command: apt-get update && apt-get install -y certbot python3-certbot-nginx
         skip_on_error: false
       - description: Verify Certbot installation
         command: certbot --version

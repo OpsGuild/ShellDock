@@ -7,23 +7,23 @@ versions:
     commands:
       - description: Install Nginx
         platforms:
-          ubuntu: sudo apt-get update && sudo apt-get install -y nginx
-          debian: sudo apt-get update && sudo apt-get install -y nginx
-          centos: sudo yum install -y epel-release && sudo yum install -y nginx
-          rhel: sudo yum install -y epel-release && sudo yum install -y nginx
-          fedora: sudo dnf install -y nginx
-          arch: sudo pacman -S --noconfirm nginx
+          ubuntu: apt-get update && apt-get install -y nginx
+          debian: apt-get update && apt-get install -y nginx
+          centos: yum install -y epel-release && yum install -y nginx
+          rhel: yum install -y epel-release && yum install -y nginx
+          fedora: dnf install -y nginx
+          arch: pacman -S --noconfirm nginx
           darwin: brew install nginx
-        command: sudo apt-get update && sudo apt-get install -y nginx
+        command: apt-get update && apt-get install -y nginx
         skip_on_error: false
       - description: Enable and start Nginx service
         platforms:
-          linux: sudo systemctl enable nginx && sudo systemctl start nginx
+          linux: systemctl enable nginx && systemctl start nginx
           darwin: brew services start nginx
-        command: sudo systemctl enable nginx && sudo systemctl start nginx
+        command: systemctl enable nginx && systemctl start nginx
         skip_on_error: false
       - description: Verify Nginx is running
-        command: sudo systemctl status nginx --no-pager || nginx -v
+        command: systemctl status nginx --no-pager || nginx -v
         skip_on_error: false
       - description: Check Nginx version
         command: nginx -v
