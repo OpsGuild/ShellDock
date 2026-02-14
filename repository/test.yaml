@@ -70,4 +70,3 @@ versions:
           windows: powershell -Command "Write-Host 'ShellDock test successful on Windows'"
         command: echo "ShellDock test successful"
         skip_on_error: false
-

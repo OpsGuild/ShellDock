@@ -50,7 +50,3 @@ versions:
       - description: Verify Docker installation
         command: docker --version
         skip_on_error: false
-
-
-
-

@@ -45,4 +45,3 @@ versions:
           windows: powershell -Command "Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction; Get-NetFirewallRule -Direction Inbound -Enabled True | Select-Object -First 20 DisplayName, Action, Direction"
         command: ufw status verbose
         skip_on_error: false
-

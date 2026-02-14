@@ -31,7 +31,3 @@ versions:
             prompt: "Enter npm package names to install globally (space-separated, e.g., yarn pnpm)"
             default: "yarn pnpm"
             required: false
-
-
-
-

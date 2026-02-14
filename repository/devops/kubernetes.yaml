@@ -29,7 +29,3 @@ versions:
       - description: Verify Helm installation
         command: helm version
         skip_on_error: true
-
-
-
-

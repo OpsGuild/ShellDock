@@ -30,4 +30,3 @@ versions:
           - name: email
             prompt: "Enter your Git email address"
             required: true
-

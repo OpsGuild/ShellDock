@@ -185,6 +185,3 @@ versions:
             prompt: "Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)"
             default: "eth0"
             required: true
-
-  
-

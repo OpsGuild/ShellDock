@@ -44,4 +44,3 @@ versions:
       - description: List installed plugins
         command: certbot plugins
         skip_on_error: true
-

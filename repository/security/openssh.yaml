@@ -46,7 +46,7 @@ versions:
           fedora: systemctl enable sshd && systemctl start sshd
           arch: systemctl enable sshd && systemctl start sshd
           darwin: systemsetup -setremotelogin on
-          windows: powershell -Command "Set-Service -Name sshd -StartupType Automatic; Start-Service sshd"
+          windows: 'powershell -Command "Set-Service -Name sshd -StartupType Automatic; Start-Service sshd"'
         command: systemctl enable ssh && systemctl start ssh
         skip_on_error: false
       - description: Configure SSH firewall rule (allow port 22)
@@ -57,7 +57,7 @@ versions:
           rhel: firewall-cmd --permanent --add-service=ssh && firewall-cmd --reload 2>/dev/null || true
           fedora: firewall-cmd --permanent --add-service=ssh && firewall-cmd --reload 2>/dev/null || true
           arch: ufw allow ssh 2>/dev/null || true
-          windows: powershell -Command "New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -ErrorAction SilentlyContinue"
+          windows: 'powershell -Command "New-NetFirewallRule -Name ''OpenSSH-Server-In-TCP'' -DisplayName ''OpenSSH Server (sshd)'' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -ErrorAction SilentlyContinue"'
         command: ufw allow ssh 2>/dev/null || true
         skip_on_error: true
       - description: Allow ICMP ping (allow external connectivity checks)
@@ -69,7 +69,7 @@ versions:
           fedora: firewall-cmd --permanent --add-icmp-block-inversion 2>/dev/null; firewall-cmd --permanent --add-icmp-block=echo-reply 2>/dev/null || iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null || true; firewall-cmd --reload 2>/dev/null || true
           arch: iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null || true
           darwin: echo "ICMP ping is allowed by default on macOS"
-          windows: powershell -Command "New-NetFirewallRule -DisplayName 'Allow ICMPv4-In' -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -ErrorAction SilentlyContinue; New-NetFirewallRule -DisplayName 'Allow ICMPv6-In' -Protocol ICMPv6 -IcmpType 8 -Direction Inbound -Action Allow -ErrorAction SilentlyContinue"
+          windows: 'powershell -Command "New-NetFirewallRule -DisplayName ''Allow ICMPv4-In'' -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -ErrorAction SilentlyContinue; New-NetFirewallRule -DisplayName ''Allow ICMPv6-In'' -Protocol ICMPv6 -IcmpType 8 -Direction Inbound -Action Allow -ErrorAction SilentlyContinue"'
         command: ufw allow proto icmp 2>/dev/null || iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null || true
         skip_on_error: true
       - description: Verify SSH service status
@@ -81,14 +81,14 @@ versions:
           fedora: systemctl status sshd --no-pager
           arch: systemctl status sshd --no-pager
           darwin: systemsetup -getremotelogin
-          windows: powershell -Command "Get-Service sshd | Select-Object Name, Status, StartType"
+          windows: 'powershell -Command "Get-Service sshd | Select-Object Name, Status, StartType"'
         command: systemctl status ssh --no-pager
         skip_on_error: false
       - description: Display SSH connection information
         platforms:
           linux: 'echo "" && echo "========================================" && echo "  SSH Server is ready!" && echo "========================================" && echo "" && CURRENT_USER=$(whoami) && HOSTNAME=$(hostname) && IP_ADDR=$(hostname -I 2>/dev/null | awk "{print \$1}" || ip route get 1 2>/dev/null | awk "{print \$7; exit}") && echo "  Hostname : $HOSTNAME" && echo "  IP       : $IP_ADDR" && echo "" && echo "  To connect, run:" && echo "    ssh $CURRENT_USER@$HOSTNAME" && echo "    ssh $CURRENT_USER@$IP_ADDR" && echo "" && echo "========================================"'
           darwin: 'echo "" && echo "========================================" && echo "  SSH Server is ready!" && echo "========================================" && echo "" && CURRENT_USER=$(whoami) && HOSTNAME=$(hostname) && IP_ADDR=$(ipconfig getifaddr en0 2>/dev/null || echo "N/A") && echo "  Hostname : $HOSTNAME" && echo "  IP       : $IP_ADDR" && echo "" && echo "  To connect, run:" && echo "    ssh $CURRENT_USER@$HOSTNAME" && echo "    ssh $CURRENT_USER@$IP_ADDR" && echo "" && echo "========================================"'
-          windows: powershell -Command "$u = $env:USERNAME; $h = hostname; $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike '*Loopback*' -and $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1).IPAddress; Write-Host ''; Write-Host '========================================'; Write-Host '  SSH Server is ready!'; Write-Host '========================================'; Write-Host ''; Write-Host \"  Hostname : $h\"; Write-Host \"  IP       : $ip\"; Write-Host ''; Write-Host '  To connect, run:'; Write-Host \"    ssh $u@$h\"; Write-Host \"    ssh $u@$ip\"; Write-Host ''; Write-Host '========================================'"
+          windows: 'powershell -Command "$u = $env:USERNAME; $h = hostname; $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike ''*Loopback*'' -and $_.IPAddress -ne ''127.0.0.1'' } | Select-Object -First 1).IPAddress; Write-Host ''''; Write-Host ''========================================''; Write-Host ''  SSH Server is ready!''; Write-Host ''========================================''; Write-Host ''''; Write-Host \"  Hostname : $h\"; Write-Host \"  IP       : $ip\"; Write-Host ''''; Write-Host ''  To connect, run:''; Write-Host \"    ssh $u@$h\"; Write-Host \"    ssh $u@$ip\"; Write-Host ''''; Write-Host ''========================================''"'
         command: 'echo "" && echo "========================================" && echo "  SSH Server is ready!" && echo "========================================" && echo "" && CURRENT_USER=$(whoami) && HOSTNAME=$(hostname) && IP_ADDR=$(hostname -I 2>/dev/null | awk "{print \$1}" || ip route get 1 2>/dev/null | awk "{print \$7; exit}") && echo "  Hostname : $HOSTNAME" && echo "  IP       : $IP_ADDR" && echo "" && echo "  To connect, run:" && echo "    ssh $CURRENT_USER@$HOSTNAME" && echo "    ssh $CURRENT_USER@$IP_ADDR" && echo "" && echo "========================================"'
         skip_on_error: true
 
@@ -136,7 +136,7 @@ versions:
         platforms:
           linux: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
           darwin: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
-          windows: powershell -Command "icacls $env:USERPROFILE\.ssh\{{key_name}} /inheritance:r /grant:r \"$env:USERNAME:(R)\"; icacls $env:USERPROFILE\.ssh\{{key_name}}.pub /inheritance:r /grant:r \"$env:USERNAME:(R)\""
+          windows: 'powershell -Command "icacls $env:USERPROFILE\.ssh\{{key_name}} /inheritance:r /grant:r \"$env:USERNAME:(R)\"; icacls $env:USERPROFILE\.ssh\{{key_name}}.pub /inheritance:r /grant:r \"$env:USERNAME:(R)\""'
         command: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
         skip_on_error: true
         args:
@@ -148,7 +148,7 @@ versions:
         platforms:
           linux: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
           darwin: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
-          windows: powershell -Command "Write-Host ''; Write-Host '=== Your public key ==='; Get-Content $env:USERPROFILE\.ssh\{{key_name}}.pub; Write-Host ''; Write-Host 'Copy the key above to add to remote servers (~/.ssh/authorized_keys)'"
+          windows: 'powershell -Command "Write-Host ''''; Write-Host ''=== Your public key ===''; Get-Content $env:USERPROFILE\.ssh\{{key_name}}.pub; Write-Host ''''; Write-Host ''Copy the key above to add to remote servers (~/.ssh/authorized_keys)''"'
         command: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
         skip_on_error: false
         args:
@@ -160,7 +160,7 @@ versions:
         platforms:
           linux: eval "$(ssh-agent -s)" && ssh-add ~/.ssh/{{key_name}}
           darwin: eval "$(ssh-agent -s)" && ssh-add --apple-use-keychain ~/.ssh/{{key_name}} 2>/dev/null || ssh-add ~/.ssh/{{key_name}}
-          windows: powershell -Command "Get-Service ssh-agent | Set-Service -StartupType Automatic; Start-Service ssh-agent; ssh-add $env:USERPROFILE\.ssh\{{key_name}}"
+          windows: 'powershell -Command "Get-Service ssh-agent | Set-Service -StartupType Automatic; Start-Service ssh-agent; ssh-add $env:USERPROFILE\.ssh\{{key_name}}"'
         command: eval "$(ssh-agent -s)" && ssh-add ~/.ssh/{{key_name}}
         skip_on_error: true
         args:
@@ -168,4 +168,3 @@ versions:
             prompt: "Enter key file name used during generation"
             default: "id_ed25519"
             required: false
-

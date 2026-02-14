@@ -31,4 +31,3 @@ versions:
           windows: powershell -Command "go version"
         command: /usr/local/go/bin/go version
         skip_on_error: false
-

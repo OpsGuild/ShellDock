@@ -43,7 +43,3 @@ versions:
           windows: powershell -Command "python --version; pip --version"
         command: python3 --version && pip3 --version
         skip_on_error: false
-
-
-
-

@@ -34,4 +34,3 @@ versions:
       - description: Check Nginx version
         command: nginx -v
         skip_on_error: false
-

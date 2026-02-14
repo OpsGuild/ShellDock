@@ -22,4 +22,3 @@ versions:
       - description: Verify PM2 installation
         command: pm2 --version
         skip_on_error: false
-

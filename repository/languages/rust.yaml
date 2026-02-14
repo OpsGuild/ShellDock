@@ -26,4 +26,3 @@ versions:
           windows: powershell -Command "rustc --version; cargo --version"
         command: '$HOME/.cargo/bin/rustc --version && $HOME/.cargo/bin/cargo --version'
         skip_on_error: false
-
