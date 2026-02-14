@@ -119,7 +119,7 @@ versions:
         platforms:
           linux: echo "Skipped - not needed on Linux"
           darwin: echo "Skipped - not needed on macOS"
-          windows: 'cmd /c icacls "C:\ProgramData\ssh\administrators_authorized_keys" /grant:r "Administrators:(F)" 2>nul; Copy-Item $env:USERPROFILE\.ssh\authorized_keys C:\ProgramData\ssh\administrators_authorized_keys -Force; Write-Host "Copied to administrators_authorized_keys"'
+          windows: 'cmd /c "icacls C:\ProgramData\ssh\administrators_authorized_keys /grant:r Administrators:(F) 2>nul & copy /Y %USERPROFILE%\.ssh\authorized_keys C:\ProgramData\ssh\administrators_authorized_keys"'
         command: echo "Skipped - not needed on Linux"
         skip_on_error: true
       - description: Set correct permissions on authorized_keys
