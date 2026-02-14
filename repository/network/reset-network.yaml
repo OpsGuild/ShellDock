@@ -29,7 +29,7 @@ versions:
           arch: dhclient -r {{interface}} 2>/dev/null && sleep 2 && dhclient {{interface}} 2>/dev/null || (systemctl restart systemd-networkd && echo "Network service restarted")
           alpine: udhcpc -R -i {{interface}} && echo "IP address renewed"
           darwin: ipconfig set {{interface}} DHCP && echo "IP address renewed"
-          windows: powershell -Command "ipconfig /release; Start-Sleep -Seconds 2; ipconfig /renew; Write-Host 'IP address renewed'"
+          windows: powershell -Command "ipconfig /release '{{interface}}'; Start-Sleep -Seconds 2; ipconfig /renew '{{interface}}'; Write-Host 'IP address renewed on {{interface}}'"
         command: dhclient -r {{interface}} && sleep 2 && dhclient {{interface}} && echo "IP address renewed"
         skip_on_error: true
         args:
@@ -47,7 +47,7 @@ versions:
           arch: systemctl restart NetworkManager 2>/dev/null || systemctl restart systemd-networkd 2>/dev/null; echo "Network service restarted"
           alpine: rc-service networking restart 2>/dev/null; echo "Network service restarted"
           darwin: networksetup -setnetworkserviceenabled Wi-Fi off && sleep 2 && networksetup -setnetworkserviceenabled Wi-Fi on; echo "Network service restarted"
-          windows: powershell -Command "Restart-Service -Name 'NetMan' -Force -ErrorAction SilentlyContinue; Restart-Service -Name 'Dhcp' -Force -ErrorAction SilentlyContinue; Write-Host 'Network services restarted'"
+          windows: powershell -Command "Restart-Service -Name 'Dhcp' -Force -ErrorAction SilentlyContinue; Write-Host 'DHCP service restarted'"
         command: systemctl restart NetworkManager 2>/dev/null || systemctl restart networking 2>/dev/null || systemctl restart systemd-networkd 2>/dev/null; echo "Network service restarted"
         skip_on_error: true
       - description: Reset network stack (deep reset)
@@ -60,7 +60,7 @@ versions:
           arch: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
           alpine: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
           darwin: ifconfig {{interface}} down && sleep 2 && ifconfig {{interface}} up && echo "Network stack reset"
-          windows: powershell -Command "netsh winsock reset | Out-Null; netsh int ip reset | Out-Null; Write-Host 'Network stack reset'"
+          windows: powershell -Command "Disable-NetAdapter -Name '{{interface}}' -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name '{{interface}}'; Start-Sleep -Seconds 3; Write-Host 'Adapter {{interface}} reset complete'"
         command: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
         skip_on_error: true
         args:
@@ -78,7 +78,7 @@ versions:
           arch: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
           alpine: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
           darwin: echo "=== Interface Status ===" && ifconfig {{interface}} | head -5 && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
-          windows: powershell -Command "Write-Host '=== Interface Status ===' -ForegroundColor Cyan; Get-NetAdapter '{{interface}}' | Select-Object Name, Status, LinkSpeed; Write-Host ''; Write-Host '=== IP Configuration ===' -ForegroundColor Cyan; Get-NetIPAddress -InterfaceAlias '{{interface}}' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object IPAddress, PrefixLength; Write-Host ''; Write-Host '=== DNS Test ===' -ForegroundColor Cyan; Resolve-DnsName google.com -ErrorAction SilentlyContinue | Select-Object -First 2 Name, IPAddress; Write-Host ''; Write-Host '=== Connectivity ===' -ForegroundColor Cyan; if (Test-Connection 8.8.8.8 -Count 2 -ErrorAction SilentlyContinue) { Write-Host 'Network OK' -ForegroundColor Green } else { Write-Host 'Network FAILED - try restarting your computer' -ForegroundColor Red }"
+          windows: powershell -Command "Write-Host '=== Interface Status ===' -ForegroundColor Cyan; $a = Get-NetAdapter '{{interface}}'; Write-Host ('  Name: ' + $a.Name + '  Status: ' + $a.Status + '  Speed: ' + $a.LinkSpeed); Write-Host ''; Write-Host '=== IP Configuration ===' -ForegroundColor Cyan; $ip = Get-NetIPAddress -InterfaceAlias '{{interface}}' -AddressFamily IPv4 -ErrorAction SilentlyContinue; if ($ip) { Write-Host ('  IP: ' + $ip.IPAddress + '/' + $ip.PrefixLength) } else { Write-Host '  No IPv4 address assigned' -ForegroundColor Yellow }; Write-Host ''; Write-Host '=== DNS Test ===' -ForegroundColor Cyan; $dns = Resolve-DnsName google.com -ErrorAction SilentlyContinue; if ($dns) { Write-Host ('  google.com -> ' + ($dns | Select-Object -First 1).IPAddress) } else { Write-Host '  DNS resolution failed' -ForegroundColor Yellow }; Write-Host ''; Write-Host '=== Connectivity ===' -ForegroundColor Cyan; if (Test-Connection 8.8.8.8 -Count 2 -ErrorAction SilentlyContinue) { Write-Host '  Network OK' -ForegroundColor Green } else { Write-Host '  Network FAILED - try restarting your computer' -ForegroundColor Red }"
         command: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
         skip_on_error: true
         args:
