@@ -92,6 +92,70 @@ versions:
         command: 'echo "" && echo "========================================" && echo "  SSH Server is ready!" && echo "========================================" && echo "" && CURRENT_USER=$(whoami) && HOSTNAME=$(hostname) && IP_ADDR=$(hostname -I 2>/dev/null | awk "{print \$1}" || ip route get 1 2>/dev/null | awk "{print \$7; exit}") && echo "  Hostname : $HOSTNAME" && echo "  IP       : $IP_ADDR" && echo "" && echo "  To connect, run:" && echo "    ssh $CURRENT_USER@$HOSTNAME" && echo "    ssh $CURRENT_USER@$IP_ADDR" && echo "" && echo "========================================"'
         skip_on_error: true
 
+  - version: "v3"
+    tag: authorize
+    latest: false
+    description: Authorize a public key for incoming SSH connections (run on the server)
+    commands:
+      - description: Create authorized_keys file with correct permissions
+        platforms:
+          linux: mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && echo "authorized_keys file ready"
+          darwin: mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && echo "authorized_keys file ready"
+          windows: 'New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh | Out-Null; New-Item -ItemType File -Force -Path $env:USERPROFILE\.ssh\authorized_keys -ErrorAction SilentlyContinue | Out-Null; Write-Host "authorized_keys file ready"'
+        command: mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && echo "authorized_keys file ready"
+        skip_on_error: false
+      - description: Add public key to authorized_keys
+        platforms:
+          linux: echo "{{public_key}}" >> ~/.ssh/authorized_keys && echo "Public key added to authorized_keys"
+          darwin: echo "{{public_key}}" >> ~/.ssh/authorized_keys && echo "Public key added to authorized_keys"
+          windows: 'Add-Content -Path $env:USERPROFILE\.ssh\authorized_keys -Value "{{public_key}}"; Write-Host "Public key added to authorized_keys"'
+        command: echo "{{public_key}}" >> ~/.ssh/authorized_keys && echo "Public key added to authorized_keys"
+        skip_on_error: false
+        args:
+          - name: public_key
+            prompt: "Paste the full public key (e.g., ssh-ed25519 AAAA... user@host)"
+            required: true
+      - description: Copy key to administrators authorized_keys (Windows admin users)
+        platforms:
+          linux: echo "Skipped - not needed on Linux"
+          darwin: echo "Skipped - not needed on macOS"
+          windows: 'Copy-Item $env:USERPROFILE\.ssh\authorized_keys C:\ProgramData\ssh\administrators_authorized_keys -Force; Write-Host "Copied to administrators_authorized_keys"'
+        command: echo "Skipped - not needed on Linux"
+        skip_on_error: true
+      - description: Set correct permissions on authorized_keys
+        platforms:
+          linux: chmod 600 ~/.ssh/authorized_keys && chown $(whoami) ~/.ssh/authorized_keys && echo "Permissions set on authorized_keys"
+          darwin: chmod 600 ~/.ssh/authorized_keys && chown $(whoami) ~/.ssh/authorized_keys && echo "Permissions set on authorized_keys"
+          windows: 'cmd /c icacls "C:\ProgramData\ssh\administrators_authorized_keys" /inheritance:r /grant:r "SYSTEM:(R)" /grant:r "Administrators:(R)"; cmd /c icacls "%USERPROFILE%\.ssh\authorized_keys" /inheritance:r /grant:r "%USERNAME%:(R)"'
+        command: chmod 600 ~/.ssh/authorized_keys && chown $(whoami) ~/.ssh/authorized_keys && echo "Permissions set on authorized_keys"
+        skip_on_error: true
+      - description: Enable public key authentication in sshd_config
+        platforms:
+          linux: 'sed -i "s/^#PubkeyAuthentication yes/PubkeyAuthentication yes/" /etc/ssh/sshd_config && sed -i "s/^PubkeyAuthentication no/PubkeyAuthentication yes/" /etc/ssh/sshd_config && echo "PubkeyAuthentication enabled"'
+          darwin: 'sed -i "" "s/^#PubkeyAuthentication yes/PubkeyAuthentication yes/" /etc/ssh/sshd_config && echo "PubkeyAuthentication enabled"'
+          windows: 'cmd /c copy C:\ProgramData\ssh\sshd_config C:\ProgramData\ssh\sshd_config.bak; (Get-Content C:\ProgramData\ssh\sshd_config) -replace "^#PubkeyAuthentication yes","PubkeyAuthentication yes" -replace "^PubkeyAuthentication no","PubkeyAuthentication yes" | Set-Content C:\ProgramData\ssh\sshd_config; Write-Host "PubkeyAuthentication enabled in sshd_config"'
+        command: 'sed -i "s/^#PubkeyAuthentication yes/PubkeyAuthentication yes/" /etc/ssh/sshd_config && sed -i "s/^PubkeyAuthentication no/PubkeyAuthentication yes/" /etc/ssh/sshd_config && echo "PubkeyAuthentication enabled"'
+        skip_on_error: true
+      - description: Restart SSH service to apply changes
+        platforms:
+          ubuntu: systemctl restart ssh && echo "SSH service restarted"
+          debian: systemctl restart ssh && echo "SSH service restarted"
+          centos: systemctl restart sshd && echo "SSH service restarted"
+          rhel: systemctl restart sshd && echo "SSH service restarted"
+          fedora: systemctl restart sshd && echo "SSH service restarted"
+          arch: systemctl restart sshd && echo "SSH service restarted"
+          darwin: launchctl stop com.openssh.sshd && launchctl start com.openssh.sshd && echo "SSH service restarted"
+          windows: 'Restart-Service sshd; Write-Host "SSH service restarted"'
+        command: systemctl restart ssh && echo "SSH service restarted"
+        skip_on_error: false
+      - description: Display connection information
+        platforms:
+          linux: 'echo "" && echo "========================================" && echo "  SSH Server ready for key-based auth!" && echo "========================================" && echo "" && echo "  From the client machine, connect with:" && echo "    ssh $(whoami)@$(hostname -I 2>/dev/null | cut -d'' '' -f1)" && echo "" && echo "========================================"'
+          darwin: 'echo "" && echo "========================================" && echo "  SSH Server ready for key-based auth!" && echo "========================================" && echo "" && echo "  From the client machine, connect with:" && echo "    ssh $(whoami)@$(ipconfig getifaddr en0 2>/dev/null)" && echo "" && echo "========================================"'
+          windows: 'Write-Host ""; Write-Host "========================================"; Write-Host "  SSH Server ready for key-based auth!"; Write-Host "========================================"; Write-Host ""; Write-Host "  From the client machine, connect with:"; Write-Host "    ssh $env:USERNAME@$(hostname)"; Write-Host ""; Write-Host "========================================"'
+        command: 'echo "" && echo "========================================" && echo "  SSH Server ready for key-based auth!" && echo "========================================" && echo "" && echo "  From the client machine, connect with:" && echo "    ssh $(whoami)@$(hostname -I 2>/dev/null | cut -d'' '' -f1)" && echo "" && echo "========================================"'
+        skip_on_error: true
+
   - version: "v2"
     tag: setup
     latest: false
@@ -122,7 +186,7 @@ versions:
             required: false
           - name: comment
             prompt: "Enter a comment for the key (e.g., your email)"
-            default: ""
+            default: "shelldock-key"
             required: false
           - name: key_name
             prompt: "Enter key file name (e.g., id_ed25519, id_rsa)"

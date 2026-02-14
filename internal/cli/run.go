@@ -270,9 +270,7 @@ func collectCommandArgs(cmd repo.Command, providedArgs map[string]string) map[st
 			fmt.Fprintf(os.Stderr, "Error: Required argument '%s' is missing\n", argDef.Name)
 			os.Exit(1)
 		}
-		if value != "" {
-			result[argDef.Name] = value
-		}
+		result[argDef.Name] = value
 	}
 	
 	return result
