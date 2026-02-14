@@ -30,15 +30,15 @@ versions:
         command: echo "Hello from ShellDock v1.1.0!"  # Fallback
       - description: Show package manager
         platforms:
-          ubuntu: echo "Package manager: apt"
-          debian: echo "Package manager: apt"
-          centos: echo "Package manager: yum"
-          rhel: echo "Package manager: yum"
-          fedora: echo "Package manager: dnf"
-          arch: echo "Package manager: pacman"
-          darwin: echo "Package manager: brew"
-          windows: echo "Package manager: choco"
-        command: echo "Package manager: unknown"
+          ubuntu: 'echo "Package manager: apt"'
+          debian: 'echo "Package manager: apt"'
+          centos: 'echo "Package manager: yum"'
+          rhel: 'echo "Package manager: yum"'
+          fedora: 'echo "Package manager: dnf"'
+          arch: 'echo "Package manager: pacman"'
+          darwin: 'echo "Package manager: brew"'
+          windows: 'echo "Package manager: choco"'
+        command: 'echo "Package manager: unknown"'
       - description: Show current date
         command: date
       - description: List current directory
@@ -89,6 +89,3 @@ versions:
           windows: ipconfig
         command: ifconfig | head -10 || echo "Network info not available"
         skip_on_error: true
-
-
-

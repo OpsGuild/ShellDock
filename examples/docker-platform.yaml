@@ -26,7 +26,3 @@ commands:
       darwin: echo "Docker auto-starts on macOS"
       windows: Set-Service -Name docker -StartupType Automatic
     skip_on_error: true
-
-
-
-

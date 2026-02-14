@@ -18,4 +18,3 @@ modules:
         path: shelldock-linux-amd64
       - type: dir
         path: repository
-

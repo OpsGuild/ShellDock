@@ -26,7 +26,3 @@ commands:
   - description: Add current user to docker group
     command: usermod -aG docker $USER
     skip_on_error: true
-
-
-
-

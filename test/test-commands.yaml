@@ -10,6 +10,3 @@ commands:
     command: ls -la | head -5
   - description: Show system info
     command: uname -a
-
-
-
