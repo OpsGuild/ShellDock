@@ -53,7 +53,8 @@ type VersionedCommandSet struct {
 
 // Repository manages command sets
 type Repository struct {
-	path string
+	path      string
+	needsSync bool
 }
 
 // NewRepository creates a new repository instance
@@ -460,4 +461,9 @@ func (r *Repository) Exists(name string) bool {
 // GetPath returns the repository path
 func (r *Repository) GetPath() string {
 	return r.path
+}
+
+// NeedsSync returns true if the repository needs initial sync
+func (r *Repository) NeedsSync() bool {
+	return r.needsSync
 }

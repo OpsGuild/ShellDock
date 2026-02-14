@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 const (
@@ -28,7 +29,6 @@ func NewManager() (*Manager, error) {
 	localRepo := NewRepository(localPath)
 
 	// Try to find bundled repository (installed with package)
-	// Check common installation paths
 	bundledPaths := []string{
 		"/usr/share/shelldock/repository",  // Standard Linux location
 		"/usr/local/share/shelldock/repository", // Alternative location
@@ -36,6 +36,22 @@ func NewManager() (*Manager, error) {
 		filepath.Join(filepath.Dir(os.Args[0]), "repository"), // Same directory as executable
 		"repository", // Current directory (for development)
 	}
+
+	// Add Windows-specific paths
+	if runtime.GOOS == "windows" {
+		programData := os.Getenv("ProgramData")
+		if programData == "" {
+			programData = `C:\ProgramData`
+		}
+		bundledPaths = append([]string{
+			filepath.Join(programData, "shelldock", "repository"),
+			filepath.Join(os.Getenv("ProgramFiles"), "shelldock", "repository"),
+		}, bundledPaths...)
+	}
+
+	// Add user-level fallback path (works on all platforms without sudo)
+	userRepoPath := filepath.Join(homeDir, ".shelldock", "repository")
+	bundledPaths = append(bundledPaths, userRepoPath)
 
 	var bundledRepo *Repository
 	for _, path := range bundledPaths {
@@ -47,9 +63,15 @@ func NewManager() (*Manager, error) {
 		}
 	}
 
-	// If no bundled repo found, create a dummy one (won't find anything but won't crash)
+	// If no bundled repo found, auto-sync to user-level path
 	if bundledRepo == nil {
-		bundledRepo = NewRepository("/dev/null") // Dummy path that won't exist
+		fmt.Println("📦 No command repository found. Running initial sync...")
+		if err := os.MkdirAll(userRepoPath, 0755); err == nil {
+			bundledRepo = NewRepository(userRepoPath)
+			bundledRepo.needsSync = true
+		} else {
+			bundledRepo = NewRepository("/dev/null")
+		}
 	}
 
 	return &Manager{
