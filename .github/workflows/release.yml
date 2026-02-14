@@ -149,7 +149,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -182,16 +182,16 @@ jobs:
           mkdir -p dist/deb/usr/local/bin
           mkdir -p dist/deb/usr/share/doc/shelldock
           mkdir -p dist/deb/usr/share/shelldock/repository
-          
+
           cp ./build/shelldock-linux-amd64 dist/deb/usr/local/bin/shelldock
           cp README.md dist/deb/usr/share/doc/shelldock/
           # Copy repository with all subdirectories
           cp -r repository/. dist/deb/usr/share/shelldock/repository/ 2>/dev/null || true
-          
+
           sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/deb/control > dist/deb/DEBIAN/control
           cp packaging/deb/postinst dist/deb/DEBIAN/postinst
           chmod +x dist/deb/DEBIAN/postinst
-          
+
           dpkg-deb --build dist/deb dist/shelldock_${{ steps.version.outputs.version }}_amd64.deb
 
       - name: Build RPM package
@@ -200,7 +200,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm
           mkdir -p dist/rpm/BUILD dist/rpm/BUILDROOT dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS
-          
+
           # Create source tarball structure
           VERSION="${{ steps.version.outputs.version }}"
           mkdir -p dist/rpm/tmp/shelldock-${VERSION}
@@ -208,16 +208,16 @@ jobs:
           cp README.md dist/rpm/tmp/shelldock-${VERSION}/
           # Copy repository with all subdirectories
           cp -r repository/. dist/rpm/tmp/shelldock-${VERSION}/repository/ 2>/dev/null || true
-          
+
           # Create tarball
           cd dist/rpm/tmp
           tar czf ../SOURCES/shelldock-${VERSION}.tar.gz shelldock-${VERSION}
           cd ../../..
-          
+
           # Create spec file with proper date and architecture
           CHANGELOG_DATE=$(date +"%a %b %d %Y")
           sed -e "s/VERSION/${VERSION}/g" -e "s/Wed Jan 01 2024/${CHANGELOG_DATE}/g" -e "s/BuildArch:      noarch/BuildArch:      x86_64/g" packaging/rpm/shelldock.spec > dist/rpm/SPECS/shelldock.spec
-          
+
           rpmbuild --define "_topdir $(pwd)/dist/rpm" -bb dist/rpm/SPECS/shelldock.spec
 
       - name: Upload package
@@ -277,15 +277,15 @@ jobs:
         run: |
           mkdir -p apt-repo/dists/stable/main/binary-amd64
           mkdir -p apt-repo/dists/stable/main/binary-arm64
-          
+
           # Move .deb files to pool
           find apt-repo/pool -name "*.deb" -exec mv {} apt-repo/pool/main/s/shelldock/ \;
-          
+
           # Generate Packages file for amd64
           cd apt-repo
           dpkg-scanpackages --arch amd64 pool/main > dists/stable/main/binary-amd64/Packages 2>/dev/null || true
           gzip -k dists/stable/main/binary-amd64/Packages
-          
+
           # Generate Packages file for arm64 (if available)
           dpkg-scanpackages --arch arm64 pool/main > dists/stable/main/binary-arm64/Packages 2>/dev/null || true
           gzip -k dists/stable/main/binary-arm64/Packages 2>/dev/null || true
@@ -310,7 +310,7 @@ jobs:
           EOF
             exit 0
           fi
-          
+
           cd apt-repo/dists/stable
           cat > Release << EOF
           Origin: ShellDock
@@ -322,7 +322,7 @@ jobs:
           Components: main
           Description: ShellDock APT Repository
           EOF
-          
+
           # Add file hashes
           find main -type f | while read file; do
             echo " $(md5sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file" >> Release
@@ -401,7 +401,7 @@ jobs:
             packaging/snap/snapcraft.yaml.template > snap/snapcraft.yaml
           echo "Generated snapcraft.yaml:"
           cat snap/snapcraft.yaml
-          
+
           # Verify repository directory exists for snap
           if [ ! -d "repository" ]; then
             echo "⚠️  Warning: repository directory not found"
@@ -468,7 +468,7 @@ jobs:
           # flatpak-builder looks for sources relative to the manifest file location
           cp -r repository flatpak/ 2>/dev/null || (echo "Warning: repository directory not found" && mkdir -p flatpak/repository)
           cp packaging/flatpak/com.github.opsguild.shelldock.yml flatpak/
-          
+
           # Verify repository was copied
           if [ -d "flatpak/repository" ]; then
             echo "✅ Repository directory copied to flatpak/"
@@ -495,22 +495,22 @@ jobs:
           echo "$FLATHUB_SSH_KEY" > ~/.ssh/flathub_key
           chmod 600 ~/.ssh/flathub_key
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          
+
           # Clone Flathub repository
           git clone git@github.com:flathub/com.github.opsguild.shelldock.git flathub-repo || \
           git clone https://github.com/flathub/com.github.opsguild.shelldock.git flathub-repo || \
           echo "Flathub repository not found. You may need to submit to Flathub first."
-          
+
           if [ -d flathub-repo ]; then
             cd flathub-repo
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            
+
             # Update manifest with new version
             FLATPAK_FILE=$(ls ../*.flatpak | head -1)
             # Extract and update version in manifest if needed
             # This is a simplified version - you may need to adjust based on your Flathub manifest structure
-            
+
             git add .
             git diff --staged --quiet || git commit -m "Update to ${{ github.ref_name }}"
             git push origin master || git push origin main || echo "Push failed"
@@ -583,7 +583,7 @@ jobs:
             url "https://github.com/OpsGuild/ShellDock/archive/${{ github.ref_name }}.tar.gz"
             version "${{ steps.version.outputs.version }}"
             sha256 "${{ steps.sha256_amd64.outputs.sha256 }}"
-            
+
             on_macos do
               if Hardware::CPU.intel?
                 url "https://github.com/OpsGuild/ShellDock/releases/download/${{ github.ref_name }}/shelldock-darwin-amd64"
@@ -593,13 +593,13 @@ jobs:
                 sha256 "${{ steps.sha256_arm64.outputs.sha256 }}"
               end
             end
-            
+
             def install
               if OS.mac?
                 bin.install "shelldock-darwin-#{Hardware::CPU.arch == "arm64" ? "arm64" : "amd64"}" => "shelldock"
               end
             end
-            
+
             test do
               system "#{bin}/shelldock", "--version"
             end
@@ -616,13 +616,13 @@ jobs:
             echo "To enable Homebrew tap, create https://github.com/OpsGuild/homebrew-tap and add HOMEBREW_TAP_TOKEN"
             exit 0
           fi
-          
+
           # Verify token format (fine-grained tokens start with github_pat_)
           if [[ "$HOMEBREW_TAP_TOKEN" != github_pat_* ]]; then
             echo "⚠️  Warning: Token doesn't appear to be a fine-grained token (should start with 'github_pat_')"
             echo "If using a classic token, ensure it has 'repo' scope"
           fi
-          
+
           # Clone tap repository with token
           echo "Cloning homebrew-tap repository..."
           if ! git clone https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git homebrew-tap; then
@@ -633,28 +633,28 @@ jobs:
             echo "  3. If organization has SSO, token must be authorized for SSO"
             exit 1
           fi
-          
+
           cd homebrew-tap
-          
+
           # Determine the default branch
           DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}' || echo "main")
           echo "Using branch: $DEFAULT_BRANCH"
-          
+
           # Checkout the default branch
           git checkout $DEFAULT_BRANCH 2>/dev/null || git checkout -b $DEFAULT_BRANCH
-          
+
           # Update remote URL to include token for push operations
           git remote set-url origin https://${HOMEBREW_TAP_TOKEN}@github.com/OpsGuild/homebrew-tap.git
-          
+
           # Copy formula
           mkdir -p Formula
           cp ../Formula/shelldock.rb Formula/
-          
+
           # Commit and push
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/shelldock.rb
-          
+
           if ! git diff --staged --quiet; then
             git commit -m "Update shelldock to ${{ github.ref_name }}"
             echo "Pushing to homebrew-tap..."
@@ -706,7 +706,7 @@ jobs:
         run: |
           mkdir -p chocolatey\shelldock\tools
           Move-Item shelldock-windows-amd64.exe chocolatey\shelldock\tools\shelldock.exe
-          
+
           # Copy repository with all subdirectories
           if (Test-Path "repository") {
             New-Item -ItemType Directory -Path "chocolatey\shelldock\tools\repository" -Force | Out-Null
@@ -715,12 +715,12 @@ jobs:
           } else {
             Write-Warning "Repository directory not found"
           }
-          
+
           # Copy icon if it exists
           if (Test-Path "static\images\icon.jpg") {
             Copy-Item "static\images\icon.jpg" "chocolatey\shelldock\tools\icon.jpg"
           }
-          
+
           # Copy LICENSE.txt from root LICENSE file
           if (Test-Path "LICENSE") {
             Copy-Item "LICENSE" "chocolatey\shelldock\tools\LICENSE.txt"
@@ -728,7 +728,7 @@ jobs:
             Write-Warning "LICENSE file not found, creating default MIT license"
             "MIT License`n`nCopyright (c) 2024 OpsGuild" | Out-File -Encoding UTF8 chocolatey\shelldock\tools\LICENSE.txt
           }
-          
+
           # Copy VERIFICATION.txt from packaging directory
           if (Test-Path "packaging\chocolatey\VERIFICATION.txt") {
             Copy-Item "packaging\chocolatey\VERIFICATION.txt" "chocolatey\shelldock\tools\VERIFICATION.txt"
@@ -736,21 +736,21 @@ jobs:
             Write-Warning "VERIFICATION.txt not found, creating default"
             "VERIFICATION`n`nThe software is open source and available at:`nhttps://github.com/OpsGuild/ShellDock" | Out-File -Encoding UTF8 chocolatey\shelldock\tools\VERIFICATION.txt
           }
-          
+
           # Copy chocolateyUninstall.ps1 from packaging directory
           if (Test-Path "packaging\chocolatey\chocolateyUninstall.ps1") {
             Copy-Item "packaging\chocolatey\chocolateyUninstall.ps1" "chocolatey\shelldock\tools\chocolateyUninstall.ps1"
           } else {
             Write-Warning "chocolateyUninstall.ps1 not found"
           }
-          
+
           # Copy chocolateyInstall.ps1 from packaging directory
           if (Test-Path "packaging\chocolatey\chocolateyInstall.ps1") {
             Copy-Item "packaging\chocolatey\chocolateyInstall.ps1" "chocolatey\shelldock\tools\chocolateyinstall.ps1"
           } else {
             Write-Warning "chocolateyInstall.ps1 not found"
           }
-          
+
           # Create nuspec with dynamic version from template
           $VERSION = "${{ steps.version.outputs.version }}"
           $nuspec = Get-Content "packaging\chocolatey\shelldock.nuspec.template" -Raw -ErrorAction SilentlyContinue
@@ -934,7 +934,7 @@ jobs:
         run: |
           # Create a clean release directory
           mkdir -p release-files
-          
+
           # Copy unique files (avoid duplicates)
           find release-assets -name "*.deb" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
           find release-assets -name "*.rpm" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
@@ -943,15 +943,15 @@ jobs:
           find release-assets -name "*.nupkg" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
           find release-assets -name "*.exe" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
           find release-assets -name "PKGBUILD" -type f | head -1 | xargs -I {} cp {} release-files/ 2>/dev/null || true
-          
+
           # Copy binaries (shelldock-* but not .deb/.rpm/etc)
           find release-assets -name "shelldock-*" -type f ! -name "*.deb" ! -name "*.rpm" ! -name "*.snap" ! -name "*.flatpak" ! -name "*.nupkg" ! -name "*.exe" -exec cp {} release-files/ \; 2>/dev/null || true
-          
+
           # Extract GPG key if it exists
           if [ -f release-assets/apt-repository/apt-repo/gpg.key ]; then
             cp release-assets/apt-repository/apt-repo/gpg.key release-files/gpg.key
           fi
-          
+
           # List files to be uploaded
           echo "Files to upload:"
           ls -lh release-files/ || true
