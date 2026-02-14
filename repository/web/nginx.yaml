@@ -14,15 +14,21 @@ versions:
           fedora: dnf install -y nginx
           arch: pacman -S --noconfirm nginx
           darwin: brew install nginx
+          windows: powershell -Command "winget install -e --id Nginx.Nginx --accept-source-agreements --accept-package-agreements"
         command: apt-get update && apt-get install -y nginx
         skip_on_error: false
       - description: Enable and start Nginx service
         platforms:
           linux: systemctl enable nginx && systemctl start nginx
           darwin: brew services start nginx
+          windows: powershell -Command "Start-Process -FilePath 'C:\nginx\nginx.exe' -WorkingDirectory 'C:\nginx'"
         command: systemctl enable nginx && systemctl start nginx
         skip_on_error: false
       - description: Verify Nginx is running
+        platforms:
+          linux: systemctl status nginx --no-pager || nginx -v
+          darwin: nginx -v
+          windows: powershell -Command "Get-Process nginx -ErrorAction SilentlyContinue | Select-Object Id, ProcessName; nginx -v"
         command: systemctl status nginx --no-pager || nginx -v
         skip_on_error: false
       - description: Check Nginx version

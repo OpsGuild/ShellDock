@@ -1,0 +1,189 @@
+name: alias-ip
+description: Add or remove IP address aliases on network interfaces
+versions:
+  - version: "v1"
+    tag: add
+    latest: true
+    description: Add an alias IP address to a network interface
+    commands:
+      - description: List current network interfaces and IPs
+        platforms:
+          ubuntu: ip addr show
+          debian: ip addr show
+          centos: ip addr show
+          rhel: ip addr show
+          fedora: ip addr show
+          arch: ip addr show
+          alpine: ip addr show
+          darwin: ifconfig
+          windows: powershell -Command "Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize"
+        command: ip addr show
+        skip_on_error: true
+      - description: Add alias IP address to interface
+        platforms:
+          ubuntu: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          debian: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          centos: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          rhel: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          fedora: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          arch: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          alpine: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+          darwin: ifconfig {{interface}} alias {{ip_address}}/{{prefix}}
+          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource $true"
+        command: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
+        skip_on_error: false
+        args:
+          - name: ip_address
+            prompt: "Enter the alias IP address to add (e.g., 192.168.1.100)"
+            required: true
+          - name: prefix
+            prompt: "Enter the subnet prefix length (e.g., 24 for /24)"
+            default: "24"
+            required: false
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
+            default: "eth0"
+            required: true
+          - name: label
+            prompt: "Enter the alias label number (e.g., 0, 1, 2)"
+            default: "0"
+            required: false
+      - description: Make alias IP persistent (survives reboot)
+        platforms:
+          ubuntu: 'echo -e "\nauto {{interface}}:{{label}}\niface {{interface}}:{{label}} inet static\n    address {{ip_address}}\n    netmask {{netmask}}" >> /etc/network/interfaces && echo "Alias IP added to /etc/network/interfaces"'
+          debian: 'echo -e "\nauto {{interface}}:{{label}}\niface {{interface}}:{{label}} inet static\n    address {{ip_address}}\n    netmask {{netmask}}" >> /etc/network/interfaces && echo "Alias IP added to /etc/network/interfaces"'
+          centos: 'cat > /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} << EOF\nDEVICE={{interface}}:{{label}}\nIPADDR={{ip_address}}\nNETMASK={{netmask}}\nONBOOT=yes\nEOF\necho "Alias IP config created at /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}}"'
+          rhel: 'cat > /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} << EOF\nDEVICE={{interface}}:{{label}}\nIPADDR={{ip_address}}\nNETMASK={{netmask}}\nONBOOT=yes\nEOF\necho "Alias IP config created at /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}}"'
+          fedora: 'nmcli connection modify {{interface}} +ipv4.addresses "{{ip_address}}/{{prefix}}" && nmcli connection up {{interface}}'
+          arch: 'echo -e "\n[Address]\nAddress={{ip_address}}/{{prefix}}\nLabel={{interface}}:{{label}}" >> /etc/systemd/network/{{interface}}.network && systemctl restart systemd-networkd'
+          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource $true; Write-Host 'Windows IP aliases are persistent by default'"
+        command: 'echo -e "\nauto {{interface}}:{{label}}\niface {{interface}}:{{label}} inet static\n    address {{ip_address}}\n    netmask {{netmask}}" >> /etc/network/interfaces && echo "Alias IP added to /etc/network/interfaces"'
+        skip_on_error: true
+        args:
+          - name: ip_address
+            prompt: "Enter the alias IP address (e.g., 192.168.1.100)"
+            required: true
+          - name: prefix
+            prompt: "Enter the subnet prefix length (e.g., 24)"
+            default: "24"
+            required: false
+          - name: netmask
+            prompt: "Enter the subnet mask (e.g., 255.255.255.0)"
+            default: "255.255.255.0"
+            required: false
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33)"
+            default: "eth0"
+            required: true
+          - name: label
+            prompt: "Enter the alias label number (e.g., 0, 1, 2)"
+            default: "0"
+            required: false
+      - description: Verify alias IP was added
+        platforms:
+          ubuntu: ip addr show | grep {{ip_address}}
+          debian: ip addr show | grep {{ip_address}}
+          centos: ip addr show | grep {{ip_address}}
+          rhel: ip addr show | grep {{ip_address}}
+          fedora: ip addr show | grep {{ip_address}}
+          arch: ip addr show | grep {{ip_address}}
+          alpine: ip addr show | grep {{ip_address}}
+          darwin: ifconfig | grep {{ip_address}}
+          windows: powershell -Command "Get-NetIPAddress | Where-Object { $_.IPAddress -eq '{{ip_address}}' } | Format-Table -AutoSize"
+        command: ip addr show | grep {{ip_address}}
+        skip_on_error: false
+        args:
+          - name: ip_address
+            prompt: "Enter the alias IP address to verify (e.g., 192.168.1.100)"
+            required: true
+
+  - version: "v2"
+    tag: remove
+    latest: false
+    description: Remove an alias IP address from a network interface
+    commands:
+      - description: List current network interfaces and IPs
+        platforms:
+          ubuntu: ip addr show
+          debian: ip addr show
+          centos: ip addr show
+          rhel: ip addr show
+          fedora: ip addr show
+          arch: ip addr show
+          alpine: ip addr show
+          darwin: ifconfig
+          windows: powershell -Command "Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize"
+        command: ip addr show
+        skip_on_error: true
+      - description: Remove alias IP address from interface
+        platforms:
+          ubuntu: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          debian: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          centos: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          rhel: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          fedora: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          arch: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          alpine: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+          darwin: ifconfig {{interface}} -alias {{ip_address}}
+          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:$false"
+        command: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
+        skip_on_error: false
+        args:
+          - name: ip_address
+            prompt: "Enter the alias IP address to remove (e.g., 192.168.1.100)"
+            required: true
+          - name: prefix
+            prompt: "Enter the subnet prefix length (e.g., 24 for /24)"
+            default: "24"
+            required: false
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
+            default: "eth0"
+            required: true
+      - description: Remove persistent alias IP configuration
+        platforms:
+          ubuntu: 'sed -i "/{{interface}}:{{label}}/,+3d" /etc/network/interfaces && echo "Removed alias from /etc/network/interfaces"'
+          debian: 'sed -i "/{{interface}}:{{label}}/,+3d" /etc/network/interfaces && echo "Removed alias from /etc/network/interfaces"'
+          centos: 'rm -f /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} && echo "Removed alias config file"'
+          rhel: 'rm -f /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} && echo "Removed alias config file"'
+          fedora: 'nmcli connection modify {{interface}} -ipv4.addresses "{{ip_address}}/{{prefix}}" && nmcli connection up {{interface}}'
+          arch: 'sed -i "/{{ip_address}}/,+2d" /etc/systemd/network/{{interface}}.network && systemctl restart systemd-networkd'
+          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:$false; Write-Host 'Windows IP alias removed (persistent)'"
+        command: 'sed -i "/{{interface}}:{{label}}/,+3d" /etc/network/interfaces && echo "Removed alias from /etc/network/interfaces"'
+        skip_on_error: true
+        args:
+          - name: ip_address
+            prompt: "Enter the alias IP address to remove (e.g., 192.168.1.100)"
+            required: true
+          - name: prefix
+            prompt: "Enter the subnet prefix length (e.g., 24)"
+            default: "24"
+            required: false
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33)"
+            default: "eth0"
+            required: true
+          - name: label
+            prompt: "Enter the alias label number to remove (e.g., 0, 1, 2)"
+            default: "0"
+            required: false
+      - description: Verify alias IP was removed
+        platforms:
+          ubuntu: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          debian: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          centos: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          rhel: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          fedora: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          arch: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          alpine: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+          darwin: ifconfig {{interface}}
+          windows: powershell -Command "Get-NetIPAddress -InterfaceAlias '{{interface}}' | Format-Table -AutoSize; Write-Host '--- Verify the IP is no longer listed above'"
+        command: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
+        skip_on_error: false
+        args:
+          - name: interface
+            prompt: "Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)"
+            default: "eth0"
+            required: true
+
+

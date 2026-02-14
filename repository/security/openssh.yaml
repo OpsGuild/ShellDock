@@ -14,8 +14,21 @@ versions:
           fedora: dnf install -y openssh-server
           arch: pacman -S --noconfirm openssh
           darwin: echo "OpenSSH is pre-installed on macOS"
+          windows: powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0"
         command: apt-get update && apt-get install -y openssh-server
         skip_on_error: false
+      - description: Install OpenSSH client (if not present)
+        platforms:
+          ubuntu: apt-get install -y openssh-client
+          debian: apt-get install -y openssh-client
+          centos: yum install -y openssh-clients
+          rhel: yum install -y openssh-clients
+          fedora: dnf install -y openssh-clients
+          arch: pacman -S --noconfirm openssh
+          darwin: echo "OpenSSH client is pre-installed on macOS"
+          windows: powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0"
+        command: apt-get install -y openssh-client
+        skip_on_error: true
       - description: Enable and start SSH service
         platforms:
           ubuntu: systemctl enable ssh && systemctl start ssh
@@ -25,8 +38,20 @@ versions:
           fedora: systemctl enable sshd && systemctl start sshd
           arch: systemctl enable sshd && systemctl start sshd
           darwin: systemsetup -setremotelogin on
+          windows: powershell -Command "Set-Service -Name sshd -StartupType Automatic; Start-Service sshd"
         command: systemctl enable ssh && systemctl start ssh
         skip_on_error: false
+      - description: Configure SSH firewall rule
+        platforms:
+          ubuntu: ufw allow ssh 2>/dev/null || true
+          debian: ufw allow ssh 2>/dev/null || true
+          centos: firewall-cmd --permanent --add-service=ssh && firewall-cmd --reload 2>/dev/null || true
+          rhel: firewall-cmd --permanent --add-service=ssh && firewall-cmd --reload 2>/dev/null || true
+          fedora: firewall-cmd --permanent --add-service=ssh && firewall-cmd --reload 2>/dev/null || true
+          arch: ufw allow ssh 2>/dev/null || true
+          windows: powershell -Command "New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -ErrorAction SilentlyContinue"
+        command: ufw allow ssh 2>/dev/null || true
+        skip_on_error: true
       - description: Verify SSH service status
         platforms:
           ubuntu: systemctl status ssh --no-pager
@@ -36,6 +61,7 @@ versions:
           fedora: systemctl status sshd --no-pager
           arch: systemctl status sshd --no-pager
           darwin: systemsetup -getremotelogin
+          windows: powershell -Command "Get-Service sshd | Select-Object Name, Status, StartType"
         command: systemctl status ssh --no-pager
         skip_on_error: false
 

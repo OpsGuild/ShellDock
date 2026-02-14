@@ -14,6 +14,7 @@ versions:
           fedora: curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && dnf install -y nodejs
           arch: pacman -S nodejs npm
           darwin: brew install node
+          windows: powershell -Command "winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements"
         command: curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
       - description: Verify Node.js installation
         command: node --version && npm --version
@@ -22,6 +23,7 @@ versions:
         platforms:
           linux: npm install -g {{packages}}
           darwin: npm install -g {{packages}}
+          windows: powershell -Command "npm install -g {{packages}}"
         command: npm install -g {{packages}}
         skip_on_error: true
         args:

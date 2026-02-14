@@ -14,18 +14,35 @@ versions:
           fedora: dnf install -y ufw
           arch: pacman -S --noconfirm ufw
           darwin: brew install ufw
+          windows: powershell -Command "Write-Host 'Windows Firewall is built-in, no installation needed'"
         command: apt-get update && apt-get install -y ufw
         skip_on_error: false
       - description: Set default policies (deny incoming, allow outgoing)
+        platforms:
+          linux: ufw default deny incoming && ufw default allow outgoing
+          darwin: ufw default deny incoming && ufw default allow outgoing
+          windows: powershell -Command "Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Block -DefaultOutboundAction Allow"
         command: ufw default deny incoming && ufw default allow outgoing
         skip_on_error: false
       - description: Allow SSH connections (port 22)
+        platforms:
+          linux: ufw allow ssh
+          darwin: ufw allow ssh
+          windows: powershell -Command "New-NetFirewallRule -DisplayName 'Allow SSH' -Direction Inbound -Protocol TCP -LocalPort 22 -Action Allow -ErrorAction SilentlyContinue"
         command: ufw allow ssh
         skip_on_error: false
       - description: Enable UFW
+        platforms:
+          linux: ufw --force enable
+          darwin: ufw --force enable
+          windows: powershell -Command "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True"
         command: ufw --force enable
         skip_on_error: false
       - description: Verify UFW status
+        platforms:
+          linux: ufw status verbose
+          darwin: ufw status verbose
+          windows: powershell -Command "Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction; Get-NetFirewallRule -Direction Inbound -Enabled True | Select-Object -First 20 DisplayName, Action, Direction"
         command: ufw status verbose
         skip_on_error: false
 
