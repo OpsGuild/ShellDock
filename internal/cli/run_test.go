@@ -199,7 +199,8 @@ func TestCollectCommandArgs(t *testing.T) {
 
 	// Note: This will fail in non-terminal, but we're testing the logic
 	// In a real scenario, we'd mock the terminal check
-	result := collectCommandArgs(cmd, providedArgs)
+	cliArgs := map[string]string{}
+	result := collectCommandArgs(cmd, providedArgs, cliArgs)
 
 	if result["name"] != "John" {
 		t.Errorf("Expected name 'John', got %q", result["name"])

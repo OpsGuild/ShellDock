@@ -27,6 +27,7 @@ Useful for previewing what commands will be run.`,
 		
 		manager, err := repo.NewManager()
 		handleError(err)
+		autoSyncIfNeeded(manager)
 
 		// Check if version is specified in name (e.g., docker@1.0.0)
 		var version string

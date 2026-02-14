@@ -178,18 +178,23 @@ func parseArgsFlag(argsStr string) map[string]string {
 }
 
 // promptForArg prompts the user for an argument value
-func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) string {
-	// Check if already provided
-	if val, exists := providedArgs[argDef.Name]; exists {
+func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string, cliArgs map[string]string) string {
+	// If explicitly provided via --args flag, use it silently
+	if val, exists := cliArgs[argDef.Name]; exists {
 		return val
 	}
+
+	// Determine the effective default: previously-entered value > yaml default > empty
+	effectiveDefault := argDef.Default
+	if val, exists := providedArgs[argDef.Name]; exists && val != "" {
+		effectiveDefault = val
+	}
 	
-	// If no prompt is defined and we have a default, use it
+	// If no prompt is defined, use effective default silently
 	if argDef.Prompt == "" {
-		if argDef.Default != "" {
-			return argDef.Default
+		if effectiveDefault != "" {
+			return effectiveDefault
 		}
-		// If not required and no default, return empty
 		if !argDef.Required {
 			return ""
 		}
@@ -197,13 +202,12 @@ func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) strin
 	
 	// Check if we're in a terminal
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		if effectiveDefault != "" {
+			return effectiveDefault
+		}
 		if argDef.Required {
 			fmt.Fprintf(os.Stderr, "Error: Required argument '%s' not provided and not in a terminal. Use --args flag.\n", argDef.Name)
 			return ""
-		}
-		// Not required, use default if available
-		if argDef.Default != "" {
-			return argDef.Default
 		}
 		return ""
 	}
@@ -217,8 +221,8 @@ func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) strin
 	
 	// Build the prompt message with default hint
 	promptMsg := prompt
-	if argDef.Default != "" {
-		promptMsg = fmt.Sprintf("%s [default: %s]", prompt, argDef.Default)
+	if effectiveDefault != "" {
+		promptMsg = fmt.Sprintf("%s [default: %s]", prompt, effectiveDefault)
 	} else if !argDef.Required {
 		promptMsg = fmt.Sprintf("%s (optional)", prompt)
 	}
@@ -236,19 +240,18 @@ func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) strin
 	response, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nError reading input: %v\n", err)
-		// On error, use default if available
-		if argDef.Default != "" {
-			return argDef.Default
+		if effectiveDefault != "" {
+			return effectiveDefault
 		}
 		return ""
 	}
 	
 	value := strings.TrimSpace(response)
 	
-	// If empty response, use default if available, otherwise check required
+	// If empty response, use effective default
 	if value == "" {
-		if argDef.Default != "" {
-			return argDef.Default
+		if effectiveDefault != "" {
+			return effectiveDefault
 		}
 		if argDef.Required {
 			fmt.Fprintf(os.Stderr, "Error: %s is required\n", argDef.Name)
@@ -261,11 +264,11 @@ func promptForArg(argDef repo.ArgumentDef, providedArgs map[string]string) strin
 }
 
 // collectCommandArgs collects all arguments for a command
-func collectCommandArgs(cmd repo.Command, providedArgs map[string]string) map[string]string {
+func collectCommandArgs(cmd repo.Command, providedArgs map[string]string, cliArgs map[string]string) map[string]string {
 	result := make(map[string]string)
 	
 	for _, argDef := range cmd.Args {
-		value := promptForArg(argDef, providedArgs)
+		value := promptForArg(argDef, providedArgs, cliArgs)
 		if value == "" && argDef.Required {
 			fmt.Fprintf(os.Stderr, "Error: Required argument '%s' is missing\n", argDef.Name)
 			os.Exit(1)
@@ -359,7 +362,12 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 	}
 
 	hasUnsupportedCommands := false
-	providedArgs := parseArgsFlag(argsFlag)
+	cliArgs := parseArgsFlag(argsFlag)
+	providedArgs := make(map[string]string)
+	// Seed providedArgs with CLI args so they show as defaults too
+	for k, v := range cliArgs {
+		providedArgs[k] = v
+	}
 	
 	for i, cmd := range commandsToRun {
 		originalNum := i + 1 // Default to 1-indexed position
@@ -470,7 +478,14 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, yes
 		}
 		
 		// Collect arguments for this command
-		cmdArgs := collectCommandArgs(cmd, providedArgs)
+		cmdArgs := collectCommandArgs(cmd, providedArgs, cliArgs)
+		
+		// Persist collected args as defaults for subsequent steps
+		for k, v := range cmdArgs {
+			if v != "" {
+				providedArgs[k] = v
+			}
+		}
 		
 		// Substitute arguments in command
 		command = substituteArgs(command, cmdArgs)
@@ -533,6 +548,7 @@ Or run only specific steps with --only:
 		
 		manager, err := repo.NewManager()
 		handleError(err)
+		autoSyncIfNeeded(manager)
 
 		cmdSet, err := manager.GetCommandSet(name, localFlag, version)
 		if err != nil {

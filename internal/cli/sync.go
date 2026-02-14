@@ -25,6 +25,28 @@ type githubContent struct {
 	Type string `json:"type"`
 }
 
+// autoSyncIfNeeded checks if the bundled repo needs initial sync and runs it
+func autoSyncIfNeeded(manager *repo.Manager) {
+	bundledRepo := manager.GetBundledRepo()
+	if bundledRepo == nil || !bundledRepo.NeedsSync() {
+		return
+	}
+
+	bundledPath := bundledRepo.GetPath()
+	if bundledPath == "" || bundledPath == "/dev/null" {
+		return
+	}
+
+	count, err := syncRepository(bundledPath)
+	if err != nil {
+		fmt.Printf("⚠️  Auto-sync failed: %v\n", err)
+		fmt.Println("💡 Run 'shelldock sync' manually to download command sets")
+		return
+	}
+
+	fmt.Printf("✅ Initial sync complete! Downloaded %d command set(s)\n\n", count)
+}
+
 var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Sync command sets from cloud repository",

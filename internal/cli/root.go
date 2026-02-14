@@ -50,6 +50,7 @@ Or use subcommands:
 			
 			manager, err := repo.NewManager()
 			handleError(err)
+			autoSyncIfNeeded(manager)
 
 			cmdSet, err := manager.GetCommandSet(name, rootLocalFlag, version)
 			if err != nil {

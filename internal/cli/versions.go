@@ -18,6 +18,7 @@ var versionsCmd = &cobra.Command{
 		
 		manager, err := repo.NewManager()
 		handleError(err)
+		autoSyncIfNeeded(manager)
 
 		versions, err := manager.ListVersions(name, false)
 		if err != nil {

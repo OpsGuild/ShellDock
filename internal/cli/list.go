@@ -14,6 +14,7 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		manager, err := repo.NewManager()
 		handleError(err)
+		autoSyncIfNeeded(manager)
 
 		allSets, err := manager.ListCommandSets()
 		handleError(err)

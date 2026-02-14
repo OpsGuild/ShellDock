@@ -163,13 +163,15 @@ jobs:
       - name: Build shelldock for darwin
         run: |
           mkdir -p build
-          go build -o build/shelldock-darwin-amd64 .
+          GOARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/arm64/arm64/')
+          go build -o build/shelldock-darwin-${GOARCH} .
+          echo "SHELLDOCK_BINARY=$(pwd)/build/shelldock-darwin-${GOARCH}" >> $GITHUB_ENV
 
       - name: Run sandbox tests on macOS
         run: |
           chmod +x test/sandbox/entrypoint.sh
           export SHELLDOCK_PLATFORM=darwin
-          export HOME=$HOME
+          export SHELLDOCK_BINARY=${{ env.SHELLDOCK_BINARY }}
           ./test/sandbox/entrypoint.sh
 
   lint:

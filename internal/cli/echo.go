@@ -40,6 +40,7 @@ Examples:
 
 		manager, err := repo.NewManager()
 		handleError(err)
+		autoSyncIfNeeded(manager)
 
 		// Check if version is specified in name (e.g., docker@v1)
 		var version string
