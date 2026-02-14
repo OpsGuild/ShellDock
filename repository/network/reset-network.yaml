@@ -19,6 +19,24 @@ versions:
           windows: 'powershell -Command "Clear-DnsClientCache; Write-Host ''DNS cache flushed''"'
         command: systemd-resolve --flush-caches 2>/dev/null || resolvectl flush-caches 2>/dev/null; echo "DNS cache flushed"
         skip_on_error: true
+      - description: Re-enable DHCP on interface
+        platforms:
+          ubuntu: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          debian: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          centos: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          rhel: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          fedora: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          arch: dhclient {{interface}} 2>/dev/null || systemctl restart systemd-networkd; echo "DHCP re-enabled on {{interface}}"
+          alpine: udhcpc -i {{interface}} && echo "DHCP re-enabled on {{interface}}"
+          darwin: ipconfig set {{interface}} DHCP && echo "DHCP re-enabled on {{interface}}"
+          windows: 'netsh interface ip set address "{{interface}}" dhcp; Write-Host "DHCP re-enabled on {{interface}}"'
+        command: dhclient {{interface}} && echo "DHCP re-enabled on {{interface}}"
+        skip_on_error: true
+        args:
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)"
+            default: "eth0"
+            required: true
       - description: Release and renew IP address
         platforms:
           ubuntu: dhclient -r {{interface}} && sleep 2 && dhclient {{interface}} && echo "IP address renewed"
@@ -29,7 +47,7 @@ versions:
           arch: dhclient -r {{interface}} 2>/dev/null && sleep 2 && dhclient {{interface}} 2>/dev/null || (systemctl restart systemd-networkd && echo "Network service restarted")
           alpine: udhcpc -R -i {{interface}} && echo "IP address renewed"
           darwin: ipconfig set {{interface}} DHCP && echo "IP address renewed"
-          windows: 'powershell -Command "ipconfig /release ''{{interface}}''; Start-Sleep -Seconds 2; ipconfig /renew ''{{interface}}''; Write-Host ''IP address renewed on {{interface}}''"'
+          windows: 'ipconfig /release "{{interface}}"; Start-Sleep -Seconds 2; ipconfig /renew "{{interface}}"; Write-Host "IP address renewed on {{interface}}"'
         command: dhclient -r {{interface}} && sleep 2 && dhclient {{interface}} && echo "IP address renewed"
         skip_on_error: true
         args:
@@ -78,7 +96,7 @@ versions:
           arch: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
           alpine: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
           darwin: echo "=== Interface Status ===" && ifconfig {{interface}} | head -5 && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
-          windows: 'powershell -Command "$a = Get-NetAdapter ''{{interface}}''; Write-Host (''=== Interface Status ===''); Write-Host (''  Name: '' + $a.Name + ''  Status: '' + $a.Status + ''  Speed: '' + $a.LinkSpeed); Write-Host ''''; $ip = Get-NetIPAddress -InterfaceAlias ''{{interface}}'' -AddressFamily IPv4 -ErrorAction SilentlyContinue; Write-Host (''=== IP Configuration ===''); if ($ip) { Write-Host (''  IP: '' + $ip.IPAddress + ''/'' + $ip.PrefixLength) } else { Write-Host ''  No IPv4 address assigned'' }; Write-Host ''''; Write-Host (''=== DNS Test ===''); $dns = Resolve-DnsName google.com -ErrorAction SilentlyContinue; if ($dns) { Write-Host (''  google.com -> '' + ($dns | Select-Object -First 1).IPAddress) } else { Write-Host ''  DNS resolution failed'' }; Write-Host ''''; Write-Host (''=== Connectivity ===''); if (Test-Connection 8.8.8.8 -Count 2 -ErrorAction SilentlyContinue) { Write-Host ''  Network OK'' } else { Write-Host ''  Network FAILED - try restarting your computer'' }"'
+          windows: 'powershell -Command "Write-Host ''=== Interface Status ===''; Get-NetAdapter ''{{interface}}'' | Format-List Name, Status, LinkSpeed; Write-Host ''=== IP Configuration ===''; Get-NetIPAddress -InterfaceAlias ''{{interface}}'' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Format-List IPAddress, PrefixLength; Write-Host ''=== DNS Test ===''; nslookup google.com 2>&1 | Select-Object -First 4; Write-Host ''''; Write-Host ''=== Connectivity ===''; ping -n 2 -w 3000 8.8.8.8 | Select-Object -Last 3"'
         command: echo "=== Interface Status ===" && ip -br addr show {{interface}} && echo "" && echo "=== DNS Test ===" && nslookup google.com 2>/dev/null | head -4 && echo "" && echo "=== Connectivity ===" && ping -c 2 -W 3 8.8.8.8 && echo "Network OK"
         skip_on_error: true
         args:
