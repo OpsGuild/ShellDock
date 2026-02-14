@@ -184,14 +184,42 @@ command_should_skip_execution() {
 }
 
 run_with_timeout() {
-    local timeout="$1"
+    local duration="$1"
     shift
-    timeout "$timeout" "$@" 2>&1
-    local exit_code=$?
-    if [ $exit_code -eq 124 ]; then
-        echo "TIMEOUT"
+
+    # Use GNU timeout if available, otherwise use portable fallback
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$duration" "$@" 2>&1
+        local exit_code=$?
+        if [ $exit_code -eq 124 ]; then
+            echo "TIMEOUT"
+        fi
+        return $exit_code
+    else
+        # Portable fallback for macOS (no GNU timeout)
+        local output_file
+        output_file=$(mktemp)
+        HOME="$HOME" "$@" > "$output_file" 2>&1 &
+        local pid=$!
+        local elapsed=0
+        while kill -0 "$pid" 2>/dev/null; do
+            if [ "$elapsed" -ge "$duration" ]; then
+                kill -9 "$pid" 2>/dev/null
+                wait "$pid" 2>/dev/null
+                cat "$output_file"
+                echo "TIMEOUT"
+                rm -f "$output_file"
+                return 124
+            fi
+            sleep 1
+            elapsed=$((elapsed + 1))
+        done
+        wait "$pid" 2>/dev/null
+        local exit_code=$?
+        cat "$output_file"
+        rm -f "$output_file"
+        return $exit_code
     fi
-    return $exit_code
 }
 
 test_yaml_parse() {

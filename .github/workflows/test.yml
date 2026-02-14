@@ -160,6 +160,9 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Install coreutils (for GNU timeout)
+        run: brew install coreutils
+
       - name: Build shelldock for darwin
         run: |
           mkdir -p build
@@ -172,6 +175,7 @@ jobs:
           chmod +x test/sandbox/entrypoint.sh
           export SHELLDOCK_PLATFORM=darwin
           export SHELLDOCK_BINARY=${{ env.SHELLDOCK_BINARY }}
+          export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           ./test/sandbox/entrypoint.sh
 
   lint:
