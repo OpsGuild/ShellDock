@@ -93,7 +93,7 @@ versions:
           arch: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
           alpine: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
           darwin: ifconfig {{interface}} down && sleep 1 && ifconfig {{interface}} up && echo "Adapter {{interface}} restarted"
-          windows: 'Disable-NetAdapter -Name "{{interface}}" -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name "{{interface}}"; Start-Sleep -Seconds 3; Write-Host "Adapter {{interface}} restarted"'
+          windows: 'Disable-NetAdapter -Name "{{interface}}" -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name "{{interface}}"; Start-Sleep -Seconds 3; if ("{{gateway}}" -ne "") { netsh interface ip set address "{{interface}}" static {{ip_address}} {{netmask}} {{gateway}} }; Write-Host "Adapter {{interface}} restarted with gateway {{gateway}}"'
         command: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
         skip_on_error: true
         args:
@@ -101,6 +101,17 @@ versions:
             prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
             default: "eth0"
             required: true
+          - name: ip_address
+            prompt: "Enter the alias IP address (e.g., 192.168.1.100)"
+            required: true
+          - name: netmask
+            prompt: "Enter the subnet mask (e.g., 255.255.255.0)"
+            default: "255.255.255.0"
+            required: false
+          - name: gateway
+            prompt: "Enter the default gateway to restore after restart (e.g., 192.168.1.1)"
+            default: ""
+            required: false
       - description: Verify alias IP was added
         platforms:
           ubuntu: ip addr show {{interface}} | grep inet
@@ -200,7 +211,7 @@ versions:
           arch: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
           alpine: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
           darwin: ifconfig {{interface}}
-          windows: powershell -Command "Get-NetIPAddress -InterfaceAlias '{{interface}}' | Format-Table -AutoSize; Write-Host '--- Verify the IP is no longer listed above'"
+          windows: 'Get-NetIPAddress -InterfaceAlias "{{interface}}" | Format-Table -AutoSize; Write-Host "--- Verify the IP is no longer listed above"'
         command: ip addr show {{interface}} && echo "---" && echo "Verify the IP is no longer listed above"
         skip_on_error: false
         args:
