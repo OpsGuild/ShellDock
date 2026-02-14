@@ -16,7 +16,7 @@ versions:
           arch: resolvectl flush-caches 2>/dev/null || systemctl restart systemd-resolved 2>/dev/null; echo "DNS cache flushed"
           alpine: killall -HUP dnsmasq 2>/dev/null || rc-service dnsmasq restart 2>/dev/null; echo "DNS cache flushed"
           darwin: dscacheutil -flushcache && killall -HUP mDNSResponder && echo "DNS cache flushed"
-          windows: 'powershell -Command "Clear-DnsClientCache; Write-Host ''DNS cache flushed''"'
+          windows: 'Clear-DnsClientCache; Write-Host "DNS cache flushed"'
         command: systemd-resolve --flush-caches 2>/dev/null || resolvectl flush-caches 2>/dev/null; echo "DNS cache flushed"
         skip_on_error: true
       - description: Re-enable DHCP on interface
@@ -65,7 +65,7 @@ versions:
           arch: systemctl restart NetworkManager 2>/dev/null || systemctl restart systemd-networkd 2>/dev/null; echo "Network service restarted"
           alpine: rc-service networking restart 2>/dev/null; echo "Network service restarted"
           darwin: networksetup -setnetworkserviceenabled Wi-Fi off && sleep 2 && networksetup -setnetworkserviceenabled Wi-Fi on; echo "Network service restarted"
-          windows: 'powershell -Command "Restart-Service -Name ''Dhcp'' -Force -ErrorAction SilentlyContinue; Write-Host ''DHCP service restarted''"'
+          windows: 'Restart-Service -Name "Dhcp" -Force -ErrorAction SilentlyContinue; Write-Host "DHCP service restarted"'
         command: systemctl restart NetworkManager 2>/dev/null || systemctl restart networking 2>/dev/null || systemctl restart systemd-networkd 2>/dev/null; echo "Network service restarted"
         skip_on_error: true
       - description: Reset network stack (deep reset)
@@ -78,7 +78,7 @@ versions:
           arch: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
           alpine: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
           darwin: ifconfig {{interface}} down && sleep 2 && ifconfig {{interface}} up && echo "Network stack reset"
-          windows: 'powershell -Command "Disable-NetAdapter -Name ''{{interface}}'' -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name ''{{interface}}''; Start-Sleep -Seconds 3; Write-Host ''Adapter {{interface}} reset complete''"'
+          windows: 'Disable-NetAdapter -Name "{{interface}}" -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name "{{interface}}"; Start-Sleep -Seconds 3; Write-Host "Adapter {{interface}} reset complete"'
         command: ip link set {{interface}} down && sleep 2 && ip link set {{interface}} up && echo "Network stack reset"
         skip_on_error: true
         args:
@@ -120,7 +120,7 @@ versions:
           arch: resolvectl flush-caches 2>/dev/null || systemctl restart systemd-resolved 2>/dev/null; echo "DNS cache flushed"
           alpine: killall -HUP dnsmasq 2>/dev/null || rc-service dnsmasq restart 2>/dev/null; echo "DNS cache flushed"
           darwin: dscacheutil -flushcache && killall -HUP mDNSResponder && echo "DNS cache flushed"
-          windows: 'powershell -Command "Clear-DnsClientCache; Write-Host ''DNS cache flushed''"'
+          windows: 'Clear-DnsClientCache; Write-Host "DNS cache flushed"'
         command: systemd-resolve --flush-caches 2>/dev/null || resolvectl flush-caches 2>/dev/null; echo "DNS cache flushed"
         skip_on_error: true
       - description: Verify DNS resolution
@@ -133,7 +133,7 @@ versions:
           arch: nslookup google.com && echo "DNS resolution OK"
           alpine: nslookup google.com && echo "DNS resolution OK"
           darwin: nslookup google.com && echo "DNS resolution OK"
-          windows: 'powershell -Command "Resolve-DnsName google.com -ErrorAction SilentlyContinue | Select-Object Name, IPAddress | Format-Table -AutoSize; Write-Host ''DNS resolution OK''"'
+          windows: 'Resolve-DnsName google.com -ErrorAction SilentlyContinue | Select-Object Name, IPAddress | Format-Table -AutoSize; Write-Host "DNS resolution OK"'
         command: nslookup google.com && echo "DNS resolution OK"
         skip_on_error: false
 
@@ -152,7 +152,7 @@ versions:
           arch: ip -br link show
           alpine: ip -br link show
           darwin: networksetup -listallhardwareports
-          windows: 'powershell -Command "Get-NetAdapter | Select-Object Name, InterfaceDescription, Status, LinkSpeed, MacAddress | Format-Table -AutoSize"'
+          windows: 'Get-NetAdapter | Select-Object Name, InterfaceDescription, Status, LinkSpeed, MacAddress | Format-Table -AutoSize'
         command: ip -br link show
         skip_on_error: true
       - description: Restart network adapter
@@ -165,7 +165,7 @@ versions:
           arch: ip link set {{adapter}} down && sleep 2 && ip link set {{adapter}} up && echo "Adapter {{adapter}} restarted"
           alpine: ip link set {{adapter}} down && sleep 2 && ip link set {{adapter}} up && echo "Adapter {{adapter}} restarted"
           darwin: ifconfig {{adapter}} down && sleep 2 && ifconfig {{adapter}} up && echo "Adapter {{adapter}} restarted"
-          windows: 'powershell -Command "Get-NetAdapter ''{{adapter}}'' | Restart-NetAdapter; Start-Sleep -Seconds 3; Get-NetAdapter ''{{adapter}}'' | Select-Object Name, Status, LinkSpeed"'
+          windows: 'Get-NetAdapter "{{adapter}}" | Restart-NetAdapter; Start-Sleep -Seconds 3; Get-NetAdapter "{{adapter}}" | Select-Object Name, Status, LinkSpeed'
         command: ip link set {{adapter}} down && sleep 2 && ip link set {{adapter}} up && echo "Adapter {{adapter}} restarted"
         skip_on_error: false
         args:
@@ -182,7 +182,7 @@ versions:
           arch: ip addr show {{adapter}}
           alpine: ip addr show {{adapter}}
           darwin: ifconfig {{adapter}}
-          windows: 'powershell -Command "Get-NetAdapter ''{{adapter}}'' | Select-Object Name, Status, LinkSpeed; Get-NetIPAddress -InterfaceAlias ''{{adapter}}'' -ErrorAction SilentlyContinue | Select-Object IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize"'
+          windows: 'Get-NetAdapter "{{adapter}}" | Select-Object Name, Status, LinkSpeed; Get-NetIPAddress -InterfaceAlias "{{adapter}}" -ErrorAction SilentlyContinue | Select-Object IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize'
         command: ip addr show {{adapter}}
         skip_on_error: false
         args:

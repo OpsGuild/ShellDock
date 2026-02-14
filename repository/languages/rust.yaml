@@ -9,20 +9,20 @@ versions:
         platforms:
           linux: 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
           darwin: 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
-          windows: powershell -Command "winget install -e --id Rustlang.Rustup --accept-source-agreements --accept-package-agreements"
+          windows: 'winget install -e --id Rustlang.Rustup --accept-source-agreements --accept-package-agreements'
         command: 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
         skip_on_error: false
       - description: Source cargo environment
         platforms:
           linux: 'source "$HOME/.cargo/env" 2>/dev/null || true'
           darwin: 'source "$HOME/.cargo/env" 2>/dev/null || true'
-          windows: powershell -Command "$env:Path = [Environment]::GetEnvironmentVariable('Path', 'User'); refreshenv 2>$null; Write-Host 'Cargo environment loaded'"
+          windows: "$env:Path = [Environment]::GetEnvironmentVariable('Path', 'User'); refreshenv 2>$null; Write-Host 'Cargo environment loaded'"
         command: 'source "$HOME/.cargo/env" 2>/dev/null || true'
         skip_on_error: true
       - description: Verify Rust installation
         platforms:
           linux: '$HOME/.cargo/bin/rustc --version && $HOME/.cargo/bin/cargo --version'
           darwin: '$HOME/.cargo/bin/rustc --version && $HOME/.cargo/bin/cargo --version'
-          windows: powershell -Command "rustc --version; cargo --version"
+          windows: 'rustc --version; cargo --version'
         command: '$HOME/.cargo/bin/rustc --version && $HOME/.cargo/bin/cargo --version'
         skip_on_error: false

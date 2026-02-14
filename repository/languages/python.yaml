@@ -14,21 +14,21 @@ versions:
           fedora: dnf install -y python3 python3-pip
           arch: pacman -S python python-pip
           darwin: brew install python3
-          windows: powershell -Command "winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements"
+          windows: 'winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements'
         command: apt-get update && apt-get install -y python3 python3-pip python3-venv
         skip_on_error: false
       - description: Upgrade pip
         platforms:
           linux: python3 -m pip install --upgrade pip
           darwin: python3 -m pip install --upgrade pip
-          windows: powershell -Command "python -m pip install --upgrade pip"
+          windows: 'python -m pip install --upgrade pip'
         command: python3 -m pip install --upgrade pip
         skip_on_error: true
       - description: Install common Python packages
         platforms:
           linux: python3 -m pip install --user {{packages}}
           darwin: python3 -m pip install --user {{packages}}
-          windows: powershell -Command "python -m pip install {{packages}}"
+          windows: 'python -m pip install {{packages}}'
         command: python3 -m pip install --user {{packages}}
         skip_on_error: true
         args:
@@ -40,6 +40,6 @@ versions:
         platforms:
           linux: python3 --version && pip3 --version
           darwin: python3 --version && pip3 --version
-          windows: powershell -Command "python --version; pip --version"
+          windows: 'python --version; pip --version'
         command: python3 --version && pip3 --version
         skip_on_error: false

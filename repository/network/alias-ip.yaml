@@ -16,7 +16,7 @@ versions:
           arch: ip -4 addr show scope global
           alpine: ip -4 addr show scope global
           darwin: ifconfig | grep -A 3 'inet '
-          windows: ipconfig
+          windows: 'ipconfig; Write-Host ""; Write-Host "=== Network Adapters ==="; Get-NetAdapter | Format-Table Name, Status, LinkSpeed -AutoSize'
         command: ip -4 addr show scope global
         skip_on_error: true
       - description: Add alias IP address to interface

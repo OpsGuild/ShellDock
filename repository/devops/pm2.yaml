@@ -9,14 +9,14 @@ versions:
         platforms:
           linux: npm install -g pm2
           darwin: npm install -g pm2
-          windows: powershell -Command "npm install -g pm2"
+          windows: 'npm install -g pm2'
         command: npm install -g pm2
         skip_on_error: false
       - description: Setup PM2 startup script
         platforms:
           linux: pm2 startup systemd -u $USER --hp $HOME
           darwin: pm2 startup launchd -u $USER --hp $HOME
-          windows: powershell -Command "npm install -g pm2-windows-startup && pm2-startup install"
+          windows: 'npm install -g pm2-windows-startup && pm2-startup install'
         command: pm2 startup systemd -u $USER --hp $HOME
         skip_on_error: true
       - description: Verify PM2 installation

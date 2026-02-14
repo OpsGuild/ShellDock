@@ -14,7 +14,7 @@ versions:
           fedora: dnf install -y git
           arch: pacman -S git
           darwin: brew install git
-          windows: powershell -Command "winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements"
+          windows: 'winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements'
         command: apt-get update && apt-get install -y git
         skip_on_error: false
       - description: Verify Git installation

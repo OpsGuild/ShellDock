@@ -14,7 +14,7 @@ versions:
           fedora: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
           arch: pacman -S kubectl
           darwin: brew install kubectl
-          windows: powershell -Command "winget install -e --id Kubernetes.kubectl --accept-source-agreements --accept-package-agreements"
+          windows: 'winget install -e --id Kubernetes.kubectl --accept-source-agreements --accept-package-agreements'
         command: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
       - description: Verify kubectl installation
         command: kubectl version --client
@@ -23,7 +23,7 @@ versions:
         platforms:
           linux: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
           darwin: brew install helm
-          windows: powershell -Command "winget install -e --id Helm.Helm --accept-source-agreements --accept-package-agreements"
+          windows: 'winget install -e --id Helm.Helm --accept-source-agreements --accept-package-agreements'
         command: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
         skip_on_error: true
       - description: Verify Helm installation
