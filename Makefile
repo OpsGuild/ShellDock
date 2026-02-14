@@ -1,4 +1,4 @@
-.PHONY: build install clean test package deb rpm
+.PHONY: build install clean test package deb rpm test-sandbox test-sandbox-build
 
 # Get version from git tag, or use "dev" if no tag
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
@@ -106,4 +106,30 @@ arch: build
 deps:
 	@go mod download
 	@go mod tidy
+
+# Cross-platform sandbox tests using Docker
+# Usage:
+#   make test-sandbox                              # All platforms, all commands
+#   make test-sandbox PLATFORM=ubuntu              # Single platform
+#   make test-sandbox COMMAND=openssh              # Single command on all platforms
+#   make test-sandbox PLATFORM=fedora COMMAND=git  # Single command on single platform
+#   make test-sandbox BUILD=0                      # Skip Docker image rebuild
+PLATFORM ?=
+COMMAND ?=
+BUILD ?= 1
+
+test-sandbox-build:
+	@echo "Building shelldock for linux/amd64..."
+	@mkdir -p $(BUILD_DIR)
+	@GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/shelldock-linux-amd64 .
+	@echo "Build complete"
+
+test-sandbox: test-sandbox-build
+	@echo "=========================================="
+	@echo "🐳 Running Sandbox Tests"
+	@echo "=========================================="
+	@chmod +x test/sandbox/entrypoint.sh test/sandbox/run-sandbox.sh
+	@PLATFORM=$(PLATFORM) COMMAND=$(COMMAND) BUILD=$(BUILD) ./test/sandbox/run-sandbox.sh
+	@echo ""
+	@echo "✅ Sandbox tests completed"
 

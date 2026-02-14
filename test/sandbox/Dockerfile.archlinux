@@ -1,0 +1,24 @@
+FROM archlinux:latest
+
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm \
+    curl \
+    iproute2 \
+    iputils \
+    bind \
+    net-tools \
+    openssh \
+    sudo \
+    && pacman -Scc --noconfirm
+
+RUN useradd -m -s /bin/bash testuser && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /opt/shelldock
+COPY . .
+
+RUN chmod +x build/shelldock-linux-* 2>/dev/null || true
+
+USER testuser
+ENV HOME=/home/testuser
+ENV PATH="/opt/shelldock/build:${PATH}"
+
+ENTRYPOINT ["/opt/shelldock/test/sandbox/entrypoint.sh"]

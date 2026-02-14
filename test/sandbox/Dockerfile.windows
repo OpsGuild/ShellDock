@@ -1,0 +1,18 @@
+FROM mcr.microsoft.com/powershell:latest
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    openssh-client \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash testuser && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /opt/shelldock
+COPY . .
+
+USER testuser
+ENV HOME=/home/testuser
+ENV PATH="/opt/shelldock/build:${PATH}"
+
+ENTRYPOINT ["/opt/shelldock/test/sandbox/entrypoint.sh"]

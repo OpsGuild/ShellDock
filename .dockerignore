@@ -1,0 +1,17 @@
+.git
+.github
+dist
+coverage.out
+*.exe
+shelldock
+.bin
+changelogs
+docs
+packaging
+static
+LICENSE
+README.md
+.pre-commit-config.yaml
+.yamllint.yaml
+.gitignore
+go.sum

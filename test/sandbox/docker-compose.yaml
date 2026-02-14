@@ -1,0 +1,60 @@
+services:
+  ubuntu:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.ubuntu
+    environment:
+      - SHELLDOCK_PLATFORM=ubuntu
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro
+
+  debian:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.debian
+    environment:
+      - SHELLDOCK_PLATFORM=debian
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro
+
+  rockylinux:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.rockylinux
+    environment:
+      - SHELLDOCK_PLATFORM=centos
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro
+
+  fedora:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.fedora
+    environment:
+      - SHELLDOCK_PLATFORM=fedora
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro
+
+  archlinux:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.archlinux
+    environment:
+      - SHELLDOCK_PLATFORM=arch
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro
+
+  windows:
+    build:
+      context: ../..
+      dockerfile: test/sandbox/Dockerfile.windows
+    environment:
+      - SHELLDOCK_PLATFORM=windows
+      - SHELLDOCK_COMMAND=${COMMAND:-}
+    volumes:
+      - ../../repository:/opt/shelldock/repository:ro

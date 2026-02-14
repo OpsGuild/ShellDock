@@ -1,0 +1,27 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    curl \
+    iproute2 \
+    iputils-ping \
+    dnsutils \
+    net-tools \
+    openssh-client \
+    openssh-server \
+    ufw \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash testuser && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /opt/shelldock
+COPY . .
+
+RUN chmod +x build/shelldock-linux-* 2>/dev/null || true
+
+USER testuser
+ENV HOME=/home/testuser
+ENV PATH="/opt/shelldock/build:${PATH}"
+
+ENTRYPOINT ["/opt/shelldock/test/sandbox/entrypoint.sh"]
