@@ -29,7 +29,7 @@ versions:
           arch: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
           alpine: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
           darwin: ifconfig {{interface}} alias {{ip_address}}/{{prefix}}
-          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource $true"
+          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource ([bool]1)"
         command: ip addr add {{ip_address}}/{{prefix}} dev {{interface}} label {{interface}}:{{label}}
         skip_on_error: false
         args:
@@ -56,7 +56,7 @@ versions:
           rhel: 'cat > /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} << EOF\nDEVICE={{interface}}:{{label}}\nIPADDR={{ip_address}}\nNETMASK={{netmask}}\nONBOOT=yes\nEOF\necho "Alias IP config created at /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}}"'
           fedora: 'nmcli connection modify {{interface}} +ipv4.addresses "{{ip_address}}/{{prefix}}" && nmcli connection up {{interface}}'
           arch: 'echo -e "\n[Address]\nAddress={{ip_address}}/{{prefix}}\nLabel={{interface}}:{{label}}" >> /etc/systemd/network/{{interface}}.network && systemctl restart systemd-networkd'
-          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource $true; Write-Host 'Windows IP aliases are persistent by default'"
+          windows: powershell -Command "New-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -PrefixLength {{prefix}} -SkipAsSource ([bool]1); Write-Host 'Windows IP aliases are persistent by default'"
         command: 'echo -e "\nauto {{interface}}:{{label}}\niface {{interface}}:{{label}} inet static\n    address {{ip_address}}\n    netmask {{netmask}}" >> /etc/network/interfaces && echo "Alias IP added to /etc/network/interfaces"'
         skip_on_error: true
         args:
@@ -125,7 +125,7 @@ versions:
           arch: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
           alpine: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
           darwin: ifconfig {{interface}} -alias {{ip_address}}
-          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:$false"
+          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:([bool]0)"
         command: ip addr del {{ip_address}}/{{prefix}} dev {{interface}}
         skip_on_error: false
         args:
@@ -148,7 +148,7 @@ versions:
           rhel: 'rm -f /etc/sysconfig/network-scripts/ifcfg-{{interface}}:{{label}} && echo "Removed alias config file"'
           fedora: 'nmcli connection modify {{interface}} -ipv4.addresses "{{ip_address}}/{{prefix}}" && nmcli connection up {{interface}}'
           arch: 'sed -i "/{{ip_address}}/,+2d" /etc/systemd/network/{{interface}}.network && systemctl restart systemd-networkd'
-          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:$false; Write-Host 'Windows IP alias removed (persistent)'"
+          windows: powershell -Command "Remove-NetIPAddress -InterfaceAlias '{{interface}}' -IPAddress '{{ip_address}}' -Confirm:([bool]0); Write-Host 'Windows IP alias removed (persistent)'"
         command: 'sed -i "/{{interface}}:{{label}}/,+3d" /etc/network/interfaces && echo "Removed alias from /etc/network/interfaces"'
         skip_on_error: true
         args:
