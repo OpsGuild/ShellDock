@@ -101,14 +101,14 @@ versions:
         platforms:
           linux: mkdir -p ~/.ssh && chmod 700 ~/.ssh
           darwin: mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          windows: powershell -Command "New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh | Out-Null"
+          windows: 'New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh | Out-Null'
         command: mkdir -p ~/.ssh && chmod 700 ~/.ssh
         skip_on_error: false
       - description: Generate SSH key pair
         platforms:
           linux: ssh-keygen -t {{key_type}} -b {{key_bits}} -C "{{comment}}" -f ~/.ssh/{{key_name}} -N "{{passphrase}}"
           darwin: ssh-keygen -t {{key_type}} -b {{key_bits}} -C "{{comment}}" -f ~/.ssh/{{key_name}} -N "{{passphrase}}"
-          windows: powershell -Command "ssh-keygen -t {{key_type}} -b {{key_bits}} -C '{{comment}}' -f $env:USERPROFILE\.ssh\{{key_name}} -N '{{passphrase}}'"
+          windows: 'ssh-keygen -t {{key_type}} -b {{key_bits}} -C "{{comment}}" -f "$env:USERPROFILE\.ssh\{{key_name}}" -N "{{passphrase}}"'
         command: ssh-keygen -t {{key_type}} -b {{key_bits}} -C "{{comment}}" -f ~/.ssh/{{key_name}} -N "{{passphrase}}"
         skip_on_error: false
         args:
@@ -136,7 +136,7 @@ versions:
         platforms:
           linux: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
           darwin: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
-          windows: 'powershell -Command "icacls $env:USERPROFILE\.ssh\{{key_name}} /inheritance:r /grant:r \"$env:USERNAME:(R)\"; icacls $env:USERPROFILE\.ssh\{{key_name}}.pub /inheritance:r /grant:r \"$env:USERNAME:(R)\""'
+          windows: 'cmd /c icacls "%USERPROFILE%\.ssh\{{key_name}}" /inheritance:r /grant:r "%USERNAME%:(R)"; cmd /c icacls "%USERPROFILE%\.ssh\{{key_name}}.pub" /inheritance:r /grant:r "%USERNAME%:(R)"'
         command: chmod 600 ~/.ssh/{{key_name}} && chmod 644 ~/.ssh/{{key_name}}.pub
         skip_on_error: true
         args:
@@ -148,7 +148,7 @@ versions:
         platforms:
           linux: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
           darwin: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
-          windows: 'powershell -Command "Write-Host ''''; Write-Host ''=== Your public key ===''; Get-Content $env:USERPROFILE\.ssh\{{key_name}}.pub; Write-Host ''''; Write-Host ''Copy the key above to add to remote servers (~/.ssh/authorized_keys)''"'
+          windows: 'Write-Host ""; Write-Host "=== Your public key ==="; Get-Content "$env:USERPROFILE\.ssh\{{key_name}}.pub"; Write-Host ""; Write-Host "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"'
         command: echo "" && echo "=== Your public key ===" && cat ~/.ssh/{{key_name}}.pub && echo "" && echo "Copy the key above to add to remote servers (~/.ssh/authorized_keys)"
         skip_on_error: false
         args:
@@ -160,7 +160,7 @@ versions:
         platforms:
           linux: eval "$(ssh-agent -s)" && ssh-add ~/.ssh/{{key_name}}
           darwin: eval "$(ssh-agent -s)" && ssh-add --apple-use-keychain ~/.ssh/{{key_name}} 2>/dev/null || ssh-add ~/.ssh/{{key_name}}
-          windows: 'powershell -Command "Get-Service ssh-agent | Set-Service -StartupType Automatic; Start-Service ssh-agent; ssh-add $env:USERPROFILE\.ssh\{{key_name}}"'
+          windows: 'Get-Service ssh-agent | Set-Service -StartupType Automatic; Start-Service ssh-agent; ssh-add "$env:USERPROFILE\.ssh\{{key_name}}"'
         command: eval "$(ssh-agent -s)" && ssh-add ~/.ssh/{{key_name}}
         skip_on_error: true
         args:

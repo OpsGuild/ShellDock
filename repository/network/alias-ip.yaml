@@ -6,18 +6,18 @@ versions:
     latest: true
     description: Add an alias IP address to a network interface
     commands:
-      - description: List current network interfaces and IPs
+      - description: Show current IP configuration
         platforms:
-          ubuntu: ip addr show
-          debian: ip addr show
-          centos: ip addr show
-          rhel: ip addr show
-          fedora: ip addr show
-          arch: ip addr show
-          alpine: ip addr show
-          darwin: ifconfig
-          windows: powershell -Command "Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize"
-        command: ip addr show
+          ubuntu: ip -4 addr show scope global
+          debian: ip -4 addr show scope global
+          centos: ip -4 addr show scope global
+          rhel: ip -4 addr show scope global
+          fedora: ip -4 addr show scope global
+          arch: ip -4 addr show scope global
+          alpine: ip -4 addr show scope global
+          darwin: ifconfig | grep -A 3 'inet '
+          windows: ipconfig
+        command: ip -4 addr show scope global
         skip_on_error: true
       - description: Add alias IP address to interface
         platforms:
@@ -83,22 +83,41 @@ versions:
             prompt: "Enter the alias label number (e.g., 0, 1, 2)"
             default: "0"
             required: false
+      - description: Restart adapter to apply alias
+        platforms:
+          ubuntu: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          debian: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          centos: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          rhel: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          fedora: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          arch: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          alpine: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+          darwin: ifconfig {{interface}} down && sleep 1 && ifconfig {{interface}} up && echo "Adapter {{interface}} restarted"
+          windows: 'Disable-NetAdapter -Name "{{interface}}" -Confirm:([bool]0); Start-Sleep -Seconds 2; Enable-NetAdapter -Name "{{interface}}"; Start-Sleep -Seconds 3; Write-Host "Adapter {{interface}} restarted"'
+        command: ip link set {{interface}} down && sleep 1 && ip link set {{interface}} up && echo "Adapter {{interface}} restarted"
+        skip_on_error: true
+        args:
+          - name: interface
+            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
+            default: "eth0"
+            required: true
       - description: Verify alias IP was added
         platforms:
-          ubuntu: ip addr show | grep {{ip_address}}
-          debian: ip addr show | grep {{ip_address}}
-          centos: ip addr show | grep {{ip_address}}
-          rhel: ip addr show | grep {{ip_address}}
-          fedora: ip addr show | grep {{ip_address}}
-          arch: ip addr show | grep {{ip_address}}
-          alpine: ip addr show | grep {{ip_address}}
-          darwin: ifconfig | grep {{ip_address}}
-          windows: powershell -Command "Get-NetIPAddress | Where-Object { $_.IPAddress -eq '{{ip_address}}' } | Format-Table -AutoSize"
-        command: ip addr show | grep {{ip_address}}
+          ubuntu: ip addr show {{interface}} | grep inet
+          debian: ip addr show {{interface}} | grep inet
+          centos: ip addr show {{interface}} | grep inet
+          rhel: ip addr show {{interface}} | grep inet
+          fedora: ip addr show {{interface}} | grep inet
+          arch: ip addr show {{interface}} | grep inet
+          alpine: ip addr show {{interface}} | grep inet
+          darwin: ifconfig {{interface}} | grep inet
+          windows: ipconfig
+        command: ip addr show {{interface}} | grep inet
         skip_on_error: false
         args:
-          - name: ip_address
-            prompt: "Enter the alias IP address to verify (e.g., 192.168.1.100)"
+          - name: interface
+            prompt: "Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)"
+            default: "eth0"
             required: true
 
   - version: "v2"
@@ -106,18 +125,18 @@ versions:
     latest: false
     description: Remove an alias IP address from a network interface
     commands:
-      - description: List current network interfaces and IPs
+      - description: Show current IP configuration
         platforms:
-          ubuntu: ip addr show
-          debian: ip addr show
-          centos: ip addr show
-          rhel: ip addr show
-          fedora: ip addr show
-          arch: ip addr show
-          alpine: ip addr show
-          darwin: ifconfig
-          windows: powershell -Command "Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress, PrefixLength, AddressFamily | Format-Table -AutoSize"
-        command: ip addr show
+          ubuntu: ip -4 addr show scope global
+          debian: ip -4 addr show scope global
+          centos: ip -4 addr show scope global
+          rhel: ip -4 addr show scope global
+          fedora: ip -4 addr show scope global
+          arch: ip -4 addr show scope global
+          alpine: ip -4 addr show scope global
+          darwin: ifconfig | grep -A 3 'inet '
+          windows: ipconfig
+        command: ip -4 addr show scope global
         skip_on_error: true
       - description: Remove alias IP address from interface
         platforms:
