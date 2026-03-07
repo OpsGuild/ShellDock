@@ -239,7 +239,7 @@ else
 fi
 
 test_start "Skip all steps (edge case)"
-if sd test --skip 1,2,3,4,5,6,7 --yes 2>&1 | grep -q "No commands\|Error"; then
+if sd test --skip 1,2,3,4,5,6,7 -a 2>&1 | grep -q "No commands\|Error"; then
     test_pass
 else
     test_fail "Skip all steps" "Should handle gracefully"
@@ -343,15 +343,15 @@ else
 fi
 
 # TODO: Fix this test - failing in CI
-# test_start "Yes flag (skip prompt)"
-# output=$(sd test --yes 2>&1)
+# test_start "Run all flag (skip prompt)"
+# output=$(sd test -a 2>&1)
 # exit_code=$?
-# # Check if execution started (--yes flag worked) - look for any execution indicators
-# # Commands might fail but that's OK, we just need to verify --yes flag worked
+# # Check if execution started (-a flag worked) - look for any execution indicators
+# # Commands might fail but that's OK, we just need to verify -a flag worked
 # if echo "$output" | grep -qiE "executing|success|all commands|Command failed|\[1/|\[2/|\[3/"; then
 #     test_pass
 # else
-#     test_fail "Yes flag" "Failed to execute with --yes"
+#     test_fail "Run all flag" "Failed to execute with -a"
 # fi
 
 # ============================================
@@ -391,31 +391,31 @@ fi
 # ============================================
 
 # TODO: Fix this test - failing in CI
-# test_start "Execute with --yes flag (v1)"
-# output=$(sd test@v1 --yes 2>&1)
+# test_start "Execute with -a flag (v1)"
+# output=$(sd test@v1 -a 2>&1)
 # exit_code=$?
-# # Check if execution started (--yes flag worked) - look for any execution indicators
-# # Commands might fail but that's OK, we just need to verify --yes flag worked
+# # Check if execution started (-a flag worked) - look for any execution indicators
+# # Commands might fail but that's OK, we just need to verify -a flag worked
 # if echo "$output" | grep -qiE "executing|success|all commands|Command failed|\[1/|\[2/|\[3/"; then
 #     test_pass
 # else
-#     test_fail "Execute with yes flag" "Failed to execute"
+#     test_fail "Execute with -a flag" "Failed to execute"
 # fi
 
-test_start "Execute with skip and yes"
-output=$(sd test@v1 --skip 2,3,4 --yes 2>&1)
+test_start "Execute with skip and -a"
+output=$(sd test@v1 --skip 2,3,4 -a 2>&1)
 if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
-    test_fail "Execute with skip and yes" "Failed"
+    test_fail "Execute with skip and -a" "Failed"
 fi
 
-test_start "Execute with only and yes"
-output=$(sd test@v1 --only 1 --yes 2>&1)
+test_start "Execute with only and -a"
+output=$(sd test@v1 --only 1 -a 2>&1)
 if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
-    test_fail "Execute with only and yes" "Failed"
+    test_fail "Execute with only and -a" "Failed"
 fi
 
 # ============================================
@@ -546,4 +546,3 @@ else
     echo -e "${YELLOW}⚠️  Some tests failed${NC}"
     exit 1
 fi
-

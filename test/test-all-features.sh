@@ -52,23 +52,23 @@ fi
 
 # Test 3: List versions
 test_step "3. List available versions"
-if ./shelldock versions test 2>&1 | grep -q "1.0.0\|1.1.0\|2.0.0"; then
+if ./shelldock versions test 2>&1 | grep -q "v1\|v2\|v3"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 4: Show specific version
-test_step "4. Show specific version (1.0.0)"
-if ./shelldock show test@1.0.0 2>&1 | grep -q "Version: 1.0.0"; then
+# Test 4: Show specific version (v1)
+test_step "4. Show specific version (v1)"
+if ./shelldock show test@v1 2>&1 | grep -q "Version: v1"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 5: Show another version
-test_step "5. Show specific version (2.0.0)"
-if ./shelldock show test@2.0.0 2>&1 | grep -q "Version: 2.0.0"; then
+# Test 5: Show another version (v2)
+test_step "5. Show specific version (v2)"
+if ./shelldock show test@v2 2>&1 | grep -q "Version: v2"; then
     test_pass
 else
     test_fail
@@ -117,7 +117,7 @@ fi
 
 # Test 11: Test version flag
 test_step "11. Test --ver flag"
-if echo "n" | ./shelldock test --ver 1.0.0 2>&1 | grep -q "Version: 1.0.0"; then
+if echo "n" | ./shelldock test --ver v1 2>&1 | grep -q "Version: v1"; then
     test_pass
 else
     test_fail
@@ -125,7 +125,7 @@ fi
 
 # Test 12: Test @version syntax
 test_step "12. Test @version syntax"
-if echo "n" | ./shelldock test@1.1.0 2>&1 | grep -q "Version: 1.1.0"; then
+if echo "n" | ./shelldock test@v2 2>&1 | grep -q "Version: v2"; then
     test_pass
 else
     test_fail
@@ -175,7 +175,7 @@ fi
 
 # Test 18: Test error handling (non-existent version)
 test_step "18. Test error handling (non-existent version)"
-if ./shelldock test@999.0.0 2>&1 | grep -q "not found\|Error"; then
+if ./shelldock test@v999 2>&1 | grep -q "not found\|Error"; then
     test_pass
 else
     test_fail
@@ -191,7 +191,24 @@ fi
 
 # Test 20: Test version with skip
 test_step "20. Test version with skip flag"
-if echo "n" | ./shelldock test@1.0.0 --skip 1 2>&1 | grep -q "Version: 1.0.0"; then
+if echo "n" | ./shelldock test@v1 --skip 1 2>&1 | grep -q "Version: v1"; then
+    test_pass
+else
+    test_fail
+fi
+
+# Test 21: Show latest version (default should be v3)
+test_step "21. Show latest version (default)"
+if ./shelldock show test 2>&1 | grep -q "Version: v3"; then
+    test_pass
+else
+    test_fail
+fi
+
+# Test 22: Execute with -a flag
+test_step "22. Execute with -a flag (skip all prompts)"
+output=$(./shelldock test@v1 --only 1 -a 2>&1)
+if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else
     test_fail
@@ -213,6 +230,3 @@ else
     echo -e "${YELLOW}⚠️  Some tests failed${NC}"
     exit 1
 fi
-
-
-
