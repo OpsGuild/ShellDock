@@ -92,7 +92,7 @@ echo -e "${CYAN}========================================${NC}"
 echo ""
 
 get_all_commands() {
-    sd list 2>&1 | grep '•' | sed 's/.*• //' | tr -d ' ' | sort -u
+    sd list 2>&1 | grep -E '^\s+\w+:' | sed 's/^[^:]*: //' | tr ',' '\n' | sed 's/ *(also in local)//g' | tr -d ' ' | grep -v '^$' | sort -u
 }
 
 get_versions() {
