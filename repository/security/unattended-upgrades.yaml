@@ -1,0 +1,115 @@
+name: unattended-upgrades
+description: Automatic security updates configuration
+versions:
+  - version: 'v1'
+    tag: install
+    latest: true
+    default: true
+    description: Install and configure automatic security updates
+    commands:
+      - description: Install unattended-upgrades package
+        platforms:
+          ubuntu: apt-get update && apt-get install -y unattended-upgrades apt-listchanges
+          debian: apt-get update && apt-get install -y unattended-upgrades apt-listchanges
+          centos: yum install -y dnf-automatic
+          rhel: yum install -y dnf-automatic
+          fedora: dnf install -y dnf-automatic
+          arch: pacman -S --noconfirm pacman-contrib
+          alpine: apk add --no-cache apk-cron
+          darwin: echo "macOS handles automatic updates via System Preferences > Software Update"
+          windows: 'Write-Host "Windows Update is built-in. Configuring automatic updates via Group Policy..."; $AutoUpdate = (New-Object -ComObject Microsoft.Update.AutoUpdate); $AutoUpdate.EnableService(); Write-Host "Windows Update service enabled"'
+        command: apt-get update && apt-get install -y unattended-upgrades apt-listchanges
+        skip_on_error: false
+      - description: Enable automatic security updates
+        platforms:
+          ubuntu: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
+          debian: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
+          centos: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
+          rhel: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
+          fedora: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
+          arch: 'systemctl enable --now paccache.timer && echo "Package cache cleanup timer enabled (install a cron job or timer for full auto-updates)"'
+          alpine: 'echo "0 3 * * * /sbin/apk upgrade --no-cache >> /var/log/apk-upgrade.log 2>&1" | crontab - && echo "Daily auto-upgrade cron job installed"'
+          darwin: 'defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true && defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true && defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true && echo "Automatic updates enabled"'
+          windows: 'Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUOptions" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue; Write-Host "Automatic updates configured via registry"'
+        command: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
+        skip_on_error: false
+      - description: Configure email notifications (optional)
+        platforms:
+          ubuntu: 'sed -i "s|//Unattended-Upgrade::Mail \"\"|Unattended-Upgrade::Mail \"{{email}}\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Email notifications configured for {{email}}"'
+          debian: 'sed -i "s|//Unattended-Upgrade::Mail \"\"|Unattended-Upgrade::Mail \"{{email}}\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Email notifications configured for {{email}}"'
+          centos: 'sed -i "s/emit_via = stdio/emit_via = email/" /etc/dnf/automatic.conf && sed -i "s/email_from = root@example.com/email_from = root@$(hostname)/" /etc/dnf/automatic.conf && sed -i "s/email_to = root/email_to = {{email}}/" /etc/dnf/automatic.conf && echo "Email notifications configured for {{email}}"'
+          rhel: 'sed -i "s/emit_via = stdio/emit_via = email/" /etc/dnf/automatic.conf && sed -i "s/email_from = root@example.com/email_from = root@$(hostname)/" /etc/dnf/automatic.conf && sed -i "s/email_to = root/email_to = {{email}}/" /etc/dnf/automatic.conf && echo "Email notifications configured for {{email}}"'
+          fedora: 'sed -i "s/emit_via = stdio/emit_via = email/" /etc/dnf/automatic.conf && sed -i "s/email_to = root/email_to = {{email}}/" /etc/dnf/automatic.conf && echo "Email notifications configured for {{email}}"'
+        command: 'sed -i "s|//Unattended-Upgrade::Mail \"\"|Unattended-Upgrade::Mail \"{{email}}\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Email notifications configured for {{email}}"'
+        skip_on_error: true
+        args:
+          - name: email
+            prompt: 'Enter email address for update notifications (leave empty to skip)'
+            default: 'root'
+            required: false
+      - description: Enable automatic reboot if required (optional)
+        platforms:
+          ubuntu: 'sed -i "s|//Unattended-Upgrade::Automatic-Reboot \"false\"|Unattended-Upgrade::Automatic-Reboot \"true\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && sed -i "s|//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\"|Unattended-Upgrade::Automatic-Reboot-Time \"{{reboot_time}}\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Automatic reboot enabled at {{reboot_time}} if required"'
+          debian: 'sed -i "s|//Unattended-Upgrade::Automatic-Reboot \"false\"|Unattended-Upgrade::Automatic-Reboot \"true\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && sed -i "s|//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\"|Unattended-Upgrade::Automatic-Reboot-Time \"{{reboot_time}}\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Automatic reboot enabled at {{reboot_time}} if required"'
+        command: 'sed -i "s|//Unattended-Upgrade::Automatic-Reboot \"false\"|Unattended-Upgrade::Automatic-Reboot \"true\"|" /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null && echo "Automatic reboot enabled at {{reboot_time}} if required"'
+        skip_on_error: true
+        args:
+          - name: reboot_time
+            prompt: 'Enter automatic reboot time if kernel update requires it (e.g., 02:00)'
+            default: '02:00'
+            required: false
+      - description: Run a dry-run to verify configuration
+        platforms:
+          ubuntu: unattended-upgrade --dry-run --debug 2>&1 | tail -20
+          debian: unattended-upgrade --dry-run --debug 2>&1 | tail -20
+          centos: dnf-automatic --timer 2>&1 | head -20 || echo "Check timer status below"
+          rhel: dnf-automatic --timer 2>&1 | head -20 || echo "Check timer status below"
+          fedora: dnf-automatic --timer 2>&1 | head -20 || echo "Check timer status below"
+        command: unattended-upgrade --dry-run --debug 2>&1 | tail -20
+        skip_on_error: true
+      - description: Verify auto-update service status
+        platforms:
+          ubuntu: systemctl status unattended-upgrades --no-pager 2>/dev/null && echo "" && systemctl list-timers --no-pager | grep -i "apt\|unattended" || echo "Service status checked"
+          debian: systemctl status unattended-upgrades --no-pager 2>/dev/null && echo "" && systemctl list-timers --no-pager | grep -i "apt\|unattended" || echo "Service status checked"
+          centos: systemctl status dnf-automatic.timer --no-pager && systemctl list-timers --no-pager | grep dnf
+          rhel: systemctl status dnf-automatic.timer --no-pager && systemctl list-timers --no-pager | grep dnf
+          fedora: systemctl status dnf-automatic.timer --no-pager && systemctl list-timers --no-pager | grep dnf
+          arch: systemctl list-timers --no-pager | grep paccache
+          darwin: 'defaults read /Library/Preferences/com.apple.SoftwareUpdate 2>/dev/null || echo "Check System Preferences > Software Update"'
+          windows: 'Get-Service wuauserv | Format-List Name, Status, StartType; Write-Host ""; Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot 2>$null | Select-Object -First 5 || Write-Host "Windows Update service is running"'
+        command: systemctl status unattended-upgrades --no-pager 2>/dev/null && systemctl list-timers --no-pager | grep -i "apt\|unattended" || echo "Service status checked"
+        skip_on_error: true
+  - version: 'v1'
+    tag: status
+    latest: false
+    default: false
+    description: Check automatic update status and recent update history
+    commands:
+      - description: Show auto-update configuration
+        platforms:
+          ubuntu: 'echo "=== Auto-Update Config ===" && cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null || echo "No auto-update config found"'
+          debian: 'echo "=== Auto-Update Config ===" && cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null || echo "No auto-update config found"'
+          centos: 'echo "=== Auto-Update Config ===" && grep -E "^(apply_updates|upgrade_type|emit_via)" /etc/dnf/automatic.conf 2>/dev/null || echo "No auto-update config found"'
+          rhel: 'echo "=== Auto-Update Config ===" && grep -E "^(apply_updates|upgrade_type|emit_via)" /etc/dnf/automatic.conf 2>/dev/null || echo "No auto-update config found"'
+          fedora: 'echo "=== Auto-Update Config ===" && grep -E "^(apply_updates|upgrade_type|emit_via)" /etc/dnf/automatic.conf 2>/dev/null || echo "No auto-update config found"'
+        command: 'echo "=== Auto-Update Config ===" && cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null || echo "No auto-update config found"'
+        skip_on_error: true
+      - description: Show recent unattended upgrade logs
+        platforms:
+          ubuntu: 'echo "=== Recent Upgrade Log ===" && tail -50 /var/log/unattended-upgrades/unattended-upgrades.log 2>/dev/null || echo "No upgrade logs found"'
+          debian: 'echo "=== Recent Upgrade Log ===" && tail -50 /var/log/unattended-upgrades/unattended-upgrades.log 2>/dev/null || echo "No upgrade logs found"'
+          centos: 'echo "=== Recent Upgrade Log ===" && journalctl -u dnf-automatic.timer --no-pager -n 30 2>/dev/null || echo "No upgrade logs found"'
+          rhel: 'echo "=== Recent Upgrade Log ===" && journalctl -u dnf-automatic.timer --no-pager -n 30 2>/dev/null || echo "No upgrade logs found"'
+          fedora: 'echo "=== Recent Upgrade Log ===" && journalctl -u dnf-automatic.timer --no-pager -n 30 2>/dev/null || echo "No upgrade logs found"'
+        command: 'echo "=== Recent Upgrade Log ===" && tail -50 /var/log/unattended-upgrades/unattended-upgrades.log 2>/dev/null || echo "No upgrade logs found"'
+        skip_on_error: true
+      - description: Check if reboot is required
+        platforms:
+          ubuntu: '[ -f /var/run/reboot-required ] && echo "⚠️  REBOOT REQUIRED" && cat /var/run/reboot-required.pkgs 2>/dev/null || echo "✅ No reboot required"'
+          debian: '[ -f /var/run/reboot-required ] && echo "⚠️  REBOOT REQUIRED" && cat /var/run/reboot-required.pkgs 2>/dev/null || echo "✅ No reboot required"'
+          centos: 'needs-restarting -r 2>/dev/null && echo "✅ No reboot required" || echo "⚠️  REBOOT REQUIRED"'
+          rhel: 'needs-restarting -r 2>/dev/null && echo "✅ No reboot required" || echo "⚠️  REBOOT REQUIRED"'
+          fedora: 'needs-restarting -r 2>/dev/null && echo "✅ No reboot required" || echo "⚠️  REBOOT REQUIRED"'
+          arch: 'if [ "$(uname -r)" != "$(pacman -Q linux 2>/dev/null | awk "{print \$2}")" ]; then echo "⚠️  REBOOT REQUIRED (kernel updated)"; else echo "✅ No reboot required"; fi'
+        command: '[ -f /var/run/reboot-required ] && echo "⚠️  REBOOT REQUIRED" && cat /var/run/reboot-required.pkgs 2>/dev/null || echo "✅ No reboot required"'
+        skip_on_error: true

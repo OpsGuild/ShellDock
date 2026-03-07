@@ -3,6 +3,7 @@ description: PM2 process manager for Node.js applications
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: PM2 installation and setup
     commands:
       - description: Install PM2 globally

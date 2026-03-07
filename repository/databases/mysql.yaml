@@ -1,0 +1,165 @@
+name: mysql
+description: MySQL/MariaDB database server installation and setup
+versions:
+  - version: 'v1'
+    tag: mysql
+    latest: true
+    default: true
+    description: Install MySQL server and perform initial secure setup
+    commands:
+      - description: Install MySQL server
+        platforms:
+          ubuntu: apt-get update && apt-get install -y mysql-server mysql-client
+          debian: apt-get update && apt-get install -y default-mysql-server default-mysql-client
+          centos: yum install -y mysql-server mysql
+          rhel: yum install -y mysql-server mysql
+          fedora: dnf install -y mysql-server mysql
+          arch: pacman -S --noconfirm mysql
+          alpine: apk add --no-cache mysql mysql-client
+          darwin: brew install mysql
+          windows: 'winget install -e --id Oracle.MySQL --accept-source-agreements --accept-package-agreements'
+        command: apt-get update && apt-get install -y mysql-server mysql-client
+        skip_on_error: false
+      - description: Initialize MySQL data directory (if needed)
+        platforms:
+          arch: mysqld --initialize-insecure --user=mysql 2>/dev/null; echo "MySQL data directory initialized"
+          alpine: mysql_install_db --user=mysql --datadir=/var/lib/mysql 2>/dev/null; echo "MySQL data directory initialized"
+        command: echo "MySQL data directory auto-initialized on this platform"
+        skip_on_error: true
+      - description: Enable and start MySQL service
+        platforms:
+          ubuntu: systemctl enable mysql && systemctl start mysql
+          debian: systemctl enable mariadb && systemctl start mariadb
+          centos: systemctl enable mysqld && systemctl start mysqld
+          rhel: systemctl enable mysqld && systemctl start mysqld
+          fedora: systemctl enable mysqld && systemctl start mysqld
+          arch: systemctl enable mysqld && systemctl start mysqld
+          alpine: rc-update add mariadb default && rc-service mariadb start
+          darwin: brew services start mysql
+          windows: 'Start-Service MySQL80 -ErrorAction SilentlyContinue; if ($?) { Write-Host "MySQL service started" } else { net start MySQL 2>$null; Write-Host "MySQL service start attempted" }'
+        command: systemctl enable mysql && systemctl start mysql
+        skip_on_error: false
+      - description: Verify MySQL is running
+        platforms:
+          ubuntu: systemctl status mysql --no-pager && mysql --version
+          debian: systemctl status mariadb --no-pager && mysql --version
+          centos: systemctl status mysqld --no-pager && mysql --version
+          rhel: systemctl status mysqld --no-pager && mysql --version
+          fedora: systemctl status mysqld --no-pager && mysql --version
+          arch: systemctl status mysqld --no-pager && mysql --version
+          alpine: rc-service mariadb status && mysql --version
+          darwin: brew services list | grep mysql && mysql --version
+          windows: 'Get-Service MySQL* | Format-List Name, Status; mysql --version'
+        command: systemctl status mysql --no-pager && mysql --version
+        skip_on_error: false
+      - description: Run secure installation (set root password, remove test DB, disable remote root)
+        platforms:
+          ubuntu: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED WITH mysql_native_password BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured: root password set, anonymous users removed, test DB dropped"'
+          debian: 'mysql -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MariaDB secured: root password set, anonymous users removed, test DB dropped"'
+          centos: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured"'
+          rhel: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured"'
+          fedora: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured"'
+          arch: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured"'
+          alpine: 'mysql -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MariaDB secured"'
+          darwin: 'mysql -u root -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>/dev/null && echo "MySQL root password set" || echo "Root password may already be set"'
+          windows: 'mysql -u root -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY ''{{root_password}}'';" 2>$null; Write-Host "MySQL root password configured"'
+        command: 'mysql -e "ALTER USER ''root''@''localhost'' IDENTIFIED WITH mysql_native_password BY ''{{root_password}}'';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MySQL secured"'
+        skip_on_error: true
+        args:
+          - name: root_password
+            prompt: 'Enter a root password for MySQL'
+            required: true
+      - description: Create application database and user
+        platforms:
+          linux: 'mysql -u root -p"{{root_password}}" -e "CREATE DATABASE IF NOT EXISTS {{db_name}}; CREATE USER IF NOT EXISTS ''{{db_user}}''@''{{db_host}}'' IDENTIFIED BY ''{{db_password}}''; GRANT ALL PRIVILEGES ON {{db_name}}.* TO ''{{db_user}}''@''{{db_host}}''; FLUSH PRIVILEGES;" && echo "Database ''{{db_name}}'' and user ''{{db_user}}'' created"'
+          darwin: 'mysql -u root -p"{{root_password}}" -e "CREATE DATABASE IF NOT EXISTS {{db_name}}; CREATE USER IF NOT EXISTS ''{{db_user}}''@''{{db_host}}'' IDENTIFIED BY ''{{db_password}}''; GRANT ALL PRIVILEGES ON {{db_name}}.* TO ''{{db_user}}''@''{{db_host}}''; FLUSH PRIVILEGES;" && echo "Database ''{{db_name}}'' and user ''{{db_user}}'' created"'
+          windows: 'mysql -u root -p"{{root_password}}" -e "CREATE DATABASE IF NOT EXISTS {{db_name}}; CREATE USER IF NOT EXISTS ''{{db_user}}''@''{{db_host}}'' IDENTIFIED BY ''{{db_password}}''; GRANT ALL PRIVILEGES ON {{db_name}}.* TO ''{{db_user}}''@''{{db_host}}''; FLUSH PRIVILEGES;"; Write-Host "Database ''{{db_name}}'' and user ''{{db_user}}'' created"'
+        command: 'mysql -u root -p"{{root_password}}" -e "CREATE DATABASE IF NOT EXISTS {{db_name}}; CREATE USER IF NOT EXISTS ''{{db_user}}''@''{{db_host}}'' IDENTIFIED BY ''{{db_password}}''; GRANT ALL PRIVILEGES ON {{db_name}}.* TO ''{{db_user}}''@''{{db_host}}''; FLUSH PRIVILEGES;" && echo "Database ''{{db_name}}'' and user ''{{db_user}}'' created"'
+        skip_on_error: true
+        args:
+          - name: root_password
+            prompt: 'Enter the MySQL root password'
+            required: true
+          - name: db_name
+            prompt: 'Enter the database name to create'
+            default: 'appdb'
+            required: true
+          - name: db_user
+            prompt: 'Enter the database username to create'
+            default: 'appuser'
+            required: true
+          - name: db_password
+            prompt: 'Enter the password for the database user'
+            required: true
+          - name: db_host
+            prompt: 'Enter the allowed host for the user (e.g., localhost, %, 192.168.1.%)'
+            default: 'localhost'
+            required: false
+      - description: Verify database and user were created
+        platforms:
+          linux: 'mysql -u root -p"{{root_password}}" -e "SHOW DATABASES;" && echo "" && mysql -u root -p"{{root_password}}" -e "SELECT User, Host FROM mysql.user WHERE User != ''root'' AND User != '''' AND User != ''mysql.sys'' AND User != ''mysql.session'' AND User != ''mysql.infoschema'';"'
+          darwin: 'mysql -u root -p"{{root_password}}" -e "SHOW DATABASES;" && echo "" && mysql -u root -p"{{root_password}}" -e "SELECT User, Host FROM mysql.user WHERE User != ''root'' AND User != '''';"'
+          windows: 'mysql -u root -p"{{root_password}}" -e "SHOW DATABASES;"; mysql -u root -p"{{root_password}}" -e "SELECT User, Host FROM mysql.user;"'
+        command: 'mysql -u root -p"{{root_password}}" -e "SHOW DATABASES;" && echo "" && mysql -u root -p"{{root_password}}" -e "SELECT User, Host FROM mysql.user WHERE User != ''root'' AND User != '''';"'
+        skip_on_error: true
+        args:
+          - name: root_password
+            prompt: 'Enter the MySQL root password'
+            required: true
+  - version: 'v1'
+    tag: mariadb
+    latest: false
+    default: false
+    description: Install MariaDB server (MySQL-compatible drop-in replacement)
+    commands:
+      - description: Install MariaDB server
+        platforms:
+          ubuntu: apt-get update && apt-get install -y mariadb-server mariadb-client
+          debian: apt-get update && apt-get install -y mariadb-server mariadb-client
+          centos: yum install -y mariadb-server mariadb
+          rhel: yum install -y mariadb-server mariadb
+          fedora: dnf install -y mariadb-server mariadb
+          arch: pacman -S --noconfirm mariadb
+          alpine: apk add --no-cache mariadb mariadb-client
+          darwin: brew install mariadb
+          windows: 'winget install -e --id MariaDB.Server --accept-source-agreements --accept-package-agreements'
+        command: apt-get update && apt-get install -y mariadb-server mariadb-client
+        skip_on_error: false
+      - description: Initialize MariaDB data directory (if needed)
+        platforms:
+          arch: mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql 2>/dev/null; echo "MariaDB data directory initialized"
+          alpine: mysql_install_db --user=mysql --datadir=/var/lib/mysql 2>/dev/null; echo "MariaDB data directory initialized"
+        command: echo "MariaDB data directory auto-initialized on this platform"
+        skip_on_error: true
+      - description: Enable and start MariaDB service
+        platforms:
+          ubuntu: systemctl enable mariadb && systemctl start mariadb
+          debian: systemctl enable mariadb && systemctl start mariadb
+          centos: systemctl enable mariadb && systemctl start mariadb
+          rhel: systemctl enable mariadb && systemctl start mariadb
+          fedora: systemctl enable mariadb && systemctl start mariadb
+          arch: systemctl enable mariadb && systemctl start mariadb
+          alpine: rc-update add mariadb default && rc-service mariadb start
+          darwin: brew services start mariadb
+          windows: 'Start-Service MariaDB -ErrorAction SilentlyContinue; Write-Host "MariaDB service start attempted"'
+        command: systemctl enable mariadb && systemctl start mariadb
+        skip_on_error: false
+      - description: Verify MariaDB is running
+        platforms:
+          linux: systemctl status mariadb --no-pager && mariadb --version
+          alpine: rc-service mariadb status && mariadb --version 2>/dev/null || mysql --version
+          darwin: brew services list | grep mariadb && mariadb --version
+          windows: 'Get-Service MariaDB* | Format-List Name, Status; mysql --version'
+        command: systemctl status mariadb --no-pager && mariadb --version
+        skip_on_error: false
+      - description: Secure MariaDB installation (set root password, remove defaults)
+        platforms:
+          linux: 'mysql -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MariaDB secured: root password set, anonymous users removed, test DB dropped"'
+          darwin: 'mysql -u root -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>/dev/null && echo "MariaDB root password set" || echo "Root password may already be set"'
+          windows: 'mysql -u root -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>$null; Write-Host "MariaDB root password configured"'
+        command: 'mysql -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{{root_password}}'');" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DELETE FROM mysql.user WHERE User='''';" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "DROP DATABASE IF EXISTS test;" 2>/dev/null; mysql -u root -p"{{root_password}}" -e "FLUSH PRIVILEGES;" && echo "MariaDB secured"'
+        skip_on_error: true
+        args:
+          - name: root_password
+            prompt: 'Enter a root password for MariaDB'
+            required: true

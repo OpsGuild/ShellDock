@@ -3,6 +3,7 @@ description: Node.js installation and setup
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Node.js installation using NodeSource repository
     commands:
       - description: Install Node.js

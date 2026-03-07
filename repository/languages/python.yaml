@@ -3,6 +3,7 @@ description: Python development environment setup
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Python 3 and pip installation
     commands:
       - description: Install Python 3 and pip

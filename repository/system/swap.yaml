@@ -3,6 +3,7 @@ description: Swap file setup and configuration
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Create and configure swap file
     commands:
       - description: Check current swap usage

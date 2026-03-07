@@ -1,0 +1,44 @@
+name: terraform
+description: Terraform installation and setup
+versions:
+  - version: "v1"
+    latest: true
+    default: true
+    description: Install Terraform from HashiCorp official releases
+    commands:
+      - description: Install required dependencies
+        platforms:
+          ubuntu: apt-get update && apt-get install -y gnupg software-properties-common curl
+          debian: apt-get update && apt-get install -y gnupg software-properties-common curl
+          centos: yum install -y yum-utils curl
+          rhel: yum install -y yum-utils curl
+          fedora: dnf install -y dnf-plugins-core curl
+          arch: pacman -S --noconfirm --needed curl gnupg
+          alpine: apk add --no-cache curl gnupg
+          darwin: echo "Dependencies available via Homebrew"
+          windows: echo "No additional dependencies required"
+        command: apt-get update && apt-get install -y gnupg software-properties-common curl
+        skip_on_error: true
+      - description: Install Terraform
+        platforms:
+          ubuntu: 'curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list && apt-get update && apt-get install -y terraform'
+          debian: 'curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list && apt-get update && apt-get install -y terraform'
+          centos: 'yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo && yum install -y terraform'
+          rhel: 'yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo && yum install -y terraform'
+          fedora: 'dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo && dnf install -y terraform'
+          arch: pacman -S --noconfirm terraform
+          alpine: 'apk add --no-cache terraform'
+          darwin: brew install terraform
+          windows: 'winget install -e --id Hashicorp.Terraform --accept-source-agreements --accept-package-agreements'
+        command: 'curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list && apt-get update && apt-get install -y terraform'
+        skip_on_error: false
+      - description: Enable tab completion for bash
+        platforms:
+          linux: 'terraform -install-autocomplete 2>/dev/null; echo "Terraform autocomplete configured (restart your shell to activate)"'
+          darwin: 'terraform -install-autocomplete 2>/dev/null; echo "Terraform autocomplete configured (restart your shell to activate)"'
+          windows: 'Write-Host "Tab completion: run terraform -install-autocomplete in a new shell"'
+        command: 'terraform -install-autocomplete 2>/dev/null; echo "Terraform autocomplete configured (restart your shell to activate)"'
+        skip_on_error: true
+      - description: Verify Terraform installation
+        command: terraform version
+        skip_on_error: false

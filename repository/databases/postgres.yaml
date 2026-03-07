@@ -1,0 +1,202 @@
+name: postgres
+description: PostgreSQL database server installation and setup
+versions:
+  - version: 'v1'
+    tag: install
+    latest: true
+    default: true
+    description: Install PostgreSQL server and configure a database with user
+    commands:
+      - description: Install PostgreSQL server
+        platforms:
+          ubuntu: apt-get update && apt-get install -y postgresql postgresql-contrib
+          debian: apt-get update && apt-get install -y postgresql postgresql-contrib
+          centos: 'yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm && yum install -y postgresql16-server postgresql16-contrib'
+          rhel: 'yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm && yum install -y postgresql16-server postgresql16-contrib'
+          fedora: dnf install -y postgresql-server postgresql-contrib
+          arch: pacman -S --noconfirm postgresql
+          alpine: apk add --no-cache postgresql postgresql-contrib
+          darwin: brew install postgresql@16
+          windows: 'winget install -e --id PostgreSQL.PostgreSQL --accept-source-agreements --accept-package-agreements'
+        command: apt-get update && apt-get install -y postgresql postgresql-contrib
+        skip_on_error: false
+      - description: Initialize database cluster (if needed)
+        platforms:
+          ubuntu: echo "Debian/Ubuntu auto-initializes the cluster during install"
+          debian: echo "Debian/Ubuntu auto-initializes the cluster during install"
+          centos: '/usr/pgsql-16/bin/postgresql-16-setup initdb 2>/dev/null || postgresql-setup --initdb 2>/dev/null || echo "Database cluster may already be initialized"'
+          rhel: '/usr/pgsql-16/bin/postgresql-16-setup initdb 2>/dev/null || postgresql-setup --initdb 2>/dev/null || echo "Database cluster may already be initialized"'
+          fedora: 'postgresql-setup --initdb 2>/dev/null || echo "Database cluster may already be initialized"'
+          arch: 'su - postgres -c "initdb -D /var/lib/postgres/data" 2>/dev/null || echo "Database cluster may already be initialized"'
+          alpine: 'mkdir -p /var/lib/postgresql/data && chown postgres:postgres /var/lib/postgresql/data && su - postgres -c "initdb -D /var/lib/postgresql/data" 2>/dev/null || echo "Database cluster may already be initialized"'
+          darwin: echo "Homebrew auto-initializes the cluster during install"
+          windows: 'Write-Host "Windows installer auto-initializes the cluster"'
+        command: echo "Database cluster initialization handled by package manager"
+        skip_on_error: true
+      - description: Enable and start PostgreSQL service
+        platforms:
+          ubuntu: systemctl enable postgresql && systemctl start postgresql
+          debian: systemctl enable postgresql && systemctl start postgresql
+          centos: systemctl enable postgresql-16 && systemctl start postgresql-16
+          rhel: systemctl enable postgresql-16 && systemctl start postgresql-16
+          fedora: systemctl enable postgresql && systemctl start postgresql
+          arch: systemctl enable postgresql && systemctl start postgresql
+          alpine: rc-update add postgresql default && rc-service postgresql start
+          darwin: brew services start postgresql@16
+          windows: 'Start-Service postgresql-x64-16 -ErrorAction SilentlyContinue; Write-Host "PostgreSQL service started"'
+        command: systemctl enable postgresql && systemctl start postgresql
+        skip_on_error: false
+      - description: Create database user
+        platforms:
+          ubuntu: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          debian: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          centos: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          rhel: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          fedora: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          arch: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          alpine: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+          darwin: psql postgres -c "CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';" && echo "User {{db_user}} created"
+          windows: 'psql -U postgres -c "CREATE USER {{db_user}} WITH PASSWORD ''{{db_password}}'';" ; Write-Host "User {{db_user}} created"'
+        command: su - postgres -c "psql -c \"CREATE USER {{db_user}} WITH PASSWORD '{{db_password}}';\"" && echo "User {{db_user}} created"
+        skip_on_error: false
+        args:
+          - name: db_user
+            prompt: 'Enter the database username to create'
+            default: 'appuser'
+            required: true
+          - name: db_password
+            prompt: 'Enter the password for the database user'
+            required: true
+      - description: Create database owned by user
+        platforms:
+          ubuntu: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          debian: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          centos: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          rhel: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          fedora: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          arch: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          alpine: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+          darwin: psql postgres -c "CREATE DATABASE {{db_name}} OWNER {{db_user}};" && echo "Database {{db_name}} created"
+          windows: 'psql -U postgres -c "CREATE DATABASE {{db_name}} OWNER {{db_user}};" ; Write-Host "Database {{db_name}} created"'
+        command: su - postgres -c "psql -c \"CREATE DATABASE {{db_name}} OWNER {{db_user}};\"" && echo "Database {{db_name}} created"
+        skip_on_error: false
+        args:
+          - name: db_name
+            prompt: 'Enter the database name to create'
+            default: 'appdb'
+            required: true
+          - name: db_user
+            prompt: 'Enter the owner username for the database'
+            default: 'appuser'
+            required: true
+      - description: Grant all privileges on database to user
+        platforms:
+          ubuntu: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          debian: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          centos: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          rhel: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          fedora: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          arch: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          alpine: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+          darwin: psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};" && echo "Privileges granted"
+          windows: 'psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};" ; Write-Host "Privileges granted"'
+        command: su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE {{db_name}} TO {{db_user}};\"" && echo "Privileges granted"
+        skip_on_error: false
+        args:
+          - name: db_name
+            prompt: 'Enter the database name'
+            default: 'appdb'
+            required: true
+          - name: db_user
+            prompt: 'Enter the username to grant privileges to'
+            default: 'appuser'
+            required: true
+      - description: Verify PostgreSQL installation and connection
+        platforms:
+          ubuntu: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          debian: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          centos: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          rhel: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          fedora: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          arch: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          alpine: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+          darwin: 'psql postgres -c "SELECT version();" && echo "" && echo "=== Databases ===" && psql postgres -c "\l" | head -20'
+          windows: 'psql -U postgres -c "SELECT version();" ; Write-Host "" ; Write-Host "=== Databases ===" ; psql -U postgres -c "\l"'
+        command: 'su - postgres -c "psql -c \"SELECT version();\"" && echo "" && echo "=== Databases ===" && su - postgres -c "psql -c \"\\l\"" | head -20'
+        skip_on_error: false
+  - version: 'v1'
+    tag: remote
+    latest: false
+    default: false
+    description: Configure PostgreSQL to accept remote connections
+    commands:
+      - description: Show current listen address configuration
+        platforms:
+          linux: 'grep -n "^#\?listen_addresses" /etc/postgresql/*/main/postgresql.conf 2>/dev/null || grep -n "^#\?listen_addresses" /var/lib/pgsql/*/data/postgresql.conf 2>/dev/null || grep -rn "^#\?listen_addresses" /var/lib/postgres/data/postgresql.conf 2>/dev/null || echo "Could not find postgresql.conf — check your installation"'
+          darwin: 'grep -n "^#\?listen_addresses" /opt/homebrew/var/postgresql@16/postgresql.conf 2>/dev/null || echo "Could not find postgresql.conf"'
+        command: 'grep -rn "^#\?listen_addresses" /etc/postgresql/*/main/postgresql.conf 2>/dev/null || echo "Could not find postgresql.conf"'
+        skip_on_error: true
+      - description: Set listen_addresses to allow remote connections
+        platforms:
+          ubuntu: "PG_CONF=$(find /etc/postgresql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+          debian: "PG_CONF=$(find /etc/postgresql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+          centos: "PG_CONF=$(find /var/lib/pgsql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+          rhel: "PG_CONF=$(find /var/lib/pgsql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+          fedora: "PG_CONF=$(find /var/lib/pgsql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+          arch: "sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" /var/lib/postgres/data/postgresql.conf && echo \"listen_addresses set to {{listen_addresses}}\""
+          darwin: "sed -i '' \"s/^#\\{0,1\\}listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" /opt/homebrew/var/postgresql@16/postgresql.conf && echo \"listen_addresses set to {{listen_addresses}}\""
+        command: "PG_CONF=$(find /etc/postgresql -name postgresql.conf 2>/dev/null | head -1) && sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '{{listen_addresses}}'/\" \"$PG_CONF\" && echo \"listen_addresses set to {{listen_addresses}} in $PG_CONF\""
+        skip_on_error: false
+        args:
+          - name: listen_addresses
+            prompt: 'Enter listen addresses (* for all interfaces, or a comma-separated list of IPs)'
+            default: '*'
+            required: true
+      - description: Add pg_hba.conf rule for remote connections
+        platforms:
+          ubuntu: 'PG_HBA=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+          debian: 'PG_HBA=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+          centos: 'PG_HBA=$(find /var/lib/pgsql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+          rhel: 'PG_HBA=$(find /var/lib/pgsql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+          fedora: 'PG_HBA=$(find /var/lib/pgsql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+          arch: 'echo "host all {{db_user}} {{allowed_network}} md5" >> /var/lib/postgres/data/pg_hba.conf && echo "Remote access rule added"'
+          darwin: 'echo "host all {{db_user}} {{allowed_network}} md5" >> /opt/homebrew/var/postgresql@16/pg_hba.conf && echo "Remote access rule added"'
+        command: 'PG_HBA=$(find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1) && echo "host all {{db_user}} {{allowed_network}} md5" >> "$PG_HBA" && echo "Remote access rule added to $PG_HBA"'
+        skip_on_error: false
+        args:
+          - name: db_user
+            prompt: "Enter the database user to allow remote access for (or 'all')"
+            default: 'all'
+            required: true
+          - name: allowed_network
+            prompt: 'Enter allowed network CIDR (e.g., 0.0.0.0/0 for all, 10.0.0.0/8 for private)'
+            default: '0.0.0.0/0'
+            required: true
+      - description: Allow PostgreSQL port through firewall
+        platforms:
+          ubuntu: ufw allow 5432/tcp 2>/dev/null && echo "Port 5432 allowed in UFW" || echo "UFW not active, skipping"
+          debian: ufw allow 5432/tcp 2>/dev/null && echo "Port 5432 allowed in UFW" || echo "UFW not active, skipping"
+          centos: 'firewall-cmd --permanent --add-port=5432/tcp && firewall-cmd --reload && echo "Port 5432 allowed in firewalld"'
+          rhel: 'firewall-cmd --permanent --add-port=5432/tcp && firewall-cmd --reload && echo "Port 5432 allowed in firewalld"'
+          fedora: 'firewall-cmd --permanent --add-port=5432/tcp && firewall-cmd --reload && echo "Port 5432 allowed in firewalld"'
+          arch: ufw allow 5432/tcp 2>/dev/null || echo "No firewall detected, skipping"
+        command: ufw allow 5432/tcp 2>/dev/null && echo "Port 5432 allowed" || echo "Firewall not active, skipping"
+        skip_on_error: true
+      - description: Restart PostgreSQL to apply changes
+        platforms:
+          ubuntu: systemctl restart postgresql && echo "PostgreSQL restarted"
+          debian: systemctl restart postgresql && echo "PostgreSQL restarted"
+          centos: systemctl restart postgresql-16 && echo "PostgreSQL restarted"
+          rhel: systemctl restart postgresql-16 && echo "PostgreSQL restarted"
+          fedora: systemctl restart postgresql && echo "PostgreSQL restarted"
+          arch: systemctl restart postgresql && echo "PostgreSQL restarted"
+          alpine: rc-service postgresql restart && echo "PostgreSQL restarted"
+          darwin: brew services restart postgresql@16 && echo "PostgreSQL restarted"
+        command: systemctl restart postgresql && echo "PostgreSQL restarted"
+        skip_on_error: false
+      - description: Verify PostgreSQL is listening on configured addresses
+        platforms:
+          linux: ss -tlnp | grep 5432 && echo "" && echo "PostgreSQL is listening for remote connections"
+          darwin: lsof -i :5432 | head -5 && echo "" && echo "PostgreSQL is listening for remote connections"
+        command: ss -tlnp | grep 5432 && echo "" && echo "PostgreSQL is listening for remote connections"
+        skip_on_error: false

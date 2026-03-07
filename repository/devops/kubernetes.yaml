@@ -3,6 +3,7 @@ description: Kubernetes tools installation (kubectl, k9s, helm)
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Install Kubernetes CLI tools
     commands:
       - description: Install kubectl

@@ -1,9 +1,10 @@
 name: alias-ip
 description: Add or remove IP address aliases on network interfaces
 versions:
-  - version: "v1"
+  - version: 'v1'
     tag: add
     latest: true
+    default: true
     description: Add an alias IP address to a network interface
     commands:
       - description: Show current IP configuration
@@ -34,27 +35,27 @@ versions:
         skip_on_error: false
         args:
           - name: ip_address
-            prompt: "Enter the alias IP address to add (e.g., 192.168.1.100)"
+            prompt: 'Enter the alias IP address to add (e.g., 192.168.1.100)'
             required: true
           - name: prefix
-            prompt: "Enter the subnet prefix length (e.g., 24 for /24)"
-            default: "24"
+            prompt: 'Enter the subnet prefix length (e.g., 24 for /24)'
+            default: '24'
             required: false
           - name: netmask
-            prompt: "Enter the subnet mask (e.g., 255.255.255.0)"
-            default: "255.255.255.0"
+            prompt: 'Enter the subnet mask (e.g., 255.255.255.0)'
+            default: '255.255.255.0'
             required: false
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet)'
+            default: 'eth0'
             required: true
           - name: label
-            prompt: "Enter the alias label number (e.g., 0, 1, 2)"
-            default: "0"
+            prompt: 'Enter the alias label number (e.g., 0, 1, 2)'
+            default: '0'
             required: false
           - name: gateway
-            prompt: "Enter the default gateway (e.g., 192.168.1.1, leave empty to skip)"
-            default: ""
+            prompt: 'Enter the default gateway (e.g., 192.168.1.1, leave empty to skip)'
+            default: ''
             required: false
       - description: Make alias IP persistent (survives reboot)
         platforms:
@@ -69,27 +70,27 @@ versions:
         skip_on_error: true
         args:
           - name: ip_address
-            prompt: "Enter the alias IP address (e.g., 192.168.1.100)"
+            prompt: 'Enter the alias IP address (e.g., 192.168.1.100)'
             required: true
           - name: prefix
-            prompt: "Enter the subnet prefix length (e.g., 24)"
-            default: "24"
+            prompt: 'Enter the subnet prefix length (e.g., 24)'
+            default: '24'
             required: false
           - name: netmask
-            prompt: "Enter the subnet mask (e.g., 255.255.255.0)"
-            default: "255.255.255.0"
+            prompt: 'Enter the subnet mask (e.g., 255.255.255.0)'
+            default: '255.255.255.0'
             required: false
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33)'
+            default: 'eth0'
             required: true
           - name: label
-            prompt: "Enter the alias label number (e.g., 0, 1, 2)"
-            default: "0"
+            prompt: 'Enter the alias label number (e.g., 0, 1, 2)'
+            default: '0'
             required: false
           - name: gateway
-            prompt: "Enter the default gateway (e.g., 192.168.1.1, leave empty to skip)"
-            default: ""
+            prompt: 'Enter the default gateway (e.g., 192.168.1.1, leave empty to skip)'
+            default: ''
             required: false
       - description: Restart adapter to apply alias
         platforms:
@@ -106,19 +107,19 @@ versions:
         skip_on_error: true
         args:
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet)'
+            default: 'eth0'
             required: true
           - name: ip_address
-            prompt: "Enter the alias IP address (e.g., 192.168.1.100)"
+            prompt: 'Enter the alias IP address (e.g., 192.168.1.100)'
             required: true
           - name: netmask
-            prompt: "Enter the subnet mask (e.g., 255.255.255.0)"
-            default: "255.255.255.0"
+            prompt: 'Enter the subnet mask (e.g., 255.255.255.0)'
+            default: '255.255.255.0'
             required: false
           - name: gateway
-            prompt: "Enter the default gateway to restore after restart (e.g., 192.168.1.1)"
-            default: ""
+            prompt: 'Enter the default gateway to restore after restart (e.g., 192.168.1.1)'
+            default: ''
             required: false
       - description: Verify alias IP was added
         platforms:
@@ -135,13 +136,14 @@ versions:
         skip_on_error: false
         args:
           - name: interface
-            prompt: "Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)"
-            default: "eth0"
+            prompt: 'Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)'
+            default: 'eth0'
             required: true
 
-  - version: "v2"
+  - version: 'v1'
     tag: remove
     latest: false
+    default: false
     description: Remove an alias IP address from a network interface
     commands:
       - description: Show current IP configuration
@@ -172,15 +174,15 @@ versions:
         skip_on_error: false
         args:
           - name: ip_address
-            prompt: "Enter the alias IP address to remove (e.g., 192.168.1.100)"
+            prompt: 'Enter the alias IP address to remove (e.g., 192.168.1.100)'
             required: true
           - name: prefix
-            prompt: "Enter the subnet prefix length (e.g., 24 for /24)"
-            default: "24"
+            prompt: 'Enter the subnet prefix length (e.g., 24 for /24)'
+            default: '24'
             required: false
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet)'
+            default: 'eth0'
             required: true
       - description: Remove persistent alias IP configuration
         platforms:
@@ -195,19 +197,19 @@ versions:
         skip_on_error: true
         args:
           - name: ip_address
-            prompt: "Enter the alias IP address to remove (e.g., 192.168.1.100)"
+            prompt: 'Enter the alias IP address to remove (e.g., 192.168.1.100)'
             required: true
           - name: prefix
-            prompt: "Enter the subnet prefix length (e.g., 24)"
-            default: "24"
+            prompt: 'Enter the subnet prefix length (e.g., 24)'
+            default: '24'
             required: false
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33)'
+            default: 'eth0'
             required: true
           - name: label
-            prompt: "Enter the alias label number to remove (e.g., 0, 1, 2)"
-            default: "0"
+            prompt: 'Enter the alias label number to remove (e.g., 0, 1, 2)'
+            default: '0'
             required: false
       - description: Verify alias IP was removed
         platforms:
@@ -224,6 +226,6 @@ versions:
         skip_on_error: false
         args:
           - name: interface
-            prompt: "Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)"
-            default: "eth0"
+            prompt: 'Enter the network interface name to verify (e.g., eth0, ens33, Ethernet)'
+            default: 'eth0'
             required: true

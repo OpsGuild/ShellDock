@@ -3,6 +3,7 @@ description: Display comprehensive system information and stats
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Verbose system stats and diagnostics
     commands:
       - description: Display hostname and system identity

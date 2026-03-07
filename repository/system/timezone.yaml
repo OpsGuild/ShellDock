@@ -1,0 +1,84 @@
+name: timezone
+description: System timezone configuration
+versions:
+  - version: "v1"
+    tag: set
+    latest: true
+    default: true
+    description: Set the system timezone
+    commands:
+      - description: Show current timezone
+        platforms:
+          ubuntu: timedatectl status 2>/dev/null || cat /etc/timezone 2>/dev/null || date +%Z
+          debian: timedatectl status 2>/dev/null || cat /etc/timezone 2>/dev/null || date +%Z
+          centos: timedatectl status 2>/dev/null || cat /etc/sysconfig/clock 2>/dev/null || date +%Z
+          rhel: timedatectl status 2>/dev/null || cat /etc/sysconfig/clock 2>/dev/null || date +%Z
+          fedora: timedatectl status 2>/dev/null || date +%Z
+          arch: timedatectl status 2>/dev/null || date +%Z
+          alpine: cat /etc/timezone 2>/dev/null || date +%Z
+          darwin: systemsetup -gettimezone 2>/dev/null || date +%Z
+          windows: 'Get-TimeZone | Format-List Id, DisplayName, BaseUtcOffset'
+        command: timedatectl status 2>/dev/null || cat /etc/timezone 2>/dev/null || date +%Z
+        skip_on_error: true
+      - description: List available timezones (filtered)
+        platforms:
+          ubuntu: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          debian: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          centos: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          rhel: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          fedora: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          arch: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+          alpine: ls /usr/share/zoneinfo/posix/ | grep -i "{{filter}}" | head -20
+          darwin: ls /usr/share/zoneinfo | grep -i "{{filter}}" | head -20
+          windows: 'Get-TimeZone -ListAvailable | Where-Object { $_.Id -match "{{filter}}" -or $_.DisplayName -match "{{filter}}" } | Select-Object -First 20 Id, DisplayName | Format-Table -AutoSize'
+        command: timedatectl list-timezones | grep -i "{{filter}}" | head -20
+        skip_on_error: true
+        args:
+          - name: filter
+            prompt: "Enter a keyword to filter timezones (e.g., America, London, UTC)"
+            default: "America"
+            required: false
+      - description: Set system timezone
+        platforms:
+          ubuntu: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          debian: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          centos: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          rhel: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          fedora: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          arch: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          alpine: 'apk add --no-cache tzdata 2>/dev/null; cp /usr/share/zoneinfo/{{timezone}} /etc/localtime && echo "{{timezone}}" > /etc/timezone && echo "Timezone set to {{timezone}}"'
+          darwin: systemsetup -settimezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+          windows: 'Set-TimeZone -Id "{{timezone}}"; Write-Host "Timezone set to {{timezone}}"'
+        command: timedatectl set-timezone "{{timezone}}" && echo "Timezone set to {{timezone}}"
+        skip_on_error: false
+        args:
+          - name: timezone
+            prompt: "Enter the timezone to set (e.g., America/New_York, Europe/London, UTC)"
+            default: "UTC"
+            required: true
+      - description: Enable NTP time synchronization
+        platforms:
+          ubuntu: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          debian: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          centos: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          rhel: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          fedora: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          arch: timedatectl set-ntp true && echo "NTP synchronization enabled"
+          alpine: 'apk add --no-cache chrony 2>/dev/null; rc-update add chronyd default 2>/dev/null; rc-service chronyd start 2>/dev/null; echo "NTP synchronization enabled"'
+          darwin: systemsetup -setusingnetworktime on && echo "NTP synchronization enabled"
+          windows: 'Start-Service W32Time -ErrorAction SilentlyContinue; w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update; w32tm /resync; Write-Host "NTP synchronization enabled"'
+        command: timedatectl set-ntp true && echo "NTP synchronization enabled"
+        skip_on_error: true
+      - description: Verify timezone and time settings
+        platforms:
+          ubuntu: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          debian: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          centos: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          rhel: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          fedora: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          arch: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+          alpine: echo "=== Timezone ===" && cat /etc/timezone && echo "" && echo "=== Current Time ===" && date
+          darwin: echo "=== Timezone ===" && systemsetup -gettimezone && echo "" && echo "=== Current Time ===" && date
+          windows: 'Write-Host "=== Timezone ==="; Get-TimeZone | Format-List; Write-Host "=== Current Time ==="; Get-Date -Format "yyyy-MM-dd HH:mm:ss K"'
+        command: echo "=== Timezone ===" && timedatectl status && echo "" && echo "=== Current Time ===" && date
+        skip_on_error: false

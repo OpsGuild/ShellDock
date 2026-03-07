@@ -1,0 +1,68 @@
+name: hostname
+description: Set system hostname and update /etc/hosts
+versions:
+  - version: 'v1'
+    latest: true
+    default: true
+    description: Set hostname and configure /etc/hosts
+    commands:
+      - description: Show current hostname
+        platforms:
+          ubuntu: hostnamectl status 2>/dev/null || hostname -f
+          debian: hostnamectl status 2>/dev/null || hostname -f
+          centos: hostnamectl status 2>/dev/null || hostname -f
+          rhel: hostnamectl status 2>/dev/null || hostname -f
+          fedora: hostnamectl status 2>/dev/null || hostname -f
+          arch: hostnamectl status 2>/dev/null || hostname -f
+          alpine: hostname -f 2>/dev/null || hostname
+          darwin: 'echo "Hostname: $(hostname)" && echo "Computer Name: $(scutil --get ComputerName 2>/dev/null)" && echo "Local Hostname: $(scutil --get LocalHostName 2>/dev/null)"'
+          windows: 'Write-Host "Hostname: $env:COMPUTERNAME"; Get-CimInstance Win32_ComputerSystem | Select-Object Name, Domain, DNSHostName'
+        command: hostnamectl status 2>/dev/null || hostname -f
+        skip_on_error: true
+      - description: Set system hostname
+        platforms:
+          ubuntu: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          debian: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          centos: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          rhel: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          fedora: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          arch: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+          alpine: 'echo "{{hostname}}" > /etc/hostname && hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"'
+          darwin: 'scutil --set HostName "{{hostname}}" && scutil --set LocalHostName "{{hostname}}" && scutil --set ComputerName "{{hostname}}" && echo "Hostname set to {{hostname}}"'
+          windows: 'Rename-Computer -NewName "{{hostname}}" -Force; Write-Host "Hostname set to {{hostname}} (reboot required)"'
+        command: hostnamectl set-hostname "{{hostname}}" && echo "Hostname set to {{hostname}}"
+        skip_on_error: false
+        args:
+          - name: hostname
+            prompt: 'Enter the new hostname (e.g., web-server-01, db-prod-1)'
+            required: true
+      - description: Update /etc/hosts with new hostname
+        platforms:
+          ubuntu: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          debian: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          centos: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          rhel: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          fedora: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          arch: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          alpine: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          darwin: 'echo "macOS does not use /etc/hosts for hostname resolution — hostname was set via scutil"'
+          windows: 'Write-Host "Windows hostname is managed via the registry — no hosts file change needed"'
+        command: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+        skip_on_error: true
+        args:
+          - name: hostname
+            prompt: 'Enter the hostname (must match the hostname set above)'
+            required: true
+      - description: Verify new hostname
+        platforms:
+          ubuntu: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          debian: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          centos: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          rhel: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          fedora: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          arch: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          alpine: echo "=== Hostname ===" && hostname -f && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+          darwin: 'echo "=== Hostname ===" && hostname && echo "Computer Name:" && scutil --get ComputerName && echo "Local Hostname:" && scutil --get LocalHostName'
+          windows: 'Write-Host "=== Hostname ==="; Write-Host $env:COMPUTERNAME; Write-Host ""; Write-Host "(reboot may be required for the change to take full effect)"'
+        command: echo "=== Hostname ===" && hostnamectl status && echo "" && echo "=== /etc/hosts ===" && cat /etc/hosts
+        skip_on_error: false

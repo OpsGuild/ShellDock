@@ -1,0 +1,140 @@
+name: redis
+description: Redis in-memory data store installation and setup
+versions:
+  - version: 'v1'
+    tag: install
+    latest: true
+    default: true
+    description: Install Redis server and configure for production use
+    commands:
+      - description: Install Redis server
+        platforms:
+          ubuntu: apt-get update && apt-get install -y redis-server
+          debian: apt-get update && apt-get install -y redis-server
+          centos: yum install -y epel-release && yum install -y redis
+          rhel: yum install -y epel-release && yum install -y redis
+          fedora: dnf install -y redis
+          arch: pacman -S --noconfirm redis
+          alpine: apk add --no-cache redis
+          darwin: brew install redis
+          windows: 'winget install -e --id Redis.Redis --accept-source-agreements --accept-package-agreements'
+        command: apt-get update && apt-get install -y redis-server
+        skip_on_error: false
+      - description: Enable and start Redis service
+        platforms:
+          ubuntu: systemctl enable redis-server && systemctl start redis-server
+          debian: systemctl enable redis-server && systemctl start redis-server
+          centos: systemctl enable redis && systemctl start redis
+          rhel: systemctl enable redis && systemctl start redis
+          fedora: systemctl enable redis && systemctl start redis
+          arch: systemctl enable redis && systemctl start redis
+          alpine: rc-update add redis default && rc-service redis start
+          darwin: brew services start redis
+          windows: 'Start-Service Redis -ErrorAction SilentlyContinue; Set-Service Redis -StartupType Automatic -ErrorAction SilentlyContinue; Write-Host "Redis service started"'
+        command: systemctl enable redis-server && systemctl start redis-server
+        skip_on_error: false
+      - description: Configure Redis to bind to localhost only (security)
+        platforms:
+          ubuntu: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf && echo "Redis bound to localhost only"'
+          debian: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf && echo "Redis bound to localhost only"'
+          centos: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf 2>/dev/null || sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis.conf && echo "Redis bound to localhost only"'
+          rhel: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf 2>/dev/null || sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis.conf && echo "Redis bound to localhost only"'
+          fedora: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf 2>/dev/null || sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis.conf && echo "Redis bound to localhost only"'
+          arch: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf && echo "Redis bound to localhost only"'
+          alpine: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis.conf && echo "Redis bound to localhost only"'
+          darwin: echo "Redis on macOS defaults to localhost only via Homebrew"
+          windows: 'Write-Host "Redis on Windows defaults to localhost binding"'
+        command: 'sed -i "s/^bind .*/bind 127.0.0.1 ::1/" /etc/redis/redis.conf && echo "Redis bound to localhost only"'
+        skip_on_error: true
+      - description: Set Redis password (optional but recommended)
+        platforms:
+          ubuntu: 'sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && echo "Redis password configured"'
+          debian: 'sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && echo "Redis password configured"'
+          centos: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" "$CONF" && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" "$CONF" && echo "Redis password configured"'
+          rhel: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" "$CONF" && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" "$CONF" && echo "Redis password configured"'
+          fedora: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" "$CONF" && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" "$CONF" && echo "Redis password configured"'
+          arch: 'sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && echo "Redis password configured"'
+          alpine: 'sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" /etc/redis.conf && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" /etc/redis.conf && echo "Redis password configured"'
+        command: 'sed -i "s/^# requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && sed -i "s/^requirepass .*/requirepass {{redis_password}}/" /etc/redis/redis.conf && echo "Redis password configured"'
+        skip_on_error: true
+        args:
+          - name: redis_password
+            prompt: 'Enter a Redis password (leave empty to skip password setup)'
+            default: ''
+            required: false
+      - description: Configure max memory and eviction policy
+        platforms:
+          ubuntu: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          debian: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          centos: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          rhel: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          fedora: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          arch: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          alpine: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+        command: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+        skip_on_error: true
+        args:
+          - name: max_memory
+            prompt: 'Enter max memory for Redis (e.g., 256mb, 512mb, 1gb)'
+            default: '256mb'
+            required: false
+          - name: eviction_policy
+            prompt: 'Enter eviction policy (allkeys-lru, volatile-lru, noeviction, allkeys-random)'
+            default: 'allkeys-lru'
+            required: false
+      - description: Restart Redis to apply configuration changes
+        platforms:
+          ubuntu: systemctl restart redis-server && echo "Redis restarted"
+          debian: systemctl restart redis-server && echo "Redis restarted"
+          centos: systemctl restart redis && echo "Redis restarted"
+          rhel: systemctl restart redis && echo "Redis restarted"
+          fedora: systemctl restart redis && echo "Redis restarted"
+          arch: systemctl restart redis && echo "Redis restarted"
+          alpine: rc-service redis restart && echo "Redis restarted"
+          darwin: brew services restart redis && echo "Redis restarted"
+          windows: 'Restart-Service Redis -ErrorAction SilentlyContinue; Write-Host "Redis restarted"'
+        command: systemctl restart redis-server && echo "Redis restarted"
+        skip_on_error: false
+      - description: Verify Redis is running and responsive
+        platforms:
+          linux: redis-cli ping && echo "" && redis-cli info server | head -15
+          darwin: redis-cli ping && echo "" && redis-cli info server | head -15
+          windows: 'redis-cli ping; redis-cli info server | Select-Object -First 15'
+        command: redis-cli ping && echo "" && redis-cli info server | head -15
+        skip_on_error: false
+  - version: 'v1'
+    tag: status
+    latest: false
+    default: false
+    description: Show Redis server status, memory usage, and connected clients
+    commands:
+      - description: Check Redis connectivity
+        command: redis-cli ping
+        skip_on_error: false
+      - description: Show Redis server info
+        platforms:
+          linux: redis-cli info server | grep -E "(redis_version|uptime_in_days|tcp_port|config_file)"
+          darwin: redis-cli info server | grep -E "(redis_version|uptime_in_days|tcp_port|config_file)"
+          windows: 'redis-cli info server | Select-String "redis_version|uptime_in_days|tcp_port|config_file"'
+        command: redis-cli info server | grep -E "(redis_version|uptime_in_days|tcp_port|config_file)"
+        skip_on_error: true
+      - description: Show memory usage
+        platforms:
+          linux: redis-cli info memory | grep -E "(used_memory_human|maxmemory_human|mem_fragmentation_ratio|maxmemory_policy)"
+          darwin: redis-cli info memory | grep -E "(used_memory_human|maxmemory_human|mem_fragmentation_ratio|maxmemory_policy)"
+          windows: 'redis-cli info memory | Select-String "used_memory_human|maxmemory_human|mem_fragmentation_ratio|maxmemory_policy"'
+        command: redis-cli info memory | grep -E "(used_memory_human|maxmemory_human|mem_fragmentation_ratio|maxmemory_policy)"
+        skip_on_error: true
+      - description: Show connected clients
+        platforms:
+          linux: redis-cli info clients | grep -E "(connected_clients|blocked_clients|tracking_clients)"
+          darwin: redis-cli info clients | grep -E "(connected_clients|blocked_clients|tracking_clients)"
+          windows: 'redis-cli info clients | Select-String "connected_clients|blocked_clients|tracking_clients"'
+        command: redis-cli info clients | grep -E "(connected_clients|blocked_clients|tracking_clients)"
+        skip_on_error: true
+      - description: Show keyspace statistics
+        command: redis-cli info keyspace
+        skip_on_error: true
+      - description: Show slow log (last 10 entries)
+        command: redis-cli slowlog get 10
+        skip_on_error: true

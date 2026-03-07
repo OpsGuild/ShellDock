@@ -1,9 +1,10 @@
 name: openssh
 description: OpenSSH server installation and configuration
 versions:
-  - version: "v1"
+  - version: 'v1'
     tag: install
     latest: true
+    default: true
     description: Install OpenSSH server and client, enable service, configure firewall
     commands:
       - description: Install OpenSSH server
@@ -92,9 +93,10 @@ versions:
         command: 'echo "" && echo "========================================" && echo "  SSH Server is ready!" && echo "========================================" && echo "" && CURRENT_USER=$(whoami) && HOSTNAME=$(hostname) && IP_ADDR=$(hostname -I 2>/dev/null | awk "{print \$1}" || ip route get 1 2>/dev/null | awk "{print \$7; exit}") && echo "  Hostname : $HOSTNAME" && echo "  IP       : $IP_ADDR" && echo "" && echo "  To connect, run:" && echo "    ssh $CURRENT_USER@$HOSTNAME" && echo "    ssh $CURRENT_USER@$IP_ADDR" && echo "" && echo "========================================"'
         skip_on_error: true
 
-  - version: "v3"
+  - version: 'v1'
     tag: authorize
     latest: false
+    default: false
     description: Authorize a public key for incoming SSH connections (run on the server)
     commands:
       - description: Create authorized_keys file with correct permissions
@@ -113,7 +115,7 @@ versions:
         skip_on_error: false
         args:
           - name: public_key
-            prompt: "Paste the full public key (e.g., ssh-ed25519 AAAA... user@host)"
+            prompt: 'Paste the full public key (e.g., ssh-ed25519 AAAA... user@host)'
             required: true
       - description: Copy key to administrators authorized_keys (Windows admin users)
         platforms:
@@ -156,9 +158,10 @@ versions:
         command: 'echo "" && echo "========================================" && echo "  SSH Server ready for key-based auth!" && echo "========================================" && echo "" && echo "  From the client machine, connect with:" && echo "    ssh $(whoami)@$(hostname -I 2>/dev/null | cut -d'' '' -f1)" && echo "" && echo "========================================"'
         skip_on_error: true
 
-  - version: "v2"
+  - version: 'v1'
     tag: setup
     latest: false
+    default: false
     description: Generate SSH key pair and configure SSH client
     commands:
       - description: Create .ssh directory with correct permissions
@@ -177,24 +180,24 @@ versions:
         skip_on_error: false
         args:
           - name: key_type
-            prompt: "Enter key type (rsa, ed25519, ecdsa)"
-            default: "ed25519"
+            prompt: 'Enter key type (rsa, ed25519, ecdsa)'
+            default: 'ed25519'
             required: false
           - name: key_bits
-            prompt: "Enter key size in bits (4096 for rsa, ignored for ed25519)"
-            default: "4096"
+            prompt: 'Enter key size in bits (4096 for rsa, ignored for ed25519)'
+            default: '4096'
             required: false
           - name: comment
-            prompt: "Enter a comment for the key (e.g., your email)"
-            default: "shelldock-key"
+            prompt: 'Enter a comment for the key (e.g., your email)'
+            default: 'shelldock-key'
             required: false
           - name: key_name
-            prompt: "Enter key file name (e.g., id_ed25519, id_rsa)"
-            default: "id_ed25519"
+            prompt: 'Enter key file name (e.g., id_ed25519, id_rsa)'
+            default: 'id_ed25519'
             required: false
           - name: passphrase
-            prompt: "Enter passphrase (leave empty for no passphrase)"
-            default: ""
+            prompt: 'Enter passphrase (leave empty for no passphrase)'
+            default: ''
             required: false
       - description: Set correct permissions on key files
         platforms:
@@ -205,8 +208,8 @@ versions:
         skip_on_error: true
         args:
           - name: key_name
-            prompt: "Enter key file name used during generation"
-            default: "id_ed25519"
+            prompt: 'Enter key file name used during generation'
+            default: 'id_ed25519'
             required: false
       - description: Display key file locations and commands
         platforms:
@@ -217,6 +220,6 @@ versions:
         skip_on_error: true
         args:
           - name: key_name
-            prompt: "Enter key file name used during generation"
-            default: "id_ed25519"
+            prompt: 'Enter key file name used during generation'
+            default: 'id_ed25519'
             required: false

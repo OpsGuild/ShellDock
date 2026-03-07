@@ -1,9 +1,10 @@
 name: reset-network
 description: Network stack reset, DNS flush, and adapter troubleshooting
 versions:
-  - version: "v1"
+  - version: 'v1'
     tag: full
     latest: true
+    default: true
     description: Full network stack reset
     commands:
       - description: Flush DNS cache
@@ -34,8 +35,8 @@ versions:
         skip_on_error: true
         args:
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)'
+            default: 'eth0'
             required: true
       - description: Release and renew IP address
         platforms:
@@ -52,8 +53,8 @@ versions:
         skip_on_error: true
         args:
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)'
+            default: 'eth0'
             required: true
       - description: Restart network service
         platforms:
@@ -83,8 +84,8 @@ versions:
         skip_on_error: true
         args:
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)'
+            default: 'eth0'
             required: true
       - description: Verify network connectivity
         platforms:
@@ -101,13 +102,14 @@ versions:
         skip_on_error: true
         args:
           - name: interface
-            prompt: "Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)"
-            default: "eth0"
+            prompt: 'Enter the network interface name (e.g., eth0, ens33, Ethernet, en0)'
+            default: 'eth0'
             required: true
 
-  - version: "v2"
+  - version: 'v1'
     tag: dns
     latest: false
+    default: false
     description: DNS cache flush and verify
     commands:
       - description: Flush DNS cache
@@ -137,9 +139,10 @@ versions:
         command: nslookup google.com && echo "DNS resolution OK"
         skip_on_error: false
 
-  - version: "v3"
+  - version: 'v1'
     tag: adapter
     latest: false
+    default: false
     description: Restart or hard-reset a network adapter
     commands:
       - description: List all network adapters
@@ -170,7 +173,7 @@ versions:
         skip_on_error: false
         args:
           - name: adapter
-            prompt: "Enter the network adapter name (e.g., eth0, ens33, en0, Ethernet, Wi-Fi)"
+            prompt: 'Enter the network adapter name (e.g., eth0, ens33, en0, Ethernet, Wi-Fi)'
             required: true
       - description: Verify adapter status
         platforms:
@@ -187,5 +190,5 @@ versions:
         skip_on_error: false
         args:
           - name: adapter
-            prompt: "Enter the network adapter name to verify (e.g., eth0, ens33, en0, Ethernet, Wi-Fi)"
+            prompt: 'Enter the network adapter name to verify (e.g., eth0, ens33, en0, Ethernet, Wi-Fi)'
             required: true

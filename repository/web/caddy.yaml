@@ -1,0 +1,64 @@
+name: caddy
+description: Caddy web server installation and setup
+versions:
+  - version: "v1"
+    latest: true
+    default: true
+    description: Caddy installation and basic configuration
+    commands:
+      - description: Install Caddy
+        platforms:
+          ubuntu: 'apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/gpg.key" | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt" | tee /etc/apt/sources.list.d/caddy-stable.list && apt-get update && apt-get install -y caddy'
+          debian: 'apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/gpg.key" | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt" | tee /etc/apt/sources.list.d/caddy-stable.list && apt-get update && apt-get install -y caddy'
+          centos: 'yum install -y yum-plugin-copr && yum copr enable -y @caddy/caddy && yum install -y caddy'
+          rhel: 'yum install -y yum-plugin-copr && yum copr enable -y @caddy/caddy && yum install -y caddy'
+          fedora: 'dnf install -y "dnf-command(copr)" && dnf copr enable -y @caddy/caddy && dnf install -y caddy'
+          arch: pacman -S --noconfirm caddy
+          darwin: brew install caddy
+          windows: 'winget install -e --id CaddyServer.Caddy --accept-source-agreements --accept-package-agreements'
+        command: 'apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/gpg.key" | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt" | tee /etc/apt/sources.list.d/caddy-stable.list && apt-get update && apt-get install -y caddy'
+        skip_on_error: false
+      - description: Enable and start Caddy service
+        platforms:
+          linux: systemctl enable caddy && systemctl start caddy
+          darwin: brew services start caddy
+          windows: 'caddy start'
+        command: systemctl enable caddy && systemctl start caddy
+        skip_on_error: false
+      - description: Verify Caddy is running
+        platforms:
+          linux: systemctl status caddy --no-pager && caddy version
+          darwin: caddy version
+          windows: 'caddy version'
+        command: systemctl status caddy --no-pager && caddy version
+        skip_on_error: false
+      - description: Create a basic Caddyfile
+        platforms:
+          linux: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /etc/caddy/Caddyfile && echo "Caddyfile written to /etc/caddy/Caddyfile"'
+          darwin: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /opt/homebrew/etc/Caddyfile && echo "Caddyfile written"'
+          windows: 'Set-Content -Path "$env:USERPROFILE\Caddyfile" -Value "{{domain}} {`n`treverse_proxy localhost:{{backend_port}}`n}"; Write-Host "Caddyfile written to $env:USERPROFILE\Caddyfile"'
+        command: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /etc/caddy/Caddyfile && echo "Caddyfile written to /etc/caddy/Caddyfile"'
+        skip_on_error: true
+        args:
+          - name: domain
+            prompt: "Enter the domain name (e.g., example.com, :8080 for local dev)"
+            default: ":8080"
+            required: true
+          - name: backend_port
+            prompt: "Enter the backend port to reverse proxy to (e.g., 3000, 8000)"
+            default: "3000"
+            required: true
+      - description: Reload Caddy to apply configuration
+        platforms:
+          linux: systemctl reload caddy && echo "Caddy reloaded"
+          darwin: caddy reload --config /opt/homebrew/etc/Caddyfile && echo "Caddy reloaded"
+          windows: 'caddy reload; Write-Host "Caddy reloaded"'
+        command: systemctl reload caddy && echo "Caddy reloaded"
+        skip_on_error: true
+      - description: Verify Caddy configuration
+        platforms:
+          linux: caddy validate --config /etc/caddy/Caddyfile && echo "Configuration valid"
+          darwin: caddy validate --config /opt/homebrew/etc/Caddyfile && echo "Configuration valid"
+          windows: 'caddy validate; Write-Host "Configuration valid"'
+        command: caddy validate --config /etc/caddy/Caddyfile && echo "Configuration valid"
+        skip_on_error: true

@@ -3,6 +3,7 @@ description: Docker installation and setup commands
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Docker installation with platform-specific commands
     commands:
       - description: Update package index

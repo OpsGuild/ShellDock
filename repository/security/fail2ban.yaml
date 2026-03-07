@@ -1,0 +1,175 @@
+name: fail2ban
+description: Fail2ban intrusion prevention system installation and configuration
+versions:
+  - version: 'v1'
+    tag: install
+    latest: true
+    default: true
+    description: Install and configure fail2ban with SSH protection
+    commands:
+      - description: Install fail2ban
+        platforms:
+          ubuntu: apt-get update && apt-get install -y fail2ban
+          debian: apt-get update && apt-get install -y fail2ban
+          centos: yum install -y epel-release && yum install -y fail2ban
+          rhel: yum install -y epel-release && yum install -y fail2ban
+          fedora: dnf install -y fail2ban
+          arch: pacman -S --noconfirm fail2ban
+          alpine: apk add --no-cache fail2ban
+          darwin: brew install fail2ban
+          windows: 'Write-Host "fail2ban is not natively supported on Windows. Consider using Windows Defender Firewall with Advanced Security or wail2ban instead."'
+        command: apt-get update && apt-get install -y fail2ban
+        skip_on_error: false
+      - description: Create local jail configuration (overrides without touching defaults)
+        platforms:
+          ubuntu: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          debian: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          centos: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          rhel: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          fedora: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          arch: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+          alpine: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+        command: 'cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local 2>/dev/null; cat > /etc/fail2ban/jail.d/sshd.local << EOF
+[sshd]
+enabled = true
+port = {{ssh_port}}
+maxretry = {{max_retry}}
+bantime = {{ban_time}}
+findtime = {{find_time}}
+EOF
+echo "SSH jail configuration created"'
+        skip_on_error: false
+        args:
+          - name: ssh_port
+            prompt: "Enter the SSH port to protect (e.g., 22, ssh)"
+            default: "ssh"
+            required: false
+          - name: max_retry
+            prompt: "Enter max failed attempts before ban (e.g., 3, 5)"
+            default: "5"
+            required: false
+          - name: ban_time
+            prompt: "Enter ban duration in seconds or use suffix (e.g., 3600, 1h, 1d, -1 for permanent)"
+            default: "3600"
+            required: false
+          - name: find_time
+            prompt: "Enter time window for counting failures in seconds (e.g., 600, 10m)"
+            default: "600"
+            required: false
+      - description: Enable and start fail2ban service
+        platforms:
+          ubuntu: systemctl enable fail2ban && systemctl start fail2ban
+          debian: systemctl enable fail2ban && systemctl start fail2ban
+          centos: systemctl enable fail2ban && systemctl start fail2ban
+          rhel: systemctl enable fail2ban && systemctl start fail2ban
+          fedora: systemctl enable fail2ban && systemctl start fail2ban
+          arch: systemctl enable fail2ban && systemctl start fail2ban
+          alpine: rc-update add fail2ban default && rc-service fail2ban start
+          darwin: brew services start fail2ban
+        command: systemctl enable fail2ban && systemctl start fail2ban
+        skip_on_error: false
+      - description: Verify fail2ban is running and show jail status
+        platforms:
+          ubuntu: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          debian: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          centos: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          rhel: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          fedora: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          arch: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          alpine: rc-service fail2ban status && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+          darwin: fail2ban-client status && echo "" && fail2ban-client status sshd
+        command: systemctl status fail2ban --no-pager && echo "" && fail2ban-client status && echo "" && fail2ban-client status sshd
+        skip_on_error: false
+  - version: 'v1'
+    tag: status
+    latest: false
+    default: false
+    description: Check fail2ban status and banned IPs
+    commands:
+      - description: Show overall fail2ban status
+        command: fail2ban-client status
+        skip_on_error: false
+      - description: Show SSH jail status and banned IPs
+        command: fail2ban-client status sshd
+        skip_on_error: false
+      - description: Show recent fail2ban log entries
+        platforms:
+          linux: tail -50 /var/log/fail2ban.log 2>/dev/null || journalctl -u fail2ban --no-pager -n 50
+          darwin: tail -50 /usr/local/var/log/fail2ban.log 2>/dev/null || echo "No fail2ban log found"
+        command: tail -50 /var/log/fail2ban.log 2>/dev/null || journalctl -u fail2ban --no-pager -n 50
+        skip_on_error: true
+  - version: 'v1'
+    tag: unban
+    latest: false
+    default: false
+    description: Unban an IP address from fail2ban
+    commands:
+      - description: Show currently banned IPs in SSH jail
+        command: fail2ban-client status sshd
+        skip_on_error: true
+      - description: Unban IP address
+        command: fail2ban-client set sshd unbanip {{ip_address}} && echo "IP {{ip_address}} has been unbanned from sshd jail"
+        skip_on_error: false
+        args:
+          - name: ip_address
+            prompt: "Enter the IP address to unban"
+            required: true
+      - description: Verify IP was unbanned
+        command: fail2ban-client status sshd
+        skip_on_error: false

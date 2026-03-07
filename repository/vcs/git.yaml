@@ -3,6 +3,7 @@ description: Git installation and basic configuration
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Git installation and setup
     commands:
       - description: Install Git

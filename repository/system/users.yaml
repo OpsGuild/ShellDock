@@ -1,0 +1,217 @@
+name: users
+description: System user management — create users, grant sudo, configure SSH access
+versions:
+  - version: 'v1'
+    tag: create-sudo
+    latest: true
+    default: true
+    description: Create a new user with sudo privileges and optional SSH key access
+    commands:
+      - description: Create new user account
+        platforms:
+          ubuntu: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          debian: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          centos: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          rhel: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          fedora: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          arch: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+          alpine: adduser -D -s /bin/ash {{username}} && echo "User {{username}} created"
+          darwin: sysadminctl -addUser {{username}} -shell /bin/zsh -home /Users/{{username}} && echo "User {{username}} created"
+          windows: 'New-LocalUser -Name "{{username}}" -NoPassword -FullName "{{username}}" -Description "Created by ShellDock"; Write-Host "User {{username}} created"'
+        command: useradd -m -s /bin/bash {{username}} && echo "User {{username}} created"
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to create'
+            required: true
+      - description: Set password for new user
+        platforms:
+          ubuntu: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          debian: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          centos: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          rhel: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          fedora: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          arch: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          alpine: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+          darwin: sysadminctl -resetPasswordFor {{username}} -newPassword "{{password}}" && echo "Password set for {{username}}"
+          windows: 'Set-LocalUser -Name "{{username}}" -Password (ConvertTo-SecureString "{{password}}" -AsPlainText -Force); Write-Host "Password set for {{username}}"'
+        command: 'echo "{{username}}:{{password}}" | chpasswd && echo "Password set for {{username}}"'
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username'
+            required: true
+          - name: password
+            prompt: 'Enter the password for the user'
+            required: true
+      - description: Install sudo (if not present)
+        platforms:
+          ubuntu: apt-get update && apt-get install -y sudo
+          debian: apt-get update && apt-get install -y sudo
+          centos: yum install -y sudo
+          rhel: yum install -y sudo
+          fedora: dnf install -y sudo
+          arch: pacman -S --noconfirm sudo
+          alpine: apk add --no-cache sudo
+          darwin: echo "sudo is pre-installed on macOS"
+          windows: echo "Not applicable on Windows"
+        command: apt-get update && apt-get install -y sudo
+        skip_on_error: true
+      - description: Add user to sudo group
+        platforms:
+          ubuntu: usermod -aG sudo {{username}} && echo "{{username}} added to sudo group"
+          debian: usermod -aG sudo {{username}} && echo "{{username}} added to sudo group"
+          centos: usermod -aG wheel {{username}} && echo "{{username}} added to wheel group"
+          rhel: usermod -aG wheel {{username}} && echo "{{username}} added to wheel group"
+          fedora: usermod -aG wheel {{username}} && echo "{{username}} added to wheel group"
+          arch: usermod -aG wheel {{username}} && echo "{{username}} added to wheel group"
+          alpine: addgroup {{username}} wheel 2>/dev/null || adduser {{username}} wheel && echo "{{username}} added to wheel group"
+          darwin: dseditgroup -o edit -a {{username}} -t user admin && echo "{{username}} added to admin group"
+          windows: 'Add-LocalGroupMember -Group "Administrators" -Member "{{username}}"; Write-Host "{{username}} added to Administrators group"'
+        command: usermod -aG sudo {{username}} && echo "{{username}} added to sudo group"
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to grant sudo'
+            required: true
+      - description: Ensure sudo group has NOPASSWD (optional, skip if you want password prompts)
+        platforms:
+          ubuntu: 'echo "%sudo ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-sudo > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-sudo && visudo -cf /etc/sudoers.d/nopasswd-sudo && echo "NOPASSWD configured for sudo group" || { rm -f /etc/sudoers.d/nopasswd-sudo; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          debian: 'echo "%sudo ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-sudo > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-sudo && visudo -cf /etc/sudoers.d/nopasswd-sudo && echo "NOPASSWD configured for sudo group" || { rm -f /etc/sudoers.d/nopasswd-sudo; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          centos: 'echo "%wheel ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-wheel > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-wheel && visudo -cf /etc/sudoers.d/nopasswd-wheel && echo "NOPASSWD configured for wheel group" || { rm -f /etc/sudoers.d/nopasswd-wheel; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          rhel: 'echo "%wheel ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-wheel > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-wheel && visudo -cf /etc/sudoers.d/nopasswd-wheel && echo "NOPASSWD configured for wheel group" || { rm -f /etc/sudoers.d/nopasswd-wheel; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          fedora: 'echo "%wheel ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-wheel > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-wheel && visudo -cf /etc/sudoers.d/nopasswd-wheel && echo "NOPASSWD configured for wheel group" || { rm -f /etc/sudoers.d/nopasswd-wheel; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          arch: 'echo "%wheel ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-wheel > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-wheel && visudo -cf /etc/sudoers.d/nopasswd-wheel && echo "NOPASSWD configured for wheel group" || { rm -f /etc/sudoers.d/nopasswd-wheel; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+          alpine: 'echo "%wheel ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-wheel > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-wheel && visudo -cf /etc/sudoers.d/nopasswd-wheel && echo "NOPASSWD configured for wheel group" || { rm -f /etc/sudoers.d/nopasswd-wheel; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+        command: 'echo "%sudo ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/nopasswd-sudo > /dev/null && chmod 0440 /etc/sudoers.d/nopasswd-sudo && visudo -cf /etc/sudoers.d/nopasswd-sudo && echo "NOPASSWD configured for sudo group" || { rm -f /etc/sudoers.d/nopasswd-sudo; echo "Failed: invalid sudoers syntax, file removed"; exit 1; }'
+        skip_on_error: true
+      - description: Set up SSH directory for new user
+        platforms:
+          linux: 'mkdir -p /home/{{username}}/.ssh && chmod 700 /home/{{username}}/.ssh && chown {{username}}:{{username}} /home/{{username}}/.ssh && echo "SSH directory created for {{username}}"'
+          darwin: 'mkdir -p /Users/{{username}}/.ssh && chmod 700 /Users/{{username}}/.ssh && chown {{username}}:staff /Users/{{username}}/.ssh && echo "SSH directory created for {{username}}"'
+          windows: 'New-Item -ItemType Directory -Force -Path "C:\Users\{{username}}\.ssh" | Out-Null; Write-Host "SSH directory created for {{username}}"'
+        command: 'mkdir -p /home/{{username}}/.ssh && chmod 700 /home/{{username}}/.ssh && chown {{username}}:{{username}} /home/{{username}}/.ssh && echo "SSH directory created for {{username}}"'
+        skip_on_error: true
+        args:
+          - name: username
+            prompt: 'Enter the username'
+            required: true
+      - description: Verify user was created
+        platforms:
+          ubuntu: id {{username}} && groups {{username}}
+          debian: id {{username}} && groups {{username}}
+          centos: id {{username}} && groups {{username}}
+          rhel: id {{username}} && groups {{username}}
+          fedora: id {{username}} && groups {{username}}
+          arch: id {{username}} && groups {{username}}
+          alpine: id {{username}} && groups {{username}}
+          darwin: id {{username}} && groups {{username}}
+          windows: 'Get-LocalUser "{{username}}" | Format-List; Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.Name -match "{{username}}" }'
+        command: id {{username}} && groups {{username}}
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to verify'
+            required: true
+
+  - version: 'v1'
+    tag: lock
+    latest: false
+    default: false
+    description: Lock or disable a user account
+    commands:
+      - description: Lock user account (disable login)
+        platforms:
+          ubuntu: usermod -L {{username}} && echo "User {{username}} locked"
+          debian: usermod -L {{username}} && echo "User {{username}} locked"
+          centos: usermod -L {{username}} && echo "User {{username}} locked"
+          rhel: usermod -L {{username}} && echo "User {{username}} locked"
+          fedora: usermod -L {{username}} && echo "User {{username}} locked"
+          arch: usermod -L {{username}} && echo "User {{username}} locked"
+          alpine: passwd -l {{username}} && echo "User {{username}} locked"
+          darwin: pwpolicy -u {{username}} -disableuser && echo "User {{username}} disabled"
+          windows: 'Disable-LocalUser -Name "{{username}}"; Write-Host "User {{username}} disabled"'
+        command: usermod -L {{username}} && echo "User {{username}} locked"
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to lock'
+            required: true
+      - description: Expire user password (force reset on next login)
+        platforms:
+          ubuntu: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          debian: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          centos: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          rhel: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          fedora: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          arch: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+          windows: 'Set-LocalUser -Name "{{username}}" -PasswordNeverExpires $false; net user "{{username}}" /logonpasswordchg:yes; Write-Host "Password expired for {{username}}"'
+        command: passwd -e {{username}} && echo "Password expired for {{username}} — must reset on next login"
+        skip_on_error: true
+        args:
+          - name: username
+            prompt: 'Enter the username'
+            required: true
+      - description: Verify account status
+        platforms:
+          ubuntu: passwd -S {{username}}
+          debian: passwd -S {{username}}
+          centos: passwd -S {{username}}
+          rhel: passwd -S {{username}}
+          fedora: passwd -S {{username}}
+          arch: passwd -S {{username}}
+          alpine: passwd -S {{username}}
+          darwin: dscl . -read /Users/{{username}} AuthenticationAuthority 2>/dev/null || echo "Check user status manually"
+          windows: 'Get-LocalUser "{{username}}" | Select-Object Name, Enabled, PasswordExpires, LastLogon | Format-List'
+        command: passwd -S {{username}}
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to check'
+            required: true
+
+  - version: 'v1'
+    tag: delete
+    latest: false
+    default: false
+    description: Delete a user account and optionally remove their home directory
+    commands:
+      - description: Show user info before deletion
+        platforms:
+          linux: id {{username}} && echo "Home directory:" && ls -ld /home/{{username}} 2>/dev/null || echo "No home directory found"
+          darwin: id {{username}} && echo "Home directory:" && ls -ld /Users/{{username}} 2>/dev/null || echo "No home directory found"
+          windows: 'Get-LocalUser "{{username}}" | Format-List Name, Enabled, Description'
+        command: id {{username}} && echo "Home directory:" && ls -ld /home/{{username}} 2>/dev/null || echo "No home directory found"
+        skip_on_error: true
+        args:
+          - name: username
+            prompt: 'Enter the username to delete'
+            required: true
+      - description: Delete user and remove home directory
+        platforms:
+          ubuntu: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          debian: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          centos: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          rhel: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          fedora: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          arch: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+          alpine: deluser --remove-home {{username}} && echo "User {{username}} and home directory removed"
+          darwin: sysadminctl -deleteUser {{username}} && echo "User {{username}} removed"
+          windows: 'Remove-LocalUser -Name "{{username}}"; Remove-Item -Recurse -Force "C:\Users\{{username}}" -ErrorAction SilentlyContinue; Write-Host "User {{username}} removed"'
+        command: userdel -r {{username}} && echo "User {{username}} and home directory removed"
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to delete'
+            required: true
+      - description: Verify user was removed
+        platforms:
+          linux: 'id {{username}} 2>/dev/null && echo "WARNING: User still exists" || echo "User {{username}} successfully removed"'
+          darwin: 'id {{username}} 2>/dev/null && echo "WARNING: User still exists" || echo "User {{username}} successfully removed"'
+          windows: 'if (Get-LocalUser "{{username}}" -ErrorAction SilentlyContinue) { Write-Host "WARNING: User still exists" } else { Write-Host "User {{username}} successfully removed" }'
+        command: 'id {{username}} 2>/dev/null && echo "WARNING: User still exists" || echo "User {{username}} successfully removed"'
+        skip_on_error: false
+        args:
+          - name: username
+            prompt: 'Enter the username to verify removal'
+            required: true

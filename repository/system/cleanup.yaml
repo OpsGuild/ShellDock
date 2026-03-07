@@ -1,0 +1,152 @@
+name: cleanup
+description: System disk cleanup and space recovery
+versions:
+  - version: 'v1'
+    tag: full
+    latest: true
+    default: true
+    description: Full system cleanup (package cache, logs, temp files, docker)
+    commands:
+      - description: Show current disk usage
+        platforms:
+          ubuntu: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          debian: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          centos: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          rhel: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          fedora: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          arch: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          alpine: df -h | grep -E '(Filesystem|/$)' || df -h
+          darwin: df -h / | head -5
+          windows: 'Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{N="UsedGB";E={[math]::Round($_.Used/1GB,2)}}, @{N="FreeGB";E={[math]::Round($_.Free/1GB,2)}}, @{N="TotalGB";E={[math]::Round(($_.Used+$_.Free)/1GB,2)}} | Format-Table -AutoSize'
+        command: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+        skip_on_error: true
+      - description: Clean package manager cache
+        platforms:
+          ubuntu: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+          debian: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+          centos: yum clean all && echo "YUM cache cleaned"
+          rhel: yum clean all && echo "YUM cache cleaned"
+          fedora: dnf clean all && echo "DNF cache cleaned"
+          arch: pacman -Scc --noconfirm && echo "Pacman cache cleaned"
+          alpine: apk cache clean 2>/dev/null; rm -rf /var/cache/apk/* && echo "APK cache cleaned"
+          darwin: brew cleanup --prune=all 2>/dev/null && echo "Homebrew cache cleaned" || echo "Homebrew not installed, skipping"
+          windows: 'Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>$null; Write-Host "Component store cleaned"'
+        command: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+        skip_on_error: true
+      - description: Remove unused packages and dependencies
+        platforms:
+          ubuntu: apt-get autoremove -y && echo "Unused packages removed"
+          debian: apt-get autoremove -y && echo "Unused packages removed"
+          centos: yum autoremove -y 2>/dev/null && echo "Unused packages removed" || echo "Autoremove not supported on this version"
+          rhel: yum autoremove -y 2>/dev/null && echo "Unused packages removed" || echo "Autoremove not supported on this version"
+          fedora: dnf autoremove -y && echo "Unused packages removed"
+          arch: pacman -Qdtq | pacman -Rns --noconfirm - 2>/dev/null; echo "Orphaned packages removed"
+          alpine: apk autoremove 2>/dev/null || echo "No orphaned packages"
+          darwin: brew autoremove 2>/dev/null && echo "Unused formulae removed" || echo "Homebrew not installed, skipping"
+          windows: 'Write-Host "Windows does not have an equivalent autoremove — skipping"'
+        command: apt-get autoremove -y && echo "Unused packages removed"
+        skip_on_error: true
+      - description: Clean old journal logs (keep last 7 days)
+        platforms:
+          ubuntu: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          debian: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          centos: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          rhel: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          fedora: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          arch: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+          alpine: 'find /var/log -type f -name "*.log" -mtime +7 -exec truncate -s 0 {} \; && echo "Old log files truncated"'
+          darwin: 'sudo log erase --older --style syslog 2>/dev/null; echo "System logs cleaned"'
+          windows: 'wevtutil el | ForEach-Object { wevtutil cl $_ 2>$null }; Write-Host "Event logs cleared"'
+        command: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
+        skip_on_error: true
+        args:
+          - name: journal_retention
+            prompt: 'How long to keep journal logs (e.g., 7d, 30d, 3months)'
+            default: '7d'
+            required: false
+      - description: Clean temporary files
+        platforms:
+          ubuntu: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          debian: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          centos: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          rhel: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          fedora: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          arch: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          alpine: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          darwin: rm -rf /private/var/folders/*/* 2>/dev/null; rm -rf ~/Library/Caches/* 2>/dev/null; echo "Temporary files and user caches cleaned"
+          windows: 'Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -Path "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "Temporary files cleaned"'
+        command: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+        skip_on_error: true
+      - description: Clean old kernels (keep current)
+        platforms:
+          ubuntu: 'dpkg -l "linux-image-*" 2>/dev/null | grep "^ii" | grep -v "$(uname -r)" | awk "{print \$2}" | head -5 | xargs apt-get purge -y 2>/dev/null; echo "Old kernels removed"'
+          debian: 'dpkg -l "linux-image-*" 2>/dev/null | grep "^ii" | grep -v "$(uname -r)" | awk "{print \$2}" | head -5 | xargs apt-get purge -y 2>/dev/null; echo "Old kernels removed"'
+          centos: 'package-cleanup --oldkernels --count=1 -y 2>/dev/null || dnf remove --oldinstallonly -y 2>/dev/null; echo "Old kernels removed"'
+          rhel: 'package-cleanup --oldkernels --count=1 -y 2>/dev/null || dnf remove --oldinstallonly -y 2>/dev/null; echo "Old kernels removed"'
+          fedora: 'dnf remove --oldinstallonly -y 2>/dev/null; echo "Old kernels removed"'
+          arch: echo "Arch uses a single kernel package — no old kernels to clean"
+          darwin: echo "macOS does not have removable old kernels — skipping"
+          windows: 'Dism.exe /online /Cleanup-Image /StartComponentCleanup 2>$null; Write-Host "Component cleanup completed"'
+        command: 'dpkg -l "linux-image-*" 2>/dev/null | grep "^ii" | grep -v "$(uname -r)" | awk "{print \$2}" | head -5 | xargs apt-get purge -y 2>/dev/null; echo "Old kernels removed"'
+        skip_on_error: true
+      - description: Prune Docker resources (if Docker is installed)
+        platforms:
+          linux: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
+          darwin: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
+          windows: 'if (Get-Command docker -ErrorAction SilentlyContinue) { docker system prune -af --volumes 2>$null; Write-Host "Docker resources pruned" } else { Write-Host "Docker not installed, skipping" }'
+        command: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
+        skip_on_error: true
+      - description: Show recovered disk space
+        platforms:
+          ubuntu: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          debian: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          centos: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          rhel: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          fedora: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          arch: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          alpine: df -h | grep -E '(Filesystem|/$)' || df -h
+          darwin: df -h / | head -5
+          windows: 'Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{N="UsedGB";E={[math]::Round($_.Used/1GB,2)}}, @{N="FreeGB";E={[math]::Round($_.Free/1GB,2)}}, @{N="TotalGB";E={[math]::Round(($_.Used+$_.Free)/1GB,2)}} | Format-Table -AutoSize'
+        command: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+        skip_on_error: false
+
+  - version: 'v1'
+    tag: light
+    latest: false
+    default: false
+    description: Light cleanup (package cache and temp files only, no Docker prune)
+    commands:
+      - description: Show current disk usage
+        platforms:
+          linux: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          darwin: df -h / | head -5
+          windows: 'Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{N="FreeGB";E={[math]::Round($_.Free/1GB,2)}} | Format-Table -AutoSize'
+        command: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+        skip_on_error: true
+      - description: Clean package manager cache
+        platforms:
+          ubuntu: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+          debian: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+          centos: yum clean all && echo "YUM cache cleaned"
+          rhel: yum clean all && echo "YUM cache cleaned"
+          fedora: dnf clean all && echo "DNF cache cleaned"
+          arch: pacman -Sc --noconfirm && echo "Pacman cache cleaned"
+          alpine: apk cache clean 2>/dev/null; rm -rf /var/cache/apk/* && echo "APK cache cleaned"
+          darwin: brew cleanup 2>/dev/null && echo "Homebrew cache cleaned" || echo "Homebrew not installed, skipping"
+          windows: 'Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "Temp files cleaned"'
+        command: apt-get clean && apt-get autoclean && echo "APT cache cleaned"
+        skip_on_error: true
+      - description: Clean temporary files
+        platforms:
+          linux: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+          darwin: rm -rf ~/Library/Caches/* 2>/dev/null; echo "User caches cleaned"
+          windows: 'Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "Temporary files cleaned"'
+        command: rm -rf /tmp/* /var/tmp/* 2>/dev/null; echo "Temporary files cleaned"
+        skip_on_error: true
+      - description: Show recovered disk space
+        platforms:
+          linux: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+          darwin: df -h / | head -5
+          windows: 'Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{N="FreeGB";E={[math]::Round($_.Free/1GB,2)}} | Format-Table -AutoSize'
+        command: df -h --total 2>/dev/null | grep -E '(Filesystem|total|/$)' || df -h
+        skip_on_error: false

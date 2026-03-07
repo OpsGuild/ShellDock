@@ -3,6 +3,7 @@ description: Go programming language installation (latest stable)
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Go installation from official releases
     commands:
       - description: Install Go (latest stable)

@@ -3,6 +3,7 @@ description: Rust programming language installation via rustup
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Rust installation using official rustup installer
     commands:
       - description: Install Rust via rustup

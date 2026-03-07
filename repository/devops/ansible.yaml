@@ -1,0 +1,76 @@
+name: ansible
+description: Ansible automation and configuration management tool installation
+versions:
+  - version: 'v1'
+    tag: pip
+    latest: true
+    default: true
+    description: Install Ansible via pip (recommended, latest version)
+    commands:
+      - description: Install Python 3 and pip (prerequisite)
+        platforms:
+          ubuntu: apt-get update && apt-get install -y python3 python3-pip python3-venv sshpass
+          debian: apt-get update && apt-get install -y python3 python3-pip python3-venv sshpass
+          centos: yum install -y python3 python3-pip sshpass
+          rhel: yum install -y python3 python3-pip sshpass
+          fedora: dnf install -y python3 python3-pip sshpass
+          arch: pacman -S --noconfirm python python-pip sshpass
+          alpine: apk add --no-cache python3 py3-pip sshpass
+          darwin: brew install python3 hudochenkov/sshpass/sshpass
+          windows: 'winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements'
+        command: apt-get update && apt-get install -y python3 python3-pip python3-venv sshpass
+        skip_on_error: true
+      - description: Install Ansible via pip
+        platforms:
+          linux: python3 -m pip install --user ansible
+          darwin: python3 -m pip install --user ansible
+          windows: 'python -m pip install ansible'
+        command: python3 -m pip install --user ansible
+        skip_on_error: false
+      - description: Verify Ansible installation
+        platforms:
+          linux: ansible --version | head -5
+          darwin: ansible --version | head -5
+          windows: 'ansible --version | Select-Object -First 5'
+        command: ansible --version | head -5
+        skip_on_error: false
+      - description: Create default Ansible directory structure
+        platforms:
+          linux: mkdir -p /etc/ansible 2>/dev/null || mkdir -p ~/.ansible && mkdir -p ~/.ansible/{inventory,roles,playbooks} && echo "Ansible directories created in ~/.ansible/"
+          darwin: mkdir -p ~/.ansible/{inventory,roles,playbooks} && echo "Ansible directories created in ~/.ansible/"
+          windows: 'New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.ansible\inventory","$env:USERPROFILE\.ansible\roles","$env:USERPROFILE\.ansible\playbooks" | Out-Null; Write-Host "Ansible directories created in $env:USERPROFILE\.ansible\"'
+        command: mkdir -p ~/.ansible/{inventory,roles,playbooks} && echo "Ansible directories created in ~/.ansible/"
+        skip_on_error: true
+      - description: Test Ansible connectivity (localhost)
+        platforms:
+          linux: ansible localhost -m ping -c local
+          darwin: ansible localhost -m ping -c local
+          windows: 'ansible localhost -m win_ping -c local'
+        command: ansible localhost -m ping -c local
+        skip_on_error: true
+  - version: 'v1'
+    tag: package
+    latest: false
+    default: false
+    description: Install Ansible via system package manager
+    commands:
+      - description: Install Ansible from system repositories
+        platforms:
+          ubuntu: apt-get update && apt-get install -y software-properties-common && add-apt-repository --yes --update ppa:ansible/ansible && apt-get install -y ansible
+          debian: apt-get update && apt-get install -y ansible
+          centos: yum install -y epel-release && yum install -y ansible
+          rhel: yum install -y epel-release && yum install -y ansible
+          fedora: dnf install -y ansible
+          arch: pacman -S --noconfirm ansible
+          alpine: apk add --no-cache ansible
+          darwin: brew install ansible
+          windows: 'python -m pip install ansible'
+        command: apt-get update && apt-get install -y software-properties-common && add-apt-repository --yes --update ppa:ansible/ansible && apt-get install -y ansible
+        skip_on_error: false
+      - description: Verify Ansible installation
+        platforms:
+          linux: ansible --version | head -5
+          darwin: ansible --version | head -5
+          windows: 'ansible --version | Select-Object -First 5'
+        command: ansible --version | head -5
+        skip_on_error: false

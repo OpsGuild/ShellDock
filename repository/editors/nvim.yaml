@@ -3,6 +3,7 @@ description: Neovim nightly installation (latest build from GitHub)
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Neovim nightly installation from GitHub releases
     commands:
       - description: Install Neovim nightly

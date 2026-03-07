@@ -1,9 +1,10 @@
 name: certbot
 description: Certbot SSL certificate tool installation
 versions:
-  - version: "v1"
+  - version: 'v1'
     tag: certonly
     latest: false
+    default: false
     description: Certbot standalone installation
     commands:
       - description: Install Certbot
@@ -21,9 +22,10 @@ versions:
       - description: Verify Certbot installation
         command: certbot --version
         skip_on_error: false
-  - version: "v2"
+  - version: 'v1'
     tag: nginx
     latest: true
+    default: true
     description: Certbot with Nginx plugin installation
     commands:
       - description: Install Certbot with Nginx plugin

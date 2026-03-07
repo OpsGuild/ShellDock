@@ -3,6 +3,7 @@ description: ShellDock installation and functionality test suite
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: Test ShellDock installation and basic functionality
     commands:
       - description: Display current date and time

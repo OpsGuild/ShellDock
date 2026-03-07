@@ -3,6 +3,7 @@ description: UFW (Uncomplicated Firewall) installation and setup
 versions:
   - version: "v1"
     latest: true
+    default: true
     description: UFW installation and basic configuration
     commands:
       - description: Install UFW
