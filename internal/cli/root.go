@@ -73,7 +73,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&rootLocalFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
 	rootCmd.Flags().StringVar(&rootSkipSteps, "skip", "", "Skip specific steps (comma-separated or range, e.g., 1,2,3 or 1-3)")
 	rootCmd.Flags().StringVar(&rootOnlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
-	rootCmd.Flags().StringVar(&rootVersionFlag, "ver", "", "Run specific version or tag (default: latest). Can also use name@version format")
+	rootCmd.Flags().StringVar(&rootVersionFlag, "ver", "", "Run specific version or tag (uses default). Can also use name@version format")
 	rootCmd.Flags().BoolVarP(&rootYesFlag, "yes", "a", false, "Execute all commands without prompting for confirmation")
 	rootCmd.Flags().StringVar(&rootArgsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 	rootCmd.AddCommand(runCmd)

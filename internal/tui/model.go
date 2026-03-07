@@ -383,8 +383,12 @@ func (m *model) viewDetail() string {
 	b.WriteString(detailValueStyle.Render(cs.Description))
 	b.WriteString("\n")
 
+	versionDisplay := cs.Version
+	if cs.Tag != "" {
+		versionDisplay = cs.Version + " @" + cs.Tag
+	}
 	b.WriteString(detailLabelStyle.Render("Version      "))
-	b.WriteString(tagStyle.Render(cs.Version))
+	b.WriteString(tagStyle.Render(versionDisplay))
 	b.WriteString("\n\n")
 
 	b.WriteString(headerStyle.Render("Steps"))

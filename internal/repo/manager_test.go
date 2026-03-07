@@ -131,9 +131,12 @@ func TestManagerListVersions(t *testing.T) {
 	yamlContent := `name: test
 versions:
   - version: "v1"
+    latest: false
+    default: true
     commands: []
   - version: "v2"
     latest: true
+    default: true
     commands: []
 `
 	filePath := filepath.Join(tmpLocal, "test.yaml")
@@ -155,4 +158,3 @@ versions:
 		t.Errorf("Expected 2 versions, got %d", len(versions))
 	}
 }
-

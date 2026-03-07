@@ -25,6 +25,7 @@ const (
 	metaName metaField = iota
 	metaDesc
 	metaVersion
+	metaTag
 )
 
 type stepField int
@@ -120,6 +121,7 @@ func newFormModel(manager *repo.Manager, cmdSet *repo.CommandSet, width, height 
 		Name:        cmdSet.Name,
 		Description: cmdSet.Description,
 		Version:     cmdSet.Version,
+		Tag:         cmdSet.Tag,
 		Commands:    make([]repo.Command, len(cmdSet.Commands)),
 	}
 	copy(cs.Commands, cmdSet.Commands)
@@ -218,6 +220,11 @@ func (m *formModel) advanceMeta() (*formModel, tea.Cmd) {
 		}
 		m.cmdSet.Version = val
 		m.err = ""
+		m.metaFld = metaTag
+		m.metaInput = m.cmdSet.Tag
+	case metaTag:
+		m.cmdSet.Tag = strings.TrimSpace(m.metaInput)
+		m.err = ""
 		m.focus = focusSteps
 		m.stepCursor = 0
 	}
@@ -237,6 +244,10 @@ func (m *formModel) retreatMeta() (*formModel, tea.Cmd) {
 		}
 		m.metaFld = metaDesc
 		m.metaInput = m.cmdSet.Description
+	case metaTag:
+		m.cmdSet.Tag = strings.TrimSpace(m.metaInput)
+		m.metaFld = metaVersion
+		m.metaInput = m.cmdSet.Version
 	}
 	m.err = ""
 	return m, nil
@@ -808,7 +819,8 @@ func (m *formModel) buildLines() []vline {
 	metas := []mf{
 		{"Name", m.cmdSet.Name, metaName, "unique identifier, e.g. docker, my-setup"},
 		{"Description", m.cmdSet.Description, metaDesc, "what this command set does"},
-		{"Version", m.cmdSet.Version, metaVersion, "version tag, e.g. v1, v2"},
+		{"Version", m.cmdSet.Version, metaVersion, "version number, e.g. v1, v2"},
+		{"Tag", m.cmdSet.Tag, metaTag, "variant label, e.g. mysql, mariadb (optional)"},
 	}
 
 	for _, f := range metas {

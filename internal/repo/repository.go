@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ArgumentDef represents a command argument definition.
 type ArgumentDef struct {
 	Name     string `yaml:"name"`
 	Prompt   string `yaml:"prompt,omitempty"`
@@ -18,7 +17,6 @@ type ArgumentDef struct {
 	Required bool   `yaml:"required,omitempty"`
 }
 
-// Command represents a single command step.
 type Command struct {
 	Description string            `yaml:"description"`
 	Command     string            `yaml:"command,omitempty"`
@@ -27,37 +25,34 @@ type Command struct {
 	Args        []ArgumentDef     `yaml:"args,omitempty"`
 }
 
-// CommandSet represents a collection of commands for a topic.
 type CommandSet struct {
 	Name        string    `yaml:"name"`
 	Description string    `yaml:"description"`
 	Version     string    `yaml:"version"`
+	Tag         string    `yaml:"tag,omitempty"`
 	Commands    []Command `yaml:"commands"`
 }
 
-// VersionInfo represents a single version of a command set.
 type VersionInfo struct {
 	Version     string    `yaml:"version"`
 	Tag         string    `yaml:"tag,omitempty"`
 	Description string    `yaml:"description"`
 	Latest      bool      `yaml:"latest,omitempty"`
+	Default     bool      `yaml:"default,omitempty"`
 	Commands    []Command `yaml:"commands"`
 }
 
-// VersionedCommandSet represents a command set with multiple versions.
 type VersionedCommandSet struct {
 	Name        string        `yaml:"name"`
 	Description string        `yaml:"description,omitempty"`
 	Versions    []VersionInfo `yaml:"versions"`
 }
 
-// Repository manages command sets.
 type Repository struct {
 	path      string
 	needsSync bool
 }
 
-// NewRepository creates a new repository instance.
 func NewRepository(path string) *Repository {
 	return &Repository{path: path}
 }
@@ -71,8 +66,6 @@ func extractVersionNumber(version string) int {
 	return num
 }
 
-// GetCommandSet retrieves a command set by name and optional version.
-// If version is empty, returns the latest version.
 func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, error) {
 	filePath := r.findCommandSetFile(name)
 	if filePath == "" {
@@ -87,57 +80,57 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 	var versionedCmdSet VersionedCommandSet
 	if err := yaml.Unmarshal(data, &versionedCmdSet); err == nil && versionedCmdSet.Versions != nil && len(versionedCmdSet.Versions) > 0 {
 		if version == "" || version == "latest" {
-			latestVersion := ""
-			hasLatestFlag := false
-			highestVersionNum := 0
+			return r.resolveLatest(&versionedCmdSet)
+		}
 
-			for _, v := range versionedCmdSet.Versions {
-				if v.Latest {
-					version = v.Version
-					hasLatestFlag = true
+		for i := range versionedCmdSet.Versions {
+			if versionedCmdSet.Versions[i].Tag != "" && strings.EqualFold(versionedCmdSet.Versions[i].Tag, version) {
+				v := &versionedCmdSet.Versions[i]
+				return &CommandSet{
+					Name:        versionedCmdSet.Name,
+					Description: v.Description,
+					Version:     v.Version,
+					Tag:         v.Tag,
+					Commands:    v.Commands,
+				}, nil
+			}
+		}
+
+		var defaultMatch *VersionInfo
+		var firstMatch *VersionInfo
+		for i := range versionedCmdSet.Versions {
+			v := &versionedCmdSet.Versions[i]
+			if v.Version == version || strings.TrimPrefix(v.Version, "v") == strings.TrimPrefix(version, "v") {
+				if v.Default {
+					defaultMatch = v
 					break
 				}
-			}
-
-			if !hasLatestFlag {
-				for _, v := range versionedCmdSet.Versions {
-					versionNum := extractVersionNumber(v.Version)
-					if versionNum > highestVersionNum {
-						highestVersionNum = versionNum
-						latestVersion = v.Version
-					}
-				}
-				if latestVersion != "" {
-					version = latestVersion
+				if firstMatch == nil {
+					firstMatch = v
 				}
 			}
 		}
 
-		var foundVersion *VersionInfo
-		for i := range versionedCmdSet.Versions {
-			v := versionedCmdSet.Versions[i]
-			if v.Version == version || strings.TrimPrefix(v.Version, "v") == strings.TrimPrefix(version, "v") {
-				foundVersion = &versionedCmdSet.Versions[i]
-				break
-			}
-			if v.Tag != "" && strings.EqualFold(v.Tag, version) {
-				foundVersion = &versionedCmdSet.Versions[i]
-				break
-			}
+		if defaultMatch != nil {
+			return &CommandSet{
+				Name:        versionedCmdSet.Name,
+				Description: defaultMatch.Description,
+				Version:     defaultMatch.Version,
+				Tag:         defaultMatch.Tag,
+				Commands:    defaultMatch.Commands,
+			}, nil
+		}
+		if firstMatch != nil {
+			return &CommandSet{
+				Name:        versionedCmdSet.Name,
+				Description: firstMatch.Description,
+				Version:     firstMatch.Version,
+				Tag:         firstMatch.Tag,
+				Commands:    firstMatch.Commands,
+			}, nil
 		}
 
-		if foundVersion == nil {
-			return nil, fmt.Errorf("command set '%s' version or tag '%s' not found", name, version)
-		}
-
-		cmdSet := CommandSet{
-			Name:        versionedCmdSet.Name,
-			Description: foundVersion.Description,
-			Version:     foundVersion.Version,
-			Commands:    foundVersion.Commands,
-		}
-
-		return &cmdSet, nil
+		return nil, fmt.Errorf("command set '%s' version or tag '%s' not found", name, version)
 	}
 
 	var cmdSet CommandSet
@@ -154,7 +147,53 @@ func (r *Repository) GetCommandSet(name string, version string) (*CommandSet, er
 	return &cmdSet, nil
 }
 
-// ListVersions returns all available versions for a command set.
+func (r *Repository) resolveLatest(vcs *VersionedCommandSet) (*CommandSet, error) {
+	for i := range vcs.Versions {
+		if vcs.Versions[i].Latest {
+			v := &vcs.Versions[i]
+			return &CommandSet{
+				Name:        vcs.Name,
+				Description: v.Description,
+				Version:     v.Version,
+				Tag:         v.Tag,
+				Commands:    v.Commands,
+			}, nil
+		}
+	}
+
+	highestNum := 0
+	var best *VersionInfo
+	for i := range vcs.Versions {
+		num := extractVersionNumber(vcs.Versions[i].Version)
+		if num > highestNum {
+			highestNum = num
+			best = &vcs.Versions[i]
+		}
+	}
+	if best != nil {
+		return &CommandSet{
+			Name:        vcs.Name,
+			Description: best.Description,
+			Version:     best.Version,
+			Tag:         best.Tag,
+			Commands:    best.Commands,
+		}, nil
+	}
+
+	if len(vcs.Versions) > 0 {
+		v := &vcs.Versions[0]
+		return &CommandSet{
+			Name:        vcs.Name,
+			Description: v.Description,
+			Version:     v.Version,
+			Tag:         v.Tag,
+			Commands:    v.Commands,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("command set '%s' has no versions", vcs.Name)
+}
+
 func (r *Repository) ListVersions(name string) ([]string, error) {
 	filePath := r.findCommandSetFile(name)
 	if filePath == "" {
@@ -169,33 +208,41 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 	var versionedCmdSet VersionedCommandSet
 	if err := yaml.Unmarshal(data, &versionedCmdSet); err == nil && versionedCmdSet.Versions != nil && len(versionedCmdSet.Versions) > 0 {
 		var versions []string
-		var latestVersion string
 
-		for _, v := range versionedCmdSet.Versions {
+		latestIdx := -1
+		for i, v := range versionedCmdSet.Versions {
 			if v.Latest {
-				latestVersion = v.Version
+				latestIdx = i
 				break
 			}
 		}
-
-		if latestVersion == "" {
-			highestVersionNum := 0
-			for _, v := range versionedCmdSet.Versions {
-				versionNum := extractVersionNumber(v.Version)
-				if versionNum > highestVersionNum {
-					highestVersionNum = versionNum
-					latestVersion = v.Version
+		if latestIdx == -1 {
+			highestNum := 0
+			for i, v := range versionedCmdSet.Versions {
+				num := extractVersionNumber(v.Version)
+				if num > highestNum {
+					highestNum = num
+					latestIdx = i
 				}
 			}
 		}
 
-		for _, v := range versionedCmdSet.Versions {
-			versionStr := v.Version
+		for i, v := range versionedCmdSet.Versions {
+			var versionStr string
 			if v.Tag != "" {
-				versionStr = fmt.Sprintf("%s [%s]", v.Version, v.Tag)
+				versionStr = fmt.Sprintf("%s @%s", v.Version, v.Tag)
+			} else {
+				versionStr = v.Version
 			}
-			if v.Version == latestVersion {
-				versions = append(versions, versionStr+" (latest)")
+			parts := []string{versionStr}
+			if v.Default {
+				parts = append(parts, "default")
+			}
+			if i == latestIdx {
+				parts = append(parts, "latest")
+			}
+			if len(parts) > 1 {
+				versions = append(versions, versionStr+" ("+strings.Join(parts[1:], ", ")+")")
 			} else {
 				versions = append(versions, versionStr)
 			}
@@ -216,9 +263,6 @@ func (r *Repository) ListVersions(name string) ([]string, error) {
 	return []string{}, nil
 }
 
-// SaveCommandSet saves a command set to the repository.
-// If version is specified, adds/updates that version in the versioned file.
-// If version is empty, uses the version from cmdSet.Version.
 func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 	if err := os.MkdirAll(r.path, 0755); err != nil {
 		return fmt.Errorf("failed to create repository directory: %w", err)
@@ -247,8 +291,12 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 			versionExists := false
 			for i := range versionedCmdSet.Versions {
 				v := versionedCmdSet.Versions[i].Version
-				if v == versionToSave || strings.TrimPrefix(v, "v") == strings.TrimPrefix(versionToSave, "v") {
+				t := versionedCmdSet.Versions[i].Tag
+				versionMatch := v == versionToSave || strings.TrimPrefix(v, "v") == strings.TrimPrefix(versionToSave, "v")
+				tagMatch := cmdSet.Tag != "" && strings.EqualFold(t, cmdSet.Tag)
+				if (cmdSet.Tag != "" && versionMatch && tagMatch) || (cmdSet.Tag == "" && versionMatch && t == "") {
 					versionedCmdSet.Versions[i].Description = cmdSet.Description
+					versionedCmdSet.Versions[i].Tag = cmdSet.Tag
 					versionedCmdSet.Versions[i].Commands = cmdSet.Commands
 					versionExists = true
 					break
@@ -258,31 +306,39 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 			if !versionExists {
 				versionedCmdSet.Versions = append(versionedCmdSet.Versions, VersionInfo{
 					Version:     versionToSave,
+					Tag:         cmdSet.Tag,
 					Description: cmdSet.Description,
 					Commands:    cmdSet.Commands,
 					Latest:      false,
+					Default:     false,
 				})
 			}
 
-			highestVersionNum := 0
-			latestVersion := ""
+			hasLatest := false
 			for _, v := range versionedCmdSet.Versions {
-				versionNum := extractVersionNumber(v.Version)
-				if versionNum > highestVersionNum {
-					highestVersionNum = versionNum
-					latestVersion = v.Version
+				if v.Latest {
+					hasLatest = true
+					break
 				}
 			}
 
-			for i := range versionedCmdSet.Versions {
-				versionedCmdSet.Versions[i].Latest = (versionedCmdSet.Versions[i].Version == latestVersion)
+			if !hasLatest {
+				highestVersionNum := 0
+				highestIdx := 0
+				for i, v := range versionedCmdSet.Versions {
+					versionNum := extractVersionNumber(v.Version)
+					if versionNum > highestVersionNum {
+						highestVersionNum = versionNum
+						highestIdx = i
+					}
+				}
+				versionedCmdSet.Versions[highestIdx].Latest = true
 			}
 
 			if versionedCmdSet.Name == "" {
 				versionedCmdSet.Name = cmdSet.Name
 			}
 		} else {
-			// Existing file is single-version format, convert to versioned
 			var oldCmdSet CommandSet
 			if err := yaml.Unmarshal(data, &oldCmdSet); err == nil {
 				versionedCmdSet.Name = oldCmdSet.Name
@@ -302,15 +358,19 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 				versionedCmdSet.Versions = []VersionInfo{
 					{
 						Version:     oldVersion,
+						Tag:         oldCmdSet.Tag,
 						Description: oldCmdSet.Description,
 						Commands:    oldCmdSet.Commands,
 						Latest:      oldVersionNum >= newVersionNum,
+						Default:     true,
 					},
 					{
 						Version:     versionToSave,
+						Tag:         cmdSet.Tag,
 						Description: cmdSet.Description,
 						Commands:    cmdSet.Commands,
 						Latest:      newVersionNum > oldVersionNum,
+						Default:     false,
 					},
 				}
 			} else {
@@ -318,9 +378,11 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 				versionedCmdSet.Versions = []VersionInfo{
 					{
 						Version:     versionToSave,
+						Tag:         cmdSet.Tag,
 						Description: cmdSet.Description,
 						Commands:    cmdSet.Commands,
 						Latest:      true,
+						Default:     true,
 					},
 				}
 			}
@@ -330,9 +392,11 @@ func (r *Repository) SaveCommandSet(cmdSet *CommandSet, version string) error {
 		versionedCmdSet.Versions = []VersionInfo{
 			{
 				Version:     versionToSave,
+				Tag:         cmdSet.Tag,
 				Description: cmdSet.Description,
 				Commands:    cmdSet.Commands,
 				Latest:      true,
+				Default:     true,
 			},
 		}
 	}
@@ -373,7 +437,6 @@ func (r *Repository) findCommandSetFile(name string) string {
 	return foundPath
 }
 
-// ListCommandSets returns all available command sets.
 func (r *Repository) ListCommandSets() ([]string, error) {
 	if _, err := os.Stat(r.path); os.IsNotExist(err) {
 		return []string{}, nil
@@ -399,7 +462,59 @@ func (r *Repository) ListCommandSets() ([]string, error) {
 	return sets, nil
 }
 
-// DeleteCommandSet removes a command set from the repository.
+type CommandGroup struct {
+	Name     string
+	Commands []string
+}
+
+func (r *Repository) ListCommandSetsGrouped() ([]CommandGroup, error) {
+	if _, err := os.Stat(r.path); os.IsNotExist(err) {
+		return []CommandGroup{}, nil
+	}
+
+	groupMap := make(map[string][]string)
+	var groupOrder []string
+
+	err := filepath.WalkDir(r.path, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if !d.IsDir() && filepath.Ext(d.Name()) == ".yaml" {
+			name := d.Name()[:len(d.Name())-5]
+
+			relPath, relErr := filepath.Rel(r.path, path)
+			group := "general"
+			if relErr == nil {
+				dir := filepath.Dir(relPath)
+				if dir != "." {
+					parts := strings.Split(filepath.ToSlash(dir), "/")
+					group = parts[0]
+				}
+			}
+
+			if _, exists := groupMap[group]; !exists {
+				groupOrder = append(groupOrder, group)
+			}
+			groupMap[group] = append(groupMap[group], name)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read repository: %w", err)
+	}
+
+	var groups []CommandGroup
+	for _, groupName := range groupOrder {
+		groups = append(groups, CommandGroup{
+			Name:     groupName,
+			Commands: groupMap[groupName],
+		})
+	}
+
+	return groups, nil
+}
+
 func (r *Repository) DeleteCommandSet(name string) error {
 	filePath := r.findCommandSetFile(name)
 	if filePath == "" {
@@ -413,17 +528,14 @@ func (r *Repository) DeleteCommandSet(name string) error {
 	return nil
 }
 
-// Exists checks if a command set exists.
 func (r *Repository) Exists(name string) bool {
 	return r.findCommandSetFile(name) != ""
 }
 
-// GetPath returns the repository path.
 func (r *Repository) GetPath() string {
 	return r.path
 }
 
-// NeedsSync returns true if the repository needs initial sync.
 func (r *Repository) NeedsSync() bool {
 	return r.needsSync
 }

@@ -328,7 +328,11 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, all
 
 	fmt.Printf("\n📦 Command Set: %s\n", cmdSet.Name)
 	fmt.Printf("📝 Description: %s\n", cmdSet.Description)
-	fmt.Printf("🔢 Version: %s\n", cmdSet.Version)
+	if cmdSet.Tag != "" {
+		fmt.Printf("🔢 Version: %s @%s\n", cmdSet.Version, cmdSet.Tag)
+	} else {
+		fmt.Printf("🔢 Version: %s\n", cmdSet.Version)
+	}
 	fmt.Printf("🖥️  Platform: %s\n", platform)
 
 	if skipSteps != "" {
@@ -540,8 +544,8 @@ func init() {
 	runCmd.Flags().BoolVarP(&localFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
 	runCmd.Flags().StringVar(&skipSteps, "skip", "", "Skip specific steps (comma-separated or range, e.g., 1,2,3 or 1-3)")
 	runCmd.Flags().StringVar(&onlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
-	runCmd.Flags().StringVar(&versionFlag, "ver", "", "Run specific version or tag (default: latest)")
-	runCmd.Flags().StringVar(&versionFlag, "version", "", "Run specific version or tag (default: latest) - alias for --ver")
+	runCmd.Flags().StringVar(&versionFlag, "ver", "", "Run specific version or tag (uses default)")
+	runCmd.Flags().StringVar(&versionFlag, "version", "", "Run specific version or tag (uses default) - alias for --ver")
 	runCmd.Flags().BoolVarP(&yesFlag, "yes", "a", false, "Execute all commands without prompting for confirmation")
 	runCmd.Flags().StringVar(&argsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 }

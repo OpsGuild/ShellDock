@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/shelldock/shelldock/internal/repo"
 	"github.com/spf13/cobra"
@@ -33,8 +34,8 @@ var versionsCmd = &cobra.Command{
 
 		fmt.Printf("Available versions for '%s':\n\n", name)
 		for _, version := range versions {
-			if version == "latest" {
-				fmt.Printf("  * %s (default)\n", version)
+			if strings.Contains(version, "latest") {
+				fmt.Printf("  * %s\n", version)
 			} else {
 				fmt.Printf("  - %s\n", version)
 			}

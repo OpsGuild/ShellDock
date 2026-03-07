@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,7 +26,17 @@ type githubContent struct {
 	Type string `json:"type"`
 }
 
-// autoSyncIfNeeded checks if the bundled repo needs initial sync and runs it.
+func confirmPrompt(message string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s [y/N]: ", message)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return false
+	}
+	input = strings.TrimSpace(strings.ToLower(input))
+	return input == "y" || input == "yes"
+}
+
 func autoSyncIfNeeded(manager *repo.Manager) {
 	bundledRepo := manager.GetBundledRepo()
 	if bundledRepo == nil || !bundledRepo.NeedsSync() {
@@ -37,6 +48,17 @@ func autoSyncIfNeeded(manager *repo.Manager) {
 		return
 	}
 
+	fmt.Println("📦 No command repository found locally.")
+	fmt.Println("   This will download command sets from the ShellDock cloud repository")
+	fmt.Printf("   and save them to: %s\n", bundledPath)
+	fmt.Println()
+
+	if !confirmPrompt("Would you like to download the repository command sets?") {
+		fmt.Println("⏭️  Skipped. You can run 'shelldock sync' later to download command sets.")
+		return
+	}
+
+	fmt.Println()
 	count, err := syncRepository(bundledPath)
 	if err != nil {
 		fmt.Printf("⚠️  Auto-sync failed: %v\n", err)
@@ -44,16 +66,16 @@ func autoSyncIfNeeded(manager *repo.Manager) {
 		return
 	}
 
-	fmt.Printf("✅ Initial sync complete! Downloaded %d command set(s)\n\n", count)
+	fmt.Printf("\n✅ Initial sync complete! Downloaded %d command set(s)\n\n", count)
 }
+
+var syncYes bool
 
 var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Sync command sets from cloud repository",
 	Long:  "Download and update command sets from the cloud repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔄 Syncing from cloud repository...")
-
 		manager, err := repo.NewManager()
 		handleError(err)
 
@@ -81,17 +103,31 @@ var syncCmd = &cobra.Command{
 		_ = f.Close()
 		_ = os.Remove(tempFile)
 
+		fmt.Println("🔄 Sync from cloud repository")
+		fmt.Printf("   This will download/update command sets from: github.com/%s\n", githubRepo)
+		fmt.Printf("   Target directory: %s\n", bundledPath)
+		fmt.Println()
+
+		if !syncYes && !confirmPrompt("Proceed with sync?") {
+			fmt.Println("⏭️  Sync cancelled.")
+			return
+		}
+
+		fmt.Println()
 		count, err := syncRepository(bundledPath)
 		if err != nil {
 			fmt.Printf("❌ Error syncing repository: %v\n", err)
 			return
 		}
 
-		fmt.Printf("✅ Sync complete! Updated %d command set(s) in %s\n", count, bundledPath)
+		fmt.Printf("\n✅ Sync complete! Updated %d command set(s) in %s\n", count, bundledPath)
 	},
 }
 
-// syncRepository downloads all .yaml files from the GitHub repository.
+func init() {
+	syncCmd.Flags().BoolVarP(&syncYes, "yes", "y", false, "Skip confirmation prompt")
+}
+
 func syncRepository(repoPath string) (int, error) {
 	if err := os.MkdirAll(repoPath, 0755); err != nil {
 		return 0, fmt.Errorf("failed to create repository directory: %w", err)
@@ -105,7 +141,6 @@ func syncRepository(repoPath string) (int, error) {
 	return count, nil
 }
 
-// processDirectory recursively processes a GitHub directory and downloads all .yaml files.
 func processDirectory(dirPath, localBasePath string) (int, error) {
 	url := fmt.Sprintf("%s/contents/%s", githubAPI, dirPath)
 
@@ -165,7 +200,6 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 	return count, nil
 }
 
-// downloadFile downloads a file from a URL to a local path.
 func downloadFile(url, filePath string) error {
 	resp, err := http.Get(url)
 	if err != nil {

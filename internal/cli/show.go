@@ -49,7 +49,11 @@ Useful for previewing what commands will be run.`,
 
 		fmt.Printf("\n📦 Command Set: %s\n", cmdSet.Name)
 		fmt.Printf("📝 Description: %s\n", cmdSet.Description)
-		fmt.Printf("🔢 Version: %s\n", cmdSet.Version)
+		if cmdSet.Tag != "" {
+			fmt.Printf("🔢 Version: %s @%s\n", cmdSet.Version, cmdSet.Tag)
+		} else {
+			fmt.Printf("🔢 Version: %s\n", cmdSet.Version)
+		}
 		fmt.Printf("🖥️  Platform: %s\n", platform)
 		fmt.Printf("📋 Commands:\n\n")
 
@@ -113,6 +117,6 @@ func getCommandForPlatformShow(cmd repo.Command, platform string) string {
 
 func init() {
 	showCmd.Flags().BoolVarP(&showLocalFlag, "local", "l", false, "Only check local repository (skip bundled repository)")
-	showCmd.Flags().StringVar(&showVersionFlag, "ver", "", "Show specific version or tag (default: latest). Can also use name@version format")
-	showCmd.Flags().StringVar(&showVersionFlag, "version", "", "Show specific version or tag (default: latest) - alias for --ver")
+	showCmd.Flags().StringVar(&showVersionFlag, "ver", "", "Show specific version or tag (uses default). Can also use name@version format")
+	showCmd.Flags().StringVar(&showVersionFlag, "version", "", "Show specific version or tag (uses default) - alias for --ver")
 }

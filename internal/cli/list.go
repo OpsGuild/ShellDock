@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/shelldock/shelldock/internal/repo"
 	"github.com/spf13/cobra"
@@ -16,60 +18,66 @@ var listCmd = &cobra.Command{
 		handleError(err)
 		autoSyncIfNeeded(manager)
 
-		allSets, err := manager.ListCommandSets()
+		grouped, err := manager.ListCommandSetsGrouped()
 		handleError(err)
 
-		if len(allSets) == 0 {
+		hasBundled := len(grouped.BundledGroups) > 0
+		hasLocal := len(grouped.LocalGroups) > 0
+
+		if !hasBundled && !hasLocal {
 			fmt.Println("No command sets found.")
 			return
 		}
 
-		bundledSets, _ := manager.GetBundledRepo().ListCommandSets()
-		localSets, _ := manager.GetLocalRepo().ListCommandSets()
-
-		bundledMap := make(map[string]bool)
-		for _, name := range bundledSets {
-			bundledMap[name] = true
-		}
-
-		localMap := make(map[string]bool)
-		for _, name := range localSets {
-			localMap[name] = true
-		}
-
-		var bundledOnly []string
-		var localOnly []string
-		var both []string
-
-		for _, name := range allSets {
-			inBundled := bundledMap[name]
-			inLocal := localMap[name]
-
-			if inBundled && inLocal {
-				both = append(both, name)
-			} else if inBundled {
-				bundledOnly = append(bundledOnly, name)
-			} else if inLocal {
-				localOnly = append(localOnly, name)
-			}
-		}
-
-		if len(bundledOnly) > 0 || len(both) > 0 {
+		if hasBundled {
 			fmt.Println("📦 Repository (bundled with installation):")
-			for _, name := range bundledOnly {
-				fmt.Printf("  • %s\n", name)
-			}
-			for _, name := range both {
-				fmt.Printf("  • %s (also in local)\n", name)
-			}
+			printGroups(grouped.BundledGroups, grouped.Both, true)
 			fmt.Println()
 		}
 
-		if len(localOnly) > 0 {
+		if hasLocal {
 			fmt.Println("💾 Local Repository (~/.shelldock):")
-			for _, name := range localOnly {
-				fmt.Printf("  • %s\n", name)
-			}
+			printGroups(grouped.LocalGroups, grouped.Both, false)
 		}
 	},
+}
+
+func printGroups(groups []repo.CommandGroup, both map[string]bool, markBoth bool) {
+	sorted := make([]repo.CommandGroup, len(groups))
+	copy(sorted, groups)
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i].Name == "general" {
+			return false
+		}
+		if sorted[j].Name == "general" {
+			return true
+		}
+		return sorted[i].Name < sorted[j].Name
+	})
+
+	for _, group := range sorted {
+		if len(group.Commands) == 0 {
+			continue
+		}
+
+		cmds := make([]string, len(group.Commands))
+		copy(cmds, group.Commands)
+		sort.Strings(cmds)
+
+		var parts []string
+		for _, name := range cmds {
+			if markBoth && both[name] {
+				parts = append(parts, name+" (also in local)")
+			} else {
+				parts = append(parts, name)
+			}
+		}
+
+		label := group.Name
+		if label == "general" {
+			label = "other"
+		}
+
+		fmt.Printf("  %s: %s\n", label, strings.Join(parts, ", "))
+	}
 }

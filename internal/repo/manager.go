@@ -12,13 +12,11 @@ const (
 	LocalRepoDir   = ".shelldock"
 )
 
-// Manager handles both bundled (installed) and local repositories.
 type Manager struct {
 	bundledRepo *Repository
 	localRepo   *Repository
 }
 
-// NewManager creates a new repository manager.
 func NewManager() (*Manager, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -76,7 +74,6 @@ func NewManager() (*Manager, error) {
 	}, nil
 }
 
-// GetCommandSet retrieves a command set, checking local first, then bundled repository.
 func (m *Manager) GetCommandSet(name string, preferLocal bool, version string) (*CommandSet, error) {
 	if m.localRepo.Exists(name) {
 		return m.localRepo.GetCommandSet(name, version)
@@ -99,7 +96,6 @@ func (m *Manager) GetCommandSet(name string, preferLocal bool, version string) (
 	return nil, fmt.Errorf("command set '%s' not found in local directory or repository", name)
 }
 
-// ListVersions returns all available versions for a command set.
 func (m *Manager) ListVersions(name string, preferLocal bool) ([]string, error) {
 	if m.localRepo.Exists(name) {
 		return m.localRepo.ListVersions(name)
@@ -116,17 +112,14 @@ func (m *Manager) ListVersions(name string, preferLocal bool) ([]string, error) 
 	return []string{}, nil
 }
 
-// GetLocalRepo returns the local repository.
 func (m *Manager) GetLocalRepo() *Repository {
 	return m.localRepo
 }
 
-// GetBundledRepo returns the bundled repository.
 func (m *Manager) GetBundledRepo() *Repository {
 	return m.bundledRepo
 }
 
-// ListCommandSets returns command sets from both repositories.
 func (m *Manager) ListCommandSets() ([]string, error) {
 	bundledSets, _ := m.bundledRepo.ListCommandSets()
 	localSets, _ := m.localRepo.ListCommandSets()
@@ -145,4 +138,42 @@ func (m *Manager) ListCommandSets() ([]string, error) {
 	}
 
 	return result, nil
+}
+
+type GroupedCommandSets struct {
+	BundledGroups []CommandGroup
+	LocalGroups   []CommandGroup
+	Both          map[string]bool
+}
+
+func (m *Manager) ListCommandSetsGrouped() (*GroupedCommandSets, error) {
+	bundledGroups, _ := m.bundledRepo.ListCommandSetsGrouped()
+	localGroups, _ := m.localRepo.ListCommandSetsGrouped()
+
+	bundledMap := make(map[string]bool)
+	for _, g := range bundledGroups {
+		for _, name := range g.Commands {
+			bundledMap[name] = true
+		}
+	}
+
+	localMap := make(map[string]bool)
+	for _, g := range localGroups {
+		for _, name := range g.Commands {
+			localMap[name] = true
+		}
+	}
+
+	both := make(map[string]bool)
+	for name := range bundledMap {
+		if localMap[name] {
+			both[name] = true
+		}
+	}
+
+	return &GroupedCommandSets{
+		BundledGroups: bundledGroups,
+		LocalGroups:   localGroups,
+		Both:          both,
+	}, nil
 }

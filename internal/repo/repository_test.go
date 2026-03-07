@@ -3,6 +3,7 @@ package repo
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -39,7 +40,6 @@ func TestGetCommandSet_SingleVersion(t *testing.T) {
 	tmpDir := t.TempDir()
 	repo := NewRepository(tmpDir)
 
-	// Create a test YAML file
 	yamlContent := `name: test
 description: Test command set
 version: "v1"
@@ -77,12 +77,15 @@ func TestGetCommandSet_Versioned(t *testing.T) {
 description: Test command set
 versions:
   - version: "v1"
+    latest: false
+    default: true
     description: Version 1
     commands:
       - description: Command 1
         command: echo "v1"
   - version: "v2"
     latest: true
+    default: true
     description: Version 2
     commands:
       - description: Command 2
@@ -94,7 +97,6 @@ versions:
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	// Test latest version
 	cmdSet, err := repo.GetCommandSet("test", "")
 	if err != nil {
 		t.Fatalf("GetCommandSet failed: %v", err)
@@ -103,13 +105,130 @@ versions:
 		t.Errorf("Expected latest version 'v2', got %s", cmdSet.Version)
 	}
 
-	// Test specific version
 	cmdSet, err = repo.GetCommandSet("test", "v1")
 	if err != nil {
 		t.Fatalf("GetCommandSet failed: %v", err)
 	}
 	if cmdSet.Version != "v1" {
 		t.Errorf("Expected version 'v1', got %s", cmdSet.Version)
+	}
+}
+
+func TestGetCommandSet_VersionedWithTags(t *testing.T) {
+	tmpDir := t.TempDir()
+	repo := NewRepository(tmpDir)
+
+	yamlContent := `name: mysql
+description: MySQL/MariaDB
+versions:
+  - version: "v1"
+    tag: mysql
+    latest: true
+    default: true
+    description: MySQL server
+    commands:
+      - description: Install MySQL
+        command: echo "mysql"
+  - version: "v1"
+    tag: mariadb
+    latest: false
+    default: false
+    description: MariaDB server
+    commands:
+      - description: Install MariaDB
+        command: echo "mariadb"
+`
+	filePath := filepath.Join(tmpDir, "mysql.yaml")
+	err := os.WriteFile(filePath, []byte(yamlContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	cmdSet, err := repo.GetCommandSet("mysql", "")
+	if err != nil {
+		t.Fatalf("GetCommandSet failed: %v", err)
+	}
+	if cmdSet.Tag != "mysql" {
+		t.Errorf("Expected latest to resolve to tag 'mysql', got '%s'", cmdSet.Tag)
+	}
+
+	cmdSet, err = repo.GetCommandSet("mysql", "mariadb")
+	if err != nil {
+		t.Fatalf("GetCommandSet by tag failed: %v", err)
+	}
+	if cmdSet.Tag != "mariadb" {
+		t.Errorf("Expected tag 'mariadb', got '%s'", cmdSet.Tag)
+	}
+
+	cmdSet, err = repo.GetCommandSet("mysql", "mysql")
+	if err != nil {
+		t.Fatalf("GetCommandSet by tag failed: %v", err)
+	}
+	if cmdSet.Tag != "mysql" {
+		t.Errorf("Expected tag 'mysql', got '%s'", cmdSet.Tag)
+	}
+
+	cmdSet, err = repo.GetCommandSet("mysql", "v1")
+	if err != nil {
+		t.Fatalf("GetCommandSet by version failed: %v", err)
+	}
+	if cmdSet.Tag != "mysql" {
+		t.Errorf("Expected default for v1 to be tag 'mysql', got '%s'", cmdSet.Tag)
+	}
+}
+
+func TestGetCommandSet_VersionedDefaultDisambiguation(t *testing.T) {
+	tmpDir := t.TempDir()
+	repo := NewRepository(tmpDir)
+
+	yamlContent := `name: certbot
+description: Certbot SSL
+versions:
+  - version: "v1"
+    tag: certonly
+    latest: false
+    default: false
+    description: Standalone
+    commands:
+      - description: Install
+        command: echo "certonly"
+  - version: "v1"
+    tag: nginx
+    latest: true
+    default: true
+    description: With Nginx
+    commands:
+      - description: Install
+        command: echo "nginx"
+`
+	filePath := filepath.Join(tmpDir, "certbot.yaml")
+	err := os.WriteFile(filePath, []byte(yamlContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	cmdSet, err := repo.GetCommandSet("certbot", "v1")
+	if err != nil {
+		t.Fatalf("GetCommandSet by version failed: %v", err)
+	}
+	if cmdSet.Tag != "nginx" {
+		t.Errorf("Expected default for v1 to be tag 'nginx', got '%s'", cmdSet.Tag)
+	}
+
+	cmdSet, err = repo.GetCommandSet("certbot", "certonly")
+	if err != nil {
+		t.Fatalf("GetCommandSet by tag failed: %v", err)
+	}
+	if cmdSet.Tag != "certonly" {
+		t.Errorf("Expected tag 'certonly', got '%s'", cmdSet.Tag)
+	}
+
+	cmdSet, err = repo.GetCommandSet("certbot", "")
+	if err != nil {
+		t.Fatalf("GetCommandSet latest failed: %v", err)
+	}
+	if cmdSet.Tag != "nginx" {
+		t.Errorf("Expected latest to be 'nginx', got '%s'", cmdSet.Tag)
 	}
 }
 
@@ -164,11 +283,16 @@ func TestListVersions(t *testing.T) {
 	yamlContent := `name: test
 versions:
   - version: "v1"
+    latest: false
+    default: true
     commands: []
   - version: "v2"
     latest: true
+    default: true
     commands: []
   - version: "v3"
+    latest: false
+    default: true
     commands: []
 `
 	filePath := filepath.Join(tmpDir, "test.yaml")
@@ -186,16 +310,65 @@ versions:
 		t.Errorf("Expected 3 versions, got %d", len(versions))
 	}
 
-	// Check that latest is marked
 	foundLatest := false
 	for _, v := range versions {
-		if v == "v2 (latest)" {
+		if strings.Contains(v, "v2") && strings.Contains(v, "latest") {
 			foundLatest = true
 			break
 		}
 	}
 	if !foundLatest {
-		t.Error("Expected to find 'v2 (latest)' in versions")
+		t.Errorf("Expected to find v2 marked as latest in versions, got %v", versions)
+	}
+}
+
+func TestListVersions_WithTags(t *testing.T) {
+	tmpDir := t.TempDir()
+	repo := NewRepository(tmpDir)
+
+	yamlContent := `name: mysql
+versions:
+  - version: "v1"
+    tag: mysql
+    latest: true
+    default: true
+    commands: []
+  - version: "v1"
+    tag: mariadb
+    latest: false
+    default: false
+    commands: []
+`
+	filePath := filepath.Join(tmpDir, "mysql.yaml")
+	err := os.WriteFile(filePath, []byte(yamlContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	versions, err := repo.ListVersions("mysql")
+	if err != nil {
+		t.Fatalf("ListVersions failed: %v", err)
+	}
+
+	if len(versions) != 2 {
+		t.Errorf("Expected 2 versions, got %d", len(versions))
+	}
+
+	foundDefault := false
+	foundLatest := false
+	for _, v := range versions {
+		if strings.Contains(v, "@mysql") && strings.Contains(v, "default") {
+			foundDefault = true
+		}
+		if strings.Contains(v, "@mysql") && strings.Contains(v, "latest") {
+			foundLatest = true
+		}
+	}
+	if !foundDefault {
+		t.Errorf("Expected mysql entry marked as default, got %v", versions)
+	}
+	if !foundLatest {
+		t.Errorf("Expected mysql entry marked as latest, got %v", versions)
 	}
 }
 
@@ -220,7 +393,6 @@ func TestSaveCommandSet(t *testing.T) {
 		t.Fatalf("SaveCommandSet failed: %v", err)
 	}
 
-	// Verify it was saved
 	saved, err := repo.GetCommandSet("test", "")
 	if err != nil {
 		t.Fatalf("Failed to read saved command set: %v", err)
@@ -235,7 +407,6 @@ func TestListCommandSets(t *testing.T) {
 	tmpDir := t.TempDir()
 	repo := NewRepository(tmpDir)
 
-	// Create multiple command sets
 	cmdSets := []*CommandSet{
 		{Name: "test1", Version: "v1", Commands: []Command{}},
 		{Name: "test2", Version: "v1", Commands: []Command{}},
@@ -297,4 +468,3 @@ func TestDeleteCommandSet(t *testing.T) {
 		t.Error("Expected 'test' to be deleted")
 	}
 }
-
