@@ -1,6 +1,10 @@
-# Bash Completion for ShellDock
+# Bash Completion
 
-ShellDock supports bash completion for improved command-line experience.
+> **[← Back to README](../README.md)** · [Quick Start](QUICKSTART.md) · [Installation](INSTALLATION.md) · [Usage](USAGE.md)
+
+ShellDock supports shell autocompletion for bash, zsh, fish, and PowerShell.
+
+---
 
 ## Installation
 
@@ -56,6 +60,10 @@ shelldock run <TAB>
 # Complete flags
 shelldock git --<TAB>
 # Shows: --args, --local, --skip, --only, --ver, --yes, --help
+
+# Short flags
+shelldock git -<TAB>
+# Shows: -a (run all without prompts), -l (local only)
 
 # Complete subcommands
 shelldock config <TAB>

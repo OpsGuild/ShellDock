@@ -1,6 +1,10 @@
 # Testing Guide
 
+> **[← Back to README](../README.md)** · [Contributing](CONTRIBUTING.md) · [Manual Testing](MANUAL_TESTING.md)
+
 This document describes the testing strategy and how to run tests for ShellDock.
+
+---
 
 ## Test Types
 
@@ -99,7 +103,7 @@ Integration tests are shell scripts in the `test/` directory that test the full 
 - ✅ Step filtering (--skip, --only, ranges)
 - ✅ Flag combinations (version + skip, version + only, etc.)
 - ✅ Error handling (non-existent sets, invalid formats, conflicts)
-- ✅ Command execution (with --yes flag)
+- ✅ Command execution (with -a flag)
 - ✅ Dynamic arguments (--args flag, interactive prompting)
 - ✅ Edge cases (empty sets, platform-only commands, etc.)
 

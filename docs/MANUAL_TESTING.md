@@ -1,6 +1,10 @@
-# ShellDock Manual Testing Guide
+# Manual Testing Guide
+
+> **[← Back to README](../README.md)** · [Testing](TESTING.md) · [Contributing](CONTRIBUTING.md)
 
 This guide walks through testing all ShellDock features manually.
+
+---
 
 ## Prerequisites
 
@@ -195,33 +199,52 @@ echo "n" | ./shelldock --local test@v1
 
 ### 6. Command Execution
 
-#### Test: Execute with --yes flag
+#### Test: Execute with -a flag (skip all prompts)
 ```bash
-./shelldock test@v1 --yes
+./shelldock test@v1 -a
 ```
-**Expected:** Executes commands without prompting
+**Expected:** Executes all commands without any prompting
 
-#### Test: Execute with skip and yes
+#### Test: Execute with skip and -a
 ```bash
-./shelldock test@v1 --skip 2,3,4 --yes
+./shelldock test@v1 --skip 2,3,4 -a
 ```
 **Expected:** Executes only non-skipped steps without prompting
 
-#### Test: Execute with only and yes
+#### Test: Execute with only and -a
 ```bash
-./shelldock test@v1 --only 1 --yes
+./shelldock test@v1 --only 1 -a
 ```
 **Expected:** Executes only step 1 without prompting
 
-#### Test: Interactive prompt (without --yes)
+#### Test: Interactive prompt - run all (answer 'a')
 ```bash
 ./shelldock test@v1
 ```
-**Expected:** 
+**Expected:**
 - Shows commands
-- Prompts "Do you want to execute these commands? (y/N): "
-- Waits for input
-- Type 'y' to execute, 'n' to cancel
+- Prompts `Do you want to execute these commands? [a]ll/[y]es step-by-step/[N]o:`
+- Type `a` to execute all steps without further prompts
+
+#### Test: Interactive prompt - step-by-step (answer 'y')
+```bash
+./shelldock test@v1
+```
+**Expected:**
+- Shows commands
+- Prompts `Do you want to execute these commands? [a]ll/[y]es step-by-step/[N]o:`
+- Type `y` to proceed step-by-step
+- Each step prompts `Run this step? (y/N):`
+- Type `y` to run the step, or `n`/Enter to skip it
+
+#### Test: Interactive prompt - cancel (answer 'n')
+```bash
+./shelldock test@v1
+```
+**Expected:**
+- Shows commands
+- Prompts `Do you want to execute these commands? [a]ll/[y]es step-by-step/[N]o:`
+- Type `n` or press Enter to cancel
 
 ### 7. Direct Execution
 
@@ -318,12 +341,51 @@ EOF
 ```
 **Expected:** Opens interactive TUI for managing command sets
 
-**In TUI:**
-- Navigate with arrow keys
-- Press Enter to view
-- Press 'a' to add
-- Press 'd' to delete
-- Press 'q' to quit
+**List View:**
+- Navigate with `↑/↓` or `j/k`
+- Press `Enter` to view command set details
+- Press `n` to create a new command set
+- Press `e` to edit selected command set
+- Press `d` to delete selected command set
+- Press `q` to quit
+
+**Detail View:**
+- `↑/↓` to scroll through steps
+- `e` to edit this command set
+- `d` to delete this command set
+- `Esc` to go back to list
+
+**Form (Create/Edit):**
+- `Tab`/`Enter` to advance to next field
+- `Shift+Tab` to go back
+- `Ctrl+S` to save (from steps list)
+- `Esc` to cancel / go back
+- `n` to add a new step (from steps list)
+- `e`/`Enter` to edit a step (from steps list)
+- `d` to remove a step (from steps list)
+- `Ctrl+N` to add a platform or argument entry
+- `Ctrl+D` to remove a platform or argument entry
+
+#### Test: Create command set via TUI
+1. Open `./shelldock manage`
+2. Press `n` to create new
+3. Enter name, description, version (tab through fields)
+4. Add steps with `n`, fill in description, command, skip_on_error, platforms, args
+5. Press `Ctrl+S` to save
+6. Verify with `./shelldock show <name>`
+
+#### Test: Edit command set via TUI
+1. Open `./shelldock manage`
+2. Select a command set, press `e`
+3. Modify fields, add/remove steps, platforms, args
+4. Press `Ctrl+S` to save
+5. Verify changes with `./shelldock show <name>`
+
+#### Test: Delete command set via TUI
+1. Open `./shelldock manage`
+2. Select a command set, press `d`
+3. Confirm with `y`
+4. Verify it no longer appears in `./shelldock list`
 
 ## Test Results Template
 
@@ -339,12 +401,13 @@ Tester: ___________
 3. Platform Support: [ ] Pass [ ] Fail
 4. Step Filtering: [ ] Pass [ ] Fail
 5. Flag Combinations: [ ] Pass [ ] Fail
-6. Command Execution: [ ] Pass [ ] Fail
-7. Direct Execution: [ ] Pass [ ] Fail
-8. Error Handling: [ ] Pass [ ] Fail
-9. Help and Version: [ ] Pass [ ] Fail
-10. Edge Cases: [ ] Pass [ ] Fail
-11. TUI Management: [ ] Pass [ ] Fail
+6. Command Execution (-a flag): [ ] Pass [ ] Fail
+7. Command Execution (a/y/N prompt): [ ] Pass [ ] Fail
+8. Direct Execution: [ ] Pass [ ] Fail
+9. Error Handling: [ ] Pass [ ] Fail
+10. Help and Version: [ ] Pass [ ] Fail
+11. Edge Cases: [ ] Pass [ ] Fail
+12. TUI Management (list/detail/create/edit/delete): [ ] Pass [ ] Fail
 
 Notes:
 _______
