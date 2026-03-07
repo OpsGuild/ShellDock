@@ -1,10 +1,5 @@
 #!/bin/bash
-# Publish snap to Snap Store
-# Usage: SNAPCRAFT_STORE_CREDENTIALS="..." ./scripts/publish-snap.sh
-
 set -e
-
-# Prevent command echoing to avoid exposing credentials
 set +x
 
 if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
@@ -24,8 +19,6 @@ if [ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]; then
     exit 0
 fi
 
-# Modern snapcraft uses base64-encoded JSON credentials
-# Verify it's the correct format (starts with eyJ which is base64 for {"t":)
 if ! echo "$SNAPCRAFT_STORE_CREDENTIALS" | grep -q "^eyJ"; then
     echo "⚠️  Warning: Credentials don't appear to be in the expected format"
     echo "Modern snapcraft expects base64-encoded JSON credentials"
@@ -39,10 +32,8 @@ if ! echo "$SNAPCRAFT_STORE_CREDENTIALS" | grep -q "^eyJ"; then
     exit 1
 fi
 
-# Export to environment variable (snapcraft automatically reads this)
 export SNAPCRAFT_STORE_CREDENTIALS
 
-# Verify authentication works
 echo "✅ Verifying Snap Store authentication..."
 if ! snapcraft whoami 2>/dev/null; then
     echo "❌ Authentication verification failed"
@@ -57,7 +48,6 @@ fi
 
 echo "Authentication successful!"
 
-# Find snap file
 SNAP_FILE=$(ls *.snap 2>/dev/null | head -1)
 if [ -z "$SNAP_FILE" ]; then
     echo "No snap file found to upload"
@@ -66,7 +56,6 @@ fi
 
 echo "Uploading $SNAP_FILE to Snap Store..."
 
-# Upload snap to edge channel first, then release to stable
 if snapcraft upload "$SNAP_FILE" --release=edge,stable; then
     echo "Successfully published to Snap Store!"
 else
@@ -79,4 +68,3 @@ else
     echo "  snapcraft register shelldock"
     exit 1
 fi
-

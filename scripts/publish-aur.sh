@@ -1,5 +1,4 @@
 #!/bin/bash
-# Publish package to AUR
 # Usage: AUR_SSH_KEY="..." ./scripts/publish-aur.sh <version>
 
 set -e
@@ -19,32 +18,26 @@ if [ -z "$AUR_SSH_KEY" ]; then
     exit 0
 fi
 
-# Setup SSH
 mkdir -p ~/.ssh
 echo "$AUR_SSH_KEY" > ~/.ssh/aur_key
 chmod 600 ~/.ssh/aur_key
 ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
 
-# Configure git
 git config --global user.name "github-actions[bot]"
 git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-# Clone AUR repository
 echo "Cloning AUR repository..."
 GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git clone ssh://aur@aur.archlinux.org/shelldock.git aur-repo
 
 cd aur-repo
 
-# Check if this is an empty/new repo
 if [ ! -f PKGBUILD ]; then
     echo "This appears to be a new AUR package repository"
 fi
 
-# Copy PKGBUILD and .SRCINFO
 cp ../packaging/arch/PKGBUILD .
 cp ../packaging/arch/.SRCINFO .
 
-# Validate .SRCINFO has required fields
 if ! grep -q "^pkgname = " .SRCINFO; then
     echo "ERROR: .SRCINFO is missing pkgname entry"
     cat .SRCINFO
@@ -58,7 +51,6 @@ echo "=== .SRCINFO ==="
 cat .SRCINFO
 echo ""
 
-# Commit and push
 git add PKGBUILD .SRCINFO
 if git diff --staged --quiet; then
     echo "No changes to commit"
@@ -68,4 +60,3 @@ else
     GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_key" git push origin master
     echo "Successfully published to AUR!"
 fi
-

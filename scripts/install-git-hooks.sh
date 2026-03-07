@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Script to install git hooks
+set -e
 
-HOOKS_DIR=".git/hooks"
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
 
 if [ ! -d "$REPO_ROOT/.git" ]; then
@@ -12,7 +11,6 @@ fi
 
 echo "🔧 Installing git hooks..."
 
-# Create pre-push hook symlink (or copy)
 SOURCE="$REPO_ROOT/scripts/pre-push.sh"
 TARGET="$REPO_ROOT/.git/hooks/pre-push"
 
@@ -21,10 +19,7 @@ if [ ! -f "$SOURCE" ]; then
     exit 1
 fi
 
-# Make sure source is executable
 chmod +x "$SOURCE"
-
-# create symlink
 ln -sf "$SOURCE" "$TARGET"
 
 echo "✅ Pre-push hook installed at $TARGET"

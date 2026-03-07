@@ -1,6 +1,5 @@
 .PHONY: build install clean test package deb rpm test-sandbox test-sandbox-build
 
-# Get version from git tag, or use "dev" if no tag
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
 BUILD_DIR := build
 BINARY_NAME := shelldock
@@ -47,7 +46,6 @@ test-integration: build
 	@echo ""
 	@echo "✅ Integration tests completed"
 
-# Cross-platform builds
 build-all:
 	@echo "Building for all platforms..."
 	@mkdir -p $(BUILD_DIR)
@@ -65,11 +63,7 @@ build-all:
 		GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-X main.version=$(VERSION)" -buildmode=exe -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .; \
 	fi
 	@echo "Cross-platform builds complete!"
-	@echo ""
-	@echo "Note: To reduce false positives, consider code signing the Windows binary:"
-	@echo "  signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe"
 
-# Debian/Ubuntu package
 deb: build
 	@echo "Creating Debian package..."
 	@mkdir -p dist/deb/DEBIAN
@@ -85,7 +79,6 @@ deb: build
 	@dpkg-deb --build dist/deb dist/shelldock_$(VERSION)_$(GOARCH).deb
 	@echo "Debian package created: dist/shelldock_$(VERSION)_$(GOARCH).deb"
 
-# RPM package (RedHat/CentOS/Fedora)
 rpm: build
 	@echo "Creating RPM package..."
 	@mkdir -p dist/rpm/BUILD dist/rpm/BUILDROOT dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS
@@ -94,7 +87,6 @@ rpm: build
 	@rpmbuild --define "_topdir $(PWD)/dist/rpm" -bb dist/rpm/SPECS/shelldock.spec
 	@echo "RPM package created in dist/rpm/RPMS/"
 
-# Arch Linux package
 arch: build
 	@echo "Creating Arch Linux package..."
 	@mkdir -p dist/arch/pkg dist/arch/src
@@ -107,13 +99,6 @@ deps:
 	@go mod download
 	@go mod tidy
 
-# Cross-platform sandbox tests using Docker
-# Usage:
-#   make test-sandbox                              # All platforms, all commands
-#   make test-sandbox PLATFORM=ubuntu              # Single platform
-#   make test-sandbox COMMAND=openssh              # Single command on all platforms
-#   make test-sandbox PLATFORM=fedora COMMAND=git  # Single command on single platform
-#   make test-sandbox BUILD=0                      # Skip Docker image rebuild
 PLATFORM ?=
 COMMAND ?=
 BUILD ?= 1
@@ -132,4 +117,3 @@ test-sandbox: test-sandbox-build
 	@PLATFORM=$(PLATFORM) COMMAND=$(COMMAND) BUILD=$(BUILD) ./test/sandbox/run-sandbox.sh
 	@echo ""
 	@echo "✅ Sandbox tests completed"
-

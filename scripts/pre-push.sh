@@ -1,11 +1,8 @@
 #!/bin/bash
-
-# Pre-push hook to run lint and tests
-# This script is automatically invoked by git before a push
+set -e
 
 echo "🚀 Running pre-push checks..."
 
-# Run golangci-lint
 echo "🔍 Running golangci-lint..."
 if ! golangci-lint run; then
     echo "❌ Linting failed. Push aborted."
@@ -13,7 +10,6 @@ if ! golangci-lint run; then
 fi
 echo "✅ Linting passed."
 
-# Run unit tests
 echo "🧪 Running unit tests..."
 if ! go test ./...; then
     echo "❌ Unit tests failed. Push aborted."

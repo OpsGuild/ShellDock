@@ -1,7 +1,4 @@
 #!/bin/bash
-# Generate .SRCINFO for AUR package
-# Usage: ./scripts/generate-srcinfo.sh <version> <sha256>
-
 set -e
 
 VERSION="${1:-1.0.0}"
@@ -11,7 +8,6 @@ cd packaging/arch
 
 echo "Generating .SRCINFO for version $VERSION..."
 
-# Try Docker first for proper generation
 if command -v docker &> /dev/null; then
     echo "Attempting to generate .SRCINFO using Docker..."
     docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux:latest bash -c "
@@ -26,7 +22,6 @@ if command -v docker &> /dev/null; then
     }
 fi
 
-# Fallback: Generate manually
 echo "Generating .SRCINFO manually..."
 
 cat > .SRCINFO << SRCINFO
@@ -48,4 +43,3 @@ SRCINFO
 
 echo "Generated .SRCINFO:"
 cat .SRCINFO
-
