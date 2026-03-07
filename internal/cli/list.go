@@ -27,7 +27,6 @@ var listCmd = &cobra.Command{
 		bundledSets, _ := manager.GetBundledRepo().ListCommandSets()
 		localSets, _ := manager.GetLocalRepo().ListCommandSets()
 
-		// Create maps for quick lookup
 		bundledMap := make(map[string]bool)
 		for _, name := range bundledSets {
 			bundledMap[name] = true
@@ -74,4 +73,3 @@ var listCmd = &cobra.Command{
 		}
 	},
 }
-

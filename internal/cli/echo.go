@@ -42,7 +42,6 @@ Examples:
 		handleError(err)
 		autoSyncIfNeeded(manager)
 
-		// Check if version is specified in name (e.g., docker@v1)
 		var version string
 		if idx := strings.Index(name, "@"); idx > 0 {
 			version = name[idx+1:]
@@ -57,18 +56,16 @@ Examples:
 			os.Exit(1)
 		}
 
-		// Get platform
 		platform, err := config.GetPlatform()
 		if err != nil {
 			platform = config.DetectPlatform()
 		}
 
-		// Filter commands if flags are provided
 		commandsToRun := cmdSet.Commands
 
 		if echoSkipFlag != "" || echoOnlyFlag != "" {
 			var err error
-			var _ []int // originalIndices not needed for echo
+			var _ []int
 			commandsToRun, _, err = filterCommands(cmdSet.Commands, echoSkipFlag, echoOnlyFlag)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -81,13 +78,11 @@ Examples:
 			}
 		}
 
-		// Echo commands in plain format (one per line, no descriptions)
 		for _, cmd := range commandsToRun {
 			command := getCommandForPlatform(cmd, platform)
 			if command != "" {
 				fmt.Println(command)
 			}
-			// Skip commands that don't have a command for this platform
 		}
 	},
 }
@@ -99,5 +94,3 @@ func init() {
 	echoCmd.Flags().StringVar(&echoSkipFlag, "skip", "", "Skip specific steps (e.g., --skip 1,2,3 or --skip 1-3)")
 	echoCmd.Flags().StringVar(&echoOnlyFlag, "only", "", "Run only specific steps (e.g., --only 1,2,3 or --only 1-3)")
 }
-
-

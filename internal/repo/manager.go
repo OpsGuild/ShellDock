@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	BundledRepoDir = "repository" // Relative to executable or /usr/share/shelldock
+	BundledRepoDir = "repository"
 	LocalRepoDir   = ".shelldock"
 )
 
-// Manager handles both bundled (installed) and local repositories
+// Manager handles both bundled (installed) and local repositories.
 type Manager struct {
 	bundledRepo *Repository
 	localRepo   *Repository
 }
 
-// NewManager creates a new repository manager
+// NewManager creates a new repository manager.
 func NewManager() (*Manager, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -28,16 +28,14 @@ func NewManager() (*Manager, error) {
 	localPath := filepath.Join(homeDir, LocalRepoDir)
 	localRepo := NewRepository(localPath)
 
-	// Try to find bundled repository (installed with package)
 	bundledPaths := []string{
-		"/usr/share/shelldock/repository",  // Standard Linux location
-		"/usr/local/share/shelldock/repository", // Alternative location
-		filepath.Join(filepath.Dir(os.Args[0]), "..", "share", "shelldock", "repository"), // Relative to executable
-		filepath.Join(filepath.Dir(os.Args[0]), "repository"), // Same directory as executable
-		"repository", // Current directory (for development)
+		"/usr/share/shelldock/repository",
+		"/usr/local/share/shelldock/repository",
+		filepath.Join(filepath.Dir(os.Args[0]), "..", "share", "shelldock", "repository"),
+		filepath.Join(filepath.Dir(os.Args[0]), "repository"),
+		"repository",
 	}
 
-	// Add Windows-specific paths
 	if runtime.GOOS == "windows" {
 		programData := os.Getenv("ProgramData")
 		if programData == "" {
@@ -49,7 +47,6 @@ func NewManager() (*Manager, error) {
 		}, bundledPaths...)
 	}
 
-	// Add user-level fallback path (works on all platforms without sudo)
 	userRepoPath := filepath.Join(homeDir, ".shelldock", "repository")
 	bundledPaths = append(bundledPaths, userRepoPath)
 
@@ -63,7 +60,6 @@ func NewManager() (*Manager, error) {
 		}
 	}
 
-	// If no bundled repo found, auto-sync to user-level path
 	if bundledRepo == nil {
 		fmt.Println("📦 No command repository found. Running initial sync...")
 		if err := os.MkdirAll(userRepoPath, 0755); err == nil {
@@ -80,24 +76,19 @@ func NewManager() (*Manager, error) {
 	}, nil
 }
 
-// GetCommandSet retrieves a command set, checking local first, then bundled repository
-// version can be empty (latest), "latest", or a specific version/tag
-// preferLocal: if true, only check local repository (skip bundled)
+// GetCommandSet retrieves a command set, checking local first, then bundled repository.
 func (m *Manager) GetCommandSet(name string, preferLocal bool, version string) (*CommandSet, error) {
-	// Check local first
 	if m.localRepo.Exists(name) {
 		return m.localRepo.GetCommandSet(name, version)
 	}
-	
-	// If --local flag is set, don't check bundled
+
 	if preferLocal {
 		if version != "" {
 			return nil, fmt.Errorf("command set '%s' version '%s' not found in local directory", name, version)
 		}
 		return nil, fmt.Errorf("command set '%s' not found in local directory", name)
 	}
-	
-	// Check bundled repository
+
 	if m.bundledRepo.Exists(name) {
 		return m.bundledRepo.GetCommandSet(name, version)
 	}
@@ -108,44 +99,38 @@ func (m *Manager) GetCommandSet(name string, preferLocal bool, version string) (
 	return nil, fmt.Errorf("command set '%s' not found in local directory or repository", name)
 }
 
-// ListVersions returns all available versions for a command set
-// Checks local first, then bundled repository
-// preferLocal: if true, only check local (skip bundled)
+// ListVersions returns all available versions for a command set.
 func (m *Manager) ListVersions(name string, preferLocal bool) ([]string, error) {
-	// Check local first
 	if m.localRepo.Exists(name) {
 		return m.localRepo.ListVersions(name)
 	}
-	
-	// If --local flag is set, don't check bundled
+
 	if preferLocal {
 		return []string{}, nil
 	}
-	
-	// Check bundled repository
+
 	if m.bundledRepo.Exists(name) {
 		return m.bundledRepo.ListVersions(name)
 	}
-	
+
 	return []string{}, nil
 }
 
-// GetLocalRepo returns the local repository
+// GetLocalRepo returns the local repository.
 func (m *Manager) GetLocalRepo() *Repository {
 	return m.localRepo
 }
 
-// GetBundledRepo returns the bundled repository
+// GetBundledRepo returns the bundled repository.
 func (m *Manager) GetBundledRepo() *Repository {
 	return m.bundledRepo
 }
 
-// ListCommandSets returns command sets from both repositories
+// ListCommandSets returns command sets from both repositories.
 func (m *Manager) ListCommandSets() ([]string, error) {
 	bundledSets, _ := m.bundledRepo.ListCommandSets()
 	localSets, _ := m.localRepo.ListCommandSets()
 
-	// Combine and deduplicate
 	allSets := make(map[string]bool)
 	for _, name := range bundledSets {
 		allSets[name] = true
@@ -161,4 +146,3 @@ func (m *Manager) ListCommandSets() ([]string, error) {
 
 	return result, nil
 }
-

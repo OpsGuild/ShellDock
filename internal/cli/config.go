@@ -46,13 +46,8 @@ Use "auto" to automatically detect the platform and distribution.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		platform := args[0]
-		
-		// Allow any platform string, but validate common ones
-		switch platform {
-		case "auto":
-			// This is always valid
-		case "linux":
-			// Warn that linux is ambiguous
+
+		if platform == "linux" {
 			fmt.Fprintf(os.Stderr, "Warning: 'linux' is ambiguous. Consider using a specific distribution like 'ubuntu', 'centos', 'fedora', etc.\n")
 			fmt.Fprintf(os.Stderr, "Detected distribution: %s\n", config.DetectLinuxDistribution())
 		}
@@ -83,4 +78,3 @@ func init() {
 	configCmd.AddCommand(configShowCmd)
 	configCmd.AddCommand(configSetCmd)
 }
-

@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	rootLocalFlag bool
-	rootSkipSteps string
-	rootOnlySteps string
+	rootLocalFlag   bool
+	rootSkipSteps   string
+	rootOnlySteps   string
 	rootVersionFlag string
-	rootYesFlag bool
-	rootArgsFlag string
+	rootYesFlag     bool
+	rootArgsFlag    string
 )
 
 var rootCmd = &cobra.Command{
@@ -33,13 +33,11 @@ Or use subcommands:
   shelldock list
   shelldock manage`,
 	Version: "dev",
-	Args:  cobra.MaximumNArgs(1),
+	Args:    cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// If a command set name is provided, run it
 		if len(args) == 1 {
 			name := args[0]
-			
-			// Check if version is specified in name (e.g., docker@1.0.0)
+
 			var version string
 			if idx := strings.Index(name, "@"); idx > 0 {
 				version = name[idx+1:]
@@ -47,7 +45,7 @@ Or use subcommands:
 			} else {
 				version = rootVersionFlag
 			}
-			
+
 			manager, err := repo.NewManager()
 			handleError(err)
 			autoSyncIfNeeded(manager)
@@ -61,12 +59,11 @@ Or use subcommands:
 			executeCommandSet(cmdSet, rootSkipSteps, rootOnlySteps, rootYesFlag, rootArgsFlag)
 			return
 		}
-		// Otherwise show help
 		_ = cmd.Help()
 	},
 }
 
-// Execute runs the root command
+// Execute runs the root command.
 func Execute(version string) error {
 	rootCmd.Version = version
 	return rootCmd.Execute()
@@ -77,7 +74,7 @@ func init() {
 	rootCmd.Flags().StringVar(&rootSkipSteps, "skip", "", "Skip specific steps (comma-separated or range, e.g., 1,2,3 or 1-3)")
 	rootCmd.Flags().StringVar(&rootOnlySteps, "only", "", "Run only specific steps (comma-separated or range, e.g., 1,3,5 or 1-3)")
 	rootCmd.Flags().StringVar(&rootVersionFlag, "ver", "", "Run specific version or tag (default: latest). Can also use name@version format")
-	rootCmd.Flags().BoolVarP(&rootYesFlag, "yes", "y", false, "Execute commands without prompting for confirmation")
+	rootCmd.Flags().BoolVarP(&rootYesFlag, "yes", "a", false, "Execute all commands without prompting for confirmation")
 	rootCmd.Flags().StringVar(&rootArgsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(showCmd)

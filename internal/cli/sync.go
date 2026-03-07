@@ -25,7 +25,7 @@ type githubContent struct {
 	Type string `json:"type"`
 }
 
-// autoSyncIfNeeded checks if the bundled repo needs initial sync and runs it
+// autoSyncIfNeeded checks if the bundled repo needs initial sync and runs it.
 func autoSyncIfNeeded(manager *repo.Manager) {
 	bundledRepo := manager.GetBundledRepo()
 	if bundledRepo == nil || !bundledRepo.NeedsSync() {
@@ -64,7 +64,6 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		// Get the actual path of the bundled repository
 		bundledPath := bundledRepo.GetPath()
 		if bundledPath == "" || bundledPath == "/dev/null" {
 			fmt.Println("❌ Error: Bundled repository not found")
@@ -72,7 +71,6 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		// Check if we have write permissions by trying to create a temp file
 		tempFile := filepath.Join(bundledPath, ".sync_test")
 		f, err := os.Create(tempFile)
 		if err != nil {
@@ -83,7 +81,6 @@ var syncCmd = &cobra.Command{
 		_ = f.Close()
 		_ = os.Remove(tempFile)
 
-		// Sync repository files
 		count, err := syncRepository(bundledPath)
 		if err != nil {
 			fmt.Printf("❌ Error syncing repository: %v\n", err)
@@ -94,14 +91,12 @@ var syncCmd = &cobra.Command{
 	},
 }
 
-// syncRepository downloads all .yaml files from the GitHub repository
+// syncRepository downloads all .yaml files from the GitHub repository.
 func syncRepository(repoPath string) (int, error) {
-	// Ensure the repository directory exists
 	if err := os.MkdirAll(repoPath, 0755); err != nil {
 		return 0, fmt.Errorf("failed to create repository directory: %w", err)
 	}
 
-	// Process the repository directory recursively
 	count, err := processDirectory("repository", repoPath)
 	if err != nil {
 		return 0, err
@@ -110,7 +105,7 @@ func syncRepository(repoPath string) (int, error) {
 	return count, nil
 }
 
-// processDirectory recursively processes a GitHub directory and downloads all .yaml files
+// processDirectory recursively processes a GitHub directory and downloads all .yaml files.
 func processDirectory(dirPath, localBasePath string) (int, error) {
 	url := fmt.Sprintf("%s/contents/%s", githubAPI, dirPath)
 
@@ -120,7 +115,6 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		_ = resp.Body.Close()
 		return 0, fmt.Errorf("failed to fetch directory: HTTP %d", resp.StatusCode)
@@ -139,22 +133,18 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 
 	count := 0
 	for _, item := range contents {
-		// Skip test files
 		if strings.Contains(item.Path, "test.yaml") {
 			continue
 		}
 
 		if item.Type == "file" && strings.HasSuffix(item.Path, ".yaml") {
-			// Calculate relative path from repository/
 			relPath := strings.TrimPrefix(item.Path, "repository/")
 			localPath := filepath.Join(localBasePath, relPath)
 
-			// Create subdirectory if needed
 			if err := os.MkdirAll(filepath.Dir(localPath), 0755); err != nil {
 				return count, fmt.Errorf("failed to create directory: %w", err)
 			}
 
-			// Download file
 			fileURL := fmt.Sprintf("%s/%s", githubRaw, item.Path)
 			if err := downloadFile(fileURL, localPath); err != nil {
 				fmt.Printf("⚠️  Warning: Could not download %s: %v\n", relPath, err)
@@ -164,7 +154,6 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 			fmt.Printf("  📥 Downloaded %s\n", relPath)
 			count++
 		} else if item.Type == "dir" {
-			// Recursively process subdirectories
 			subCount, err := processDirectory(item.Path, localBasePath)
 			if err != nil {
 				return count, err
@@ -176,7 +165,7 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 	return count, nil
 }
 
-// downloadFile downloads a file from a URL to a local path
+// downloadFile downloads a file from a URL to a local path.
 func downloadFile(url, filePath string) error {
 	resp, err := http.Get(url)
 	if err != nil {

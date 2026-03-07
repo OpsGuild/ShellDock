@@ -15,7 +15,3 @@ var manageCmd = &cobra.Command{
 		}
 	},
 }
-
-
-
-

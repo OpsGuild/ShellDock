@@ -15,7 +15,7 @@ var versionsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		
+
 		manager, err := repo.NewManager()
 		handleError(err)
 		autoSyncIfNeeded(manager)
@@ -44,9 +44,4 @@ var versionsCmd = &cobra.Command{
 }
 
 func init() {
-	// This will be added in root.go
 }
-
-
-
-

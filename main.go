@@ -7,7 +7,7 @@ import (
 	"github.com/shelldock/shelldock/internal/cli"
 )
 
-var version = "dev" // Set during build with -ldflags "-X main.version=1.0.0"
+var version = "dev"
 
 func main() {
 	if err := cli.Execute(version); err != nil {
@@ -15,7 +15,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-
-
-
