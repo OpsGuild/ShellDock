@@ -159,19 +159,35 @@ ShellDock ships with ready-to-use command sets organized by category:
 
 ```
 repository/
-├── devops/      # docker, kubernetes, pm2
+├── databases/   # postgres, mysql (+ mariadb), redis
+├── devops/      # docker, docker-compose, kubernetes, pm2, terraform, ansible
 ├── editors/     # nvim
 ├── languages/   # go, nodejs, python, rust
-├── network/     # networking tools
-├── security/    # openssh, ufw
-├── system/      # swap, sysinfo
+├── network/     # alias-ip, reset-network
+├── security/    # openssh, ufw, fail2ban, unattended-upgrades
+├── system/      # swap, sysinfo, cleanup, hostname, timezone, users
 ├── vcs/         # git
-└── web/         # nginx, certbot
+└── web/         # nginx, certbot, caddy
 ```
 
 Subdirectories are transparent — just use `shelldock docker`, not `shelldock devops/docker`.
 
 Your custom command sets in `~/.shelldock/` are always checked first and can override any bundled set.
+
+---
+
+## Security
+
+ShellDock executes shell commands on your system. Every command is stored in plain YAML and can be inspected before execution:
+
+```bash
+shelldock show docker        # preview every step — nothing is executed
+shelldock echo docker | less # read raw commands in a pager
+```
+
+When you run a command set without `-a`, ShellDock shows a full preview and lets you confirm each step individually. There are no hidden scripts, no telemetry, and no automatic privilege escalation.
+
+Read the **[Security Guide](docs/SECURITY.md)** for the full trust model, best practices, and how to report vulnerabilities.
 
 ---
 
@@ -184,6 +200,7 @@ Your custom command sets in `~/.shelldock/` are always checked first and can ove
 | **[Usage Guide](docs/USAGE.md)** | Configuration, execution, versioning, platform support |
 | **[Command Reference](docs/COMMAND_REFERENCE.md)** | Every command and flag with examples |
 | **[Command Set Format](docs/COMMAND_SET_FORMAT.md)** | YAML specification, multi-version, dynamic arguments |
+| **[Security](docs/SECURITY.md)** | Trust model, inspecting commands, best practices |
 | **[Features](docs/FEATURES.md)** | Detailed feature descriptions |
 | **[Bash Completion](docs/BASH_COMPLETION.md)** | Shell autocompletion setup |
 | **[Testing](docs/TESTING.md)** | Unit and integration test guide |

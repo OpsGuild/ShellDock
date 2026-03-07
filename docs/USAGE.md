@@ -430,6 +430,7 @@ When creating or editing a command set, everything is displayed on a **single sc
                   unique identifier, e.g. docker, my-setup
   Description   —
   Version       v1
+  Tag           —
 
   ──────────────────────────────────────────────────────
 
@@ -482,7 +483,7 @@ When creating or editing a command set, everything is displayed on a **single sc
 
 #### Form Controls (Create / Edit)
 
-**Metadata fields** (Name, Description, Version):
+**Metadata fields** (Name, Description, Version, Tag):
 
 | Key | Action |
 |-----|--------|
@@ -490,7 +491,7 @@ When creating or editing a command set, everything is displayed on a **single sc
 | `Shift+Tab` | Go back to previous field |
 | `Esc` | Cancel |
 
-After Version, you advance into the **step list**:
+After Tag, you advance into the **step list**:
 
 | Key | Action |
 |-----|--------|
@@ -540,6 +541,21 @@ All sections stay visible on the same page. The cursor indicator (`❯`) and aut
 
 ## Versioning
 
+### Latest vs Default
+
+These are two separate fields on each version entry:
+
+- **`latest: true`** — the entry returned when no version or tag is specified (e.g. `shelldock mysql`).
+- **`default: true`** — the entry returned when a version number matches multiple entries (e.g. `shelldock mysql@v1` and both `mysql` and `mariadb` tags are `v1`).
+
+Every version entry should have both fields. When multiple tags share the same version number, exactly one should be `default: true` for that version.
+
+| Command | Resolution |
+|---------|------------|
+| `shelldock mysql` | Entry marked `latest: true` |
+| `shelldock mysql@v1` | Entry marked `default: true` among v1 entries |
+| `shelldock mysql@mariadb` | Exact tag match |
+
 ### List Available Versions
 
 ```bash
@@ -552,19 +568,19 @@ Available versions for 'docker':
 
   - v1
   - v2
-  * v3 (latest)
+  * v3 (default, latest)
 
 Use 'shelldock docker@<version>' or 'shelldock docker --version <version>' to run a specific version or tag
 ```
 
-**Example Output with Tags:**
+**Example Output with Tags (shared version):**
 ```
-Available versions for 'certbot':
+Available versions for 'mysql':
 
-  - v1 [certonly]
-  - v2 [nginx] (latest)
+  * v1 @mysql (default, latest)
+  - v1 @mariadb
 
-Use 'shelldock certbot@<version>' or 'shelldock certbot --version <version>' to run a specific version or tag
+Use 'shelldock mysql@<version>' or 'shelldock mysql --version <version>' to run a specific version or tag
 ```
 
 ### Run Specific Version or Tag
@@ -576,6 +592,7 @@ shelldock docker@v1
 shelldock docker@v2
 shelldock certbot@certonly
 shelldock certbot@nginx
+shelldock mysql@mariadb
 ```
 
 Using `--version` flag (or `--ver` alias):

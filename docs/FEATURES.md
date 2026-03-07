@@ -376,14 +376,15 @@ ShellDock uses a two-tier repository system:
 
 ```
 repository/
-├── devops/      # docker, kubernetes, pm2
+├── databases/   # postgres, mysql (+ mariadb), redis
+├── devops/      # docker, docker-compose, kubernetes, pm2, terraform, ansible
 ├── editors/     # nvim
 ├── languages/   # go, nodejs, python, rust
-├── network/     # networking tools
-├── security/    # openssh, ufw
-├── system/      # swap, sysinfo
+├── network/     # alias-ip, reset-network
+├── security/    # openssh, ufw, fail2ban, unattended-upgrades
+├── system/      # swap, sysinfo, cleanup, hostname, timezone, users
 ├── vcs/         # git
-└── web/         # nginx, certbot
+└── web/         # nginx, certbot, caddy
 ```
 
 **Subdirectories are transparent** — commands are accessed by name only (e.g., `shelldock docker`, not `shelldock devops/docker`).

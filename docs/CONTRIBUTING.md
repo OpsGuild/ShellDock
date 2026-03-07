@@ -112,13 +112,15 @@ The bundled repository is organized into subdirectories by category:
 
 ```
 repository/
-├── devops/      # docker, kubernetes, pm2
+├── databases/   # postgres, mysql (+ mariadb), redis
+├── devops/      # docker, docker-compose, kubernetes, pm2, terraform, ansible
 ├── editors/     # nvim
 ├── languages/   # go, nodejs, python, rust
-├── security/    # openssh, ufw
-├── system/      # swap, sysinfo
+├── network/     # alias-ip, reset-network
+├── security/    # openssh, ufw, fail2ban, unattended-upgrades
+├── system/      # swap, sysinfo, cleanup, hostname, timezone, users
 ├── vcs/         # git
-└── web/         # nginx, certbot
+└── web/         # nginx, certbot, caddy
 ```
 
 Subdirectories are transparent to users — commands are accessed by name only (e.g. `shelldock docker`), not by path.

@@ -56,7 +56,7 @@ versions:
 
 ## Version Tags
 
-You can add optional tags to versions for easier identification. Tags allow you to reference versions by meaningful names instead of version numbers.
+Tags give versions meaningful names. Multiple entries can share the same version number with different tags to represent variants.
 
 ```yaml
 name: certbot
@@ -64,27 +64,69 @@ description: Certbot SSL certificate tool installation
 versions:
   - version: "v1"
     tag: certonly
+    latest: false
+    default: false
     description: Certbot standalone installation
     commands:
       - description: Install Certbot
         command: apt-get install -y certbot
-  - version: "v2"
+  - version: "v1"
     tag: nginx
     latest: true
+    default: true
     description: Certbot with Nginx plugin installation
     commands:
       - description: Install Certbot with Nginx plugin
         command: apt-get install -y certbot python3-certbot-nginx
 ```
 
-You can then run using either the version or tag:
+Run using either the version number or tag:
 
 ```bash
-shelldock certbot@v1
 shelldock certbot@certonly
 shelldock certbot@nginx
+shelldock certbot@v1          # resolves to the entry marked default: true
+shelldock certbot              # resolves to the entry marked latest: true
 shelldock certbot --version certonly
 ```
+
+## Latest vs Default
+
+These are two separate fields that control resolution:
+
+- **`latest: true`** — the entry returned when no version or tag is specified (e.g. `shelldock certbot`).
+- **`default: true`** — the entry returned when a version number matches multiple entries (e.g. `shelldock certbot@v1` and both `certonly` and `nginx` are `v1`).
+
+Every version entry should have both fields set. When multiple tags share the same version number, exactly one of them should be `default: true` for that version.
+
+```yaml
+name: mysql
+description: MySQL/MariaDB database server
+versions:
+  - version: "v1"
+    tag: mysql
+    latest: true
+    default: true
+    description: Install MySQL server
+    commands:
+      - description: Install MySQL
+        command: apt-get install -y mysql-server
+  - version: "v1"
+    tag: mariadb
+    latest: false
+    default: false
+    description: Install MariaDB server
+    commands:
+      - description: Install MariaDB
+        command: apt-get install -y mariadb-server
+```
+
+| Command | Resolves to |
+|---------|-------------|
+| `shelldock mysql` | `v1 @mysql` (marked `latest: true`) |
+| `shelldock mysql@v1` | `v1 @mysql` (marked `default: true`) |
+| `shelldock mysql@mariadb` | `v1 @mariadb` (exact tag match) |
+| `shelldock mysql@mysql` | `v1 @mysql` (exact tag match) |
 
 ## Platform-Specific Commands
 
@@ -218,7 +260,8 @@ In this example, if no `--args` is provided and the user doesn't enter a value, 
 | `version` | yes | Version string (e.g. "v1", "v2") |
 | `tag` | no | Optional tag for easier identification (e.g. "certonly", "nginx") |
 | `description` | no | Description for this specific version |
-| `latest` | no | Boolean — marks this version as the default when no version is specified |
+| `latest` | no | Boolean — the entry used when no version is specified |
+| `default` | no | Boolean — the entry used when a version number matches multiple entries |
 | `commands` | yes | Array of command objects for this version |
 
 ### Command Object Fields
