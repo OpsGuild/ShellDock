@@ -46,13 +46,7 @@ Run 'shelldock manage' to open the interactive UI
 **Option 1: One-Line Install Script (Easiest)**
 
 ```bash
-curl -fsSL https://shelldock.opsguild.tech/install-apt.sh | sudo bash
-```
-
-**Alternative (direct from GitHub):**
-
-```bash
-curl -sSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
 ```
 
 This script automatically:
@@ -108,7 +102,7 @@ sudo dnf install shelldock-*-1.x86_64.rpm
 **Option 2: Install Script**
 
 ```bash
-curl -fsSL https://shelldock.opsguild.tech/install-yum.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-yum.sh | sudo bash
 sudo yum install shelldock
 # or
 sudo dnf install shelldock
@@ -134,7 +128,7 @@ makepkg -si
 **Option 2: Install Script**
 
 ```bash
-curl -fsSL https://shelldock.opsguild.tech/install-arch.sh | bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-arch.sh | bash
 ```
 
 ### macOS
@@ -305,7 +299,7 @@ sudo apt-get install -f
 Or use the install script:
 
 ```bash
-curl -fsSL https://shelldock.opsguild.tech/install-apt.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh | sudo bash
 ```
 
 ### .rpm Package

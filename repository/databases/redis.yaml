@@ -64,14 +64,14 @@ versions:
             required: false
       - description: Configure max memory and eviction policy
         platforms:
-          ubuntu: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          debian: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          centos: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          rhel: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          fedora: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          arch: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-          alpine: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
-        command: 'echo -e "\nmaxmemory {{max_memory}}\nmaxmemory-policy {{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          ubuntu: 'printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          debian: 'printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          centos: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          rhel: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          fedora: 'CONF=/etc/redis/redis.conf; [ -f "$CONF" ] || CONF=/etc/redis.conf; printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> "$CONF" && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          arch: 'printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+          alpine: 'printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> /etc/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
+        command: 'printf "\nmaxmemory %s\nmaxmemory-policy %s\n" "{{max_memory}}" "{{eviction_policy}}" >> /etc/redis/redis.conf && echo "Max memory set to {{max_memory}} with {{eviction_policy}} eviction"'
         skip_on_error: true
         args:
           - name: max_memory

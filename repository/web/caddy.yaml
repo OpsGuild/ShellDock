@@ -34,10 +34,25 @@ versions:
         skip_on_error: false
       - description: Create a basic Caddyfile
         platforms:
-          linux: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /etc/caddy/Caddyfile && echo "Caddyfile written to /etc/caddy/Caddyfile"'
-          darwin: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /opt/homebrew/etc/Caddyfile && echo "Caddyfile written"'
+          linux: 'cat > /etc/caddy/Caddyfile << EOF
+{{domain}} {
+    reverse_proxy localhost:{{backend_port}}
+}
+EOF
+echo "Caddyfile written to /etc/caddy/Caddyfile"'
+          darwin: 'cat > /opt/homebrew/etc/Caddyfile << EOF
+{{domain}} {
+    reverse_proxy localhost:{{backend_port}}
+}
+EOF
+echo "Caddyfile written"'
           windows: 'Set-Content -Path "$env:USERPROFILE\Caddyfile" -Value "{{domain}} {`n`treverse_proxy localhost:{{backend_port}}`n}"; Write-Host "Caddyfile written to $env:USERPROFILE\Caddyfile"'
-        command: 'echo -e "{{domain}} {\n\treverse_proxy localhost:{{backend_port}}\n}" > /etc/caddy/Caddyfile && echo "Caddyfile written to /etc/caddy/Caddyfile"'
+        command: 'cat > /etc/caddy/Caddyfile << EOF
+{{domain}} {
+    reverse_proxy localhost:{{backend_port}}
+}
+EOF
+echo "Caddyfile written to /etc/caddy/Caddyfile"'
         skip_on_error: true
         args:
           - name: domain

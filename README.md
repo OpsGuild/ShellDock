@@ -40,7 +40,7 @@ curl -fsSL https://shelldock.opsguild.tech/install.sh | bash
 | Platform | Command |
 |---|---|
 | **macOS (Homebrew)** | `brew install OpsGuild/tap/shelldock` |
-| **Debian / Ubuntu** | `curl -fsSL https://shelldock.opsguild.tech/install-apt.sh \| sudo bash` |
+| **Debian / Ubuntu** | `curl -fsSL https://raw.githubusercontent.com/OpsGuild/ShellDock/master/scripts/install-apt.sh \| sudo bash` |
 | **Arch Linux (AUR)** | `yay -S shelldock` |
 | **Windows (Chocolatey)** | `choco install shelldock` |
 | **Snap** | `sudo snap install shelldock` |

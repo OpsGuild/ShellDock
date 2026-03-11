@@ -38,16 +38,16 @@ versions:
             required: true
       - description: Update /etc/hosts with new hostname
         platforms:
-          ubuntu: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          debian: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          centos: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          rhel: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          fedora: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          arch: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
-          alpine: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          ubuntu: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          debian: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          centos: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          rhel: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          fedora: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          arch: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+          alpine: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
           darwin: 'echo "macOS does not use /etc/hosts for hostname resolution — hostname was set via scutil"'
           windows: 'Write-Host "Windows hostname is managed via the registry — no hosts file change needed"'
-        command: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else echo -e "127.0.1.1\t{{hostname}}" >> /etc/hosts; fi && echo "/etc/hosts updated"'
+        command: 'if grep -q "127.0.1.1" /etc/hosts; then sed -i "s/127.0.1.1.*/127.0.1.1\t{{hostname}}/" /etc/hosts; else printf "127.0.1.1\t{{hostname}}\n" >> /etc/hosts; fi && echo "/etc/hosts updated"'
         skip_on_error: true
         args:
           - name: hostname

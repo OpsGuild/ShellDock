@@ -22,8 +22,20 @@ versions:
         skip_on_error: false
       - description: Enable automatic security updates
         platforms:
-          ubuntu: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
-          debian: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
+          ubuntu: 'cat > /etc/apt/apt.conf.d/20auto-upgrades << EOF
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+echo "Automatic updates enabled"'
+          debian: 'cat > /etc/apt/apt.conf.d/20auto-upgrades << EOF
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+echo "Automatic updates enabled"'
           centos: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
           rhel: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
           fedora: 'sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf && systemctl enable --now dnf-automatic.timer && echo "Automatic updates enabled"'
@@ -31,7 +43,13 @@ versions:
           alpine: 'echo "0 3 * * * /sbin/apk upgrade --no-cache >> /var/log/apk-upgrade.log 2>&1" | crontab - && echo "Daily auto-upgrade cron job installed"'
           darwin: 'defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true && defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true && defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true && echo "Automatic updates enabled"'
           windows: 'Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUOptions" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue; Write-Host "Automatic updates configured via registry"'
-        command: 'echo -e "APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\nAPT::Periodic::Download-Upgradeable-Packages \"1\";\nAPT::Periodic::AutocleanInterval \"7\";" > /etc/apt/apt.conf.d/20auto-upgrades && echo "Automatic updates enabled"'
+        command: 'cat > /etc/apt/apt.conf.d/20auto-upgrades << EOF
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+echo "Automatic updates enabled"'
         skip_on_error: false
       - description: Configure email notifications (optional)
         platforms:
