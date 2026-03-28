@@ -44,3 +44,40 @@ func TestShellQuote(t *testing.T) {
 		t.Errorf("shellQuote(%q) = %q, expected %q", input, got, expected)
 	}
 }
+
+func TestExtractVersionFromText(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{input: "shelldock version 1.6", expected: "1.6"},
+		{input: "v2.0.1", expected: "v2.0.1"},
+		{input: "current=v1.3.0-beta.1", expected: "v1.3.0-beta.1"},
+		{input: "no version here", expected: ""},
+	}
+
+	for _, tt := range tests {
+		got := extractVersionFromText(tt.input)
+		if got != tt.expected {
+			t.Errorf("extractVersionFromText(%q) = %q, expected %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestNormalizeVersionForCompare(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{input: "v1.6", expected: "1.6"},
+		{input: "1.6", expected: "1.6"},
+		{input: " V2.0 ", expected: "2.0"},
+	}
+
+	for _, tt := range tests {
+		got := normalizeVersionForCompare(tt.input)
+		if got != tt.expected {
+			t.Errorf("normalizeVersionForCompare(%q) = %q, expected %q", tt.input, got, tt.expected)
+		}
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -149,6 +150,12 @@ func detectUpgradePlan() upgradePlan {
 	}
 
 	if isAPTInstalled() {
+		if fallback, reason := shouldFallbackToDirectFromAPT(); fallback {
+			return upgradePlan{
+				method: upgradeMethodDirectBinary,
+				reason: reason,
+			}
+		}
 		return upgradePlan{
 			method:   upgradeMethodAPT,
 			reason:   "Detected APT-managed installation.",
@@ -444,4 +451,104 @@ func isPacmanInstalled() bool {
 
 func isAURInstalledWith(tool string) bool {
 	return commandSucceeds(tool, "-Q", "shelldock")
+}
+
+func shouldFallbackToDirectFromAPT() (bool, string) {
+	binaryVersion := normalizeVersionForCompare(currentBinaryVersion())
+	aptInstalled := normalizeVersionForCompare(aptInstalledVersion())
+	if binaryVersion != "" && aptInstalled != "" && binaryVersion != aptInstalled {
+		return true, fmt.Sprintf("Binary version (%s) differs from installed APT package version (%s); using direct binary upgrade.", binaryVersion, aptInstalled)
+	}
+
+	aptCandidate := normalizeVersionForCompare(aptCandidateVersion())
+	if binaryVersion == "" || aptCandidate == "" {
+		return false, ""
+	}
+
+	latestTag, err := fetchLatestReleaseTag()
+	if err != nil {
+		return false, ""
+	}
+	latestVersion := normalizeVersionForCompare(latestTag)
+	if latestVersion == "" {
+		return false, ""
+	}
+
+	if dpkgVersionCompare(aptCandidate, "le", binaryVersion) && dpkgVersionCompare(binaryVersion, "lt", latestVersion) {
+		return true, fmt.Sprintf("APT candidate (%s) is not newer than installed binary (%s), while latest release is %s; using direct binary upgrade.", aptCandidate, binaryVersion, latestTag)
+	}
+
+	return false, ""
+}
+
+func aptInstalledVersion() string {
+	if !isCommandAvailable("dpkg-query") {
+		return ""
+	}
+	cmd := exec.Command("dpkg-query", "-W", "-f=${Version}", "shelldock")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func aptCandidateVersion() string {
+	if !isCommandAvailable("apt-cache") {
+		return ""
+	}
+	cmd := exec.Command("apt-cache", "policy", "shelldock")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(strings.ToLower(line), "candidate:") {
+			value := strings.TrimSpace(strings.TrimPrefix(line, "Candidate:"))
+			value = strings.TrimSpace(strings.TrimPrefix(value, "candidate:"))
+			return value
+		}
+	}
+	return ""
+}
+
+func currentBinaryVersion() string {
+	exePath, err := os.Executable()
+	if err != nil || exePath == "" {
+		return ""
+	}
+
+	cmd := exec.Command(exePath, "--version")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return ""
+	}
+
+	return extractVersionFromText(string(out))
+}
+
+func extractVersionFromText(input string) string {
+	// Accept versions like: 1.6, v1.6, 1.6.0, 1.6.0-beta.1
+	re := regexp.MustCompile(`(?i)\bv?\d+(?:\.\d+){0,3}(?:[-+][0-9a-z\.-]+)?\b`)
+	matches := re.FindAllString(input, -1)
+	if len(matches) == 0 {
+		return ""
+	}
+	return matches[len(matches)-1]
+}
+
+func normalizeVersionForCompare(input string) string {
+	version := strings.TrimSpace(strings.ToLower(input))
+	version = strings.TrimPrefix(version, "v")
+	return version
+}
+
+func dpkgVersionCompare(a, operator, b string) bool {
+	if !isCommandAvailable("dpkg") {
+		return false
+	}
+	cmd := exec.Command("dpkg", "--compare-versions", a, operator, b)
+	return cmd.Run() == nil
 }
