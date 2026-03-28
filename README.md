@@ -142,12 +142,16 @@ Use `-a` to skip prompts entirely: `shelldock docker -a`
 | `shelldock <name>` | Run a command set |
 | `shelldock show <name>` | Preview commands without executing |
 | `shelldock echo <name>` | Output commands in copyable format |
-| `shelldock list` | List all available command sets |
+| `shelldock list` / `shelldock ls` | List all available command sets |
+| `shelldock add <name>` | Add a local command set (create template or copy bundled) |
+| `shelldock open <name>` | Open command set YAML in your editor |
+| `shelldock rm <name>` | Remove a local command set |
 | `shelldock manage` | Interactive TUI for managing command sets |
 | `shelldock versions <name>` | List available versions |
 | `shelldock config show` | Show current configuration |
 | `shelldock config set <platform>` | Set platform (ubuntu, centos, darwin, etc.) |
-| `shelldock sync` | Sync from cloud repository |
+| `shelldock sync` / `shelldock update` | Sync bundled repository from cloud |
+| `shelldock upgrade` | Upgrade ShellDock binary to latest version |
 
 See the **[Command Reference](docs/COMMAND_REFERENCE.md)** for every flag and option with examples.
 

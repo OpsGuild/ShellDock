@@ -51,7 +51,7 @@ After installation, you can use tab completion:
 ```bash
 # Complete commands
 shelldock <TAB>
-# Shows: run, show, list, manage, sync, versions, config, echo, completion, help
+# Shows: run, show, list, ls, add, open, rm, manage, sync, update, upgrade, versions, config, echo, completion, help
 
 # Complete command sets
 shelldock run <TAB>
@@ -115,4 +115,3 @@ ShellDock also supports completion for other shells:
 - **PowerShell:** `shelldock completion powershell`
 
 Install them similarly to bash completion.
-

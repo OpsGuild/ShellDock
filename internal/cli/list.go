@@ -10,9 +10,10 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List available command sets",
-	Long:  "List all available command sets from bundled repository and local directory",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List available command sets",
+	Long:    "List all available command sets from bundled repository and local directory",
 	Run: func(cmd *cobra.Command, args []string) {
 		manager, err := repo.NewManager()
 		handleError(err)

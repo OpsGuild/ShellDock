@@ -80,13 +80,14 @@ shelldock echo certbot@certonly
 shelldock echo docker | bash
 ```
 
-## `shelldock list`
+## `shelldock list` / `shelldock ls`
 
 List all available command sets from both bundled and local repositories.
 
 **Example:**
 ```bash
 shelldock list
+shelldock ls
 ```
 
 **Example Output:**
@@ -240,7 +241,91 @@ Sync command sets from the cloud repository to the bundled repository.
 
 Requires `sudo` if the bundled repository is in a system directory.
 
+Aliases: `syn`
+
 **Example:**
 ```bash
 sudo shelldock sync
+```
+
+## `shelldock update`
+
+Update bundled command sets from the cloud repository.
+
+This is functionally the same as `shelldock sync`.
+
+**Example:**
+```bash
+shelldock update
+shelldock update --yes
+```
+
+## `shelldock add [command-set-name]`
+
+Add a command set to local repository (`~/.shelldock`).
+
+- If a bundled command set exists, it is copied locally for customization.
+- Otherwise, ShellDock creates a new local template YAML.
+
+**Flags:**
+- `--open` — Open file in editor after add
+- `-e, --editor <editor>` — Editor command override
+- `--description <text>` — Description for a newly created template
+- `--version <version>` — Version for a newly created template
+
+**Examples:**
+```bash
+shelldock add docker
+shelldock add my-setup --open
+shelldock add my-setup --description "My setup flow" --version v1
+```
+
+## `shelldock open [command-set-name]`
+
+Open a command set file in an available editor for your platform.
+
+- Uses `$EDITOR` first (if set and available), then platform-specific editor candidates.
+- If the set exists only in bundled repository, ShellDock copies it to local repository first, then opens it.
+
+**Flags:**
+- `-e, --editor <editor>` — Editor command override
+
+**Examples:**
+```bash
+shelldock open docker
+shelldock open my-setup --editor "code --wait"
+```
+
+## `shelldock rm [command-set-name]`
+
+Remove a command set from local repository only.
+
+Bundled repository command sets are never deleted by this command.
+
+**Flags:**
+- `-y, --yes` — Skip confirmation prompt
+
+**Examples:**
+```bash
+shelldock rm my-setup
+shelldock rm my-setup --yes
+```
+
+## `shelldock upgrade`
+
+Upgrade the ShellDock binary itself to the latest version.
+
+ShellDock detects likely installation method and platform, then uses the proper upgrade flow:
+- package manager upgrade (apt/dnf/yum/pacman/yay/paru/brew/snap/flatpak/choco), or
+- direct binary replacement fallback.
+
+**Flags:**
+- `-y, --yes` — Skip confirmation prompt
+- `--dry-run` — Show detected upgrade method/commands without executing
+
+**Examples:**
+```bash
+shelldock upgrade
+shelldock upgrade --dry-run
+shelldock upgrade --yes
 ```

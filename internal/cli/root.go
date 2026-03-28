@@ -81,7 +81,12 @@ func init() {
 	rootCmd.AddCommand(echoCmd)
 	rootCmd.AddCommand(manageCmd)
 	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(upgradeCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(rmCmd)
+	rootCmd.AddCommand(openCmd)
 	rootCmd.AddCommand(versionsCmd)
 	rootCmd.AddCommand(configCmd)
 }

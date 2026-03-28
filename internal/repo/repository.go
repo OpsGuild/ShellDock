@@ -437,6 +437,10 @@ func (r *Repository) findCommandSetFile(name string) string {
 	return foundPath
 }
 
+func (r *Repository) FindCommandSetFile(name string) string {
+	return r.findCommandSetFile(name)
+}
+
 func (r *Repository) ListCommandSets() ([]string, error) {
 	if _, err := os.Stat(r.path); os.IsNotExist(err) {
 		return []string{}, nil

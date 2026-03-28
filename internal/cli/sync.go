@@ -70,62 +70,78 @@ func autoSyncIfNeeded(manager *repo.Manager) {
 }
 
 var syncYes bool
+var updateYes bool
 
 var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Sync command sets from cloud repository",
-	Long:  "Download and update command sets from the cloud repository",
+	Use:     "sync",
+	Aliases: []string{"syn"},
+	Short:   "Sync command sets from cloud repository",
+	Long:    "Download and update command sets from the cloud repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		manager, err := repo.NewManager()
-		handleError(err)
+		runSyncCommand(syncYes)
+	},
+}
 
-		bundledRepo := manager.GetBundledRepo()
-		if bundledRepo == nil {
-			fmt.Println("❌ Error: Could not find bundled repository path")
-			fmt.Println("💡 Make sure ShellDock is properly installed")
-			return
-		}
-
-		bundledPath := bundledRepo.GetPath()
-		if bundledPath == "" || bundledPath == "/dev/null" {
-			fmt.Println("❌ Error: Bundled repository not found")
-			fmt.Println("💡 Make sure ShellDock is properly installed")
-			return
-		}
-
-		tempFile := filepath.Join(bundledPath, ".sync_test")
-		f, err := os.Create(tempFile)
-		if err != nil {
-			fmt.Printf("❌ Error: No write permission for bundled repository at %s\n", bundledPath)
-			fmt.Println("💡 You must run with sudo to update the bundled repository: sudo shelldock sync")
-			return
-		}
-		_ = f.Close()
-		_ = os.Remove(tempFile)
-
-		fmt.Println("🔄 Sync from cloud repository")
-		fmt.Printf("   This will download/update command sets from: github.com/%s\n", githubRepo)
-		fmt.Printf("   Target directory: %s\n", bundledPath)
-		fmt.Println()
-
-		if !syncYes && !confirmPrompt("Proceed with sync?") {
-			fmt.Println("⏭️  Sync cancelled.")
-			return
-		}
-
-		fmt.Println()
-		count, err := syncRepository(bundledPath)
-		if err != nil {
-			fmt.Printf("❌ Error syncing repository: %v\n", err)
-			return
-		}
-
-		fmt.Printf("\n✅ Sync complete! Updated %d command set(s) in %s\n", count, bundledPath)
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update bundled command sets (alias for sync)",
+	Long:  "Update bundled command sets from the cloud repository. This is an alias for 'shelldock sync'.",
+	Run: func(cmd *cobra.Command, args []string) {
+		runSyncCommand(updateYes)
 	},
 }
 
 func init() {
 	syncCmd.Flags().BoolVarP(&syncYes, "yes", "y", false, "Skip confirmation prompt")
+	updateCmd.Flags().BoolVarP(&updateYes, "yes", "y", false, "Skip confirmation prompt")
+}
+
+func runSyncCommand(skipPrompt bool) {
+	manager, err := repo.NewManager()
+	handleError(err)
+
+	bundledRepo := manager.GetBundledRepo()
+	if bundledRepo == nil {
+		fmt.Println("❌ Error: Could not find bundled repository path")
+		fmt.Println("💡 Make sure ShellDock is properly installed")
+		return
+	}
+
+	bundledPath := bundledRepo.GetPath()
+	if bundledPath == "" || bundledPath == "/dev/null" {
+		fmt.Println("❌ Error: Bundled repository not found")
+		fmt.Println("💡 Make sure ShellDock is properly installed")
+		return
+	}
+
+	tempFile := filepath.Join(bundledPath, ".sync_test")
+	f, err := os.Create(tempFile)
+	if err != nil {
+		fmt.Printf("❌ Error: No write permission for bundled repository at %s\n", bundledPath)
+		fmt.Println("💡 You must run with sudo to update the bundled repository: sudo shelldock sync")
+		return
+	}
+	_ = f.Close()
+	_ = os.Remove(tempFile)
+
+	fmt.Println("🔄 Sync from cloud repository")
+	fmt.Printf("   This will download/update command sets from: github.com/%s\n", githubRepo)
+	fmt.Printf("   Target directory: %s\n", bundledPath)
+	fmt.Println()
+
+	if !skipPrompt && !confirmPrompt("Proceed with sync?") {
+		fmt.Println("⏭️  Sync cancelled.")
+		return
+	}
+
+	fmt.Println()
+	count, err := syncRepository(bundledPath)
+	if err != nil {
+		fmt.Printf("❌ Error syncing repository: %v\n", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Sync complete! Updated %d command set(s) in %s\n", count, bundledPath)
 }
 
 func syncRepository(repoPath string) (int, error) {
