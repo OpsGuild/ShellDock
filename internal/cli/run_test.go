@@ -288,21 +288,34 @@ func TestBuildExecutionCommandPrefersUserShell(t *testing.T) {
 	}
 
 	originalShell := os.Getenv("SHELL")
+	originalLoginShell := os.Getenv("SHELLDOCK_USE_LOGIN_SHELL")
 	defer func() {
 		if originalShell == "" {
 			_ = os.Unsetenv("SHELL")
 		} else {
 			_ = os.Setenv("SHELL", originalShell)
 		}
+		if originalLoginShell == "" {
+			_ = os.Unsetenv("SHELLDOCK_USE_LOGIN_SHELL")
+		} else {
+			_ = os.Setenv("SHELLDOCK_USE_LOGIN_SHELL", originalLoginShell)
+		}
 	}()
 
 	_ = os.Setenv("SHELL", "/bin/bash")
+	_ = os.Unsetenv("SHELLDOCK_USE_LOGIN_SHELL")
 	cmd := buildExecutionCommand("echo hi")
 	if cmd.Path != "/bin/bash" {
 		t.Fatalf("expected command path /bin/bash, got %q", cmd.Path)
 	}
+	if len(cmd.Args) < 2 || cmd.Args[1] != "-c" {
+		t.Fatalf("expected bash to use -c by default, got args %v", cmd.Args)
+	}
+
+	_ = os.Setenv("SHELLDOCK_USE_LOGIN_SHELL", "true")
+	cmd = buildExecutionCommand("echo hi")
 	if len(cmd.Args) < 2 || cmd.Args[1] != "-lc" {
-		t.Fatalf("expected bash to use -lc, got args %v", cmd.Args)
+		t.Fatalf("expected bash to use -lc when explicitly enabled, got args %v", cmd.Args)
 	}
 }
 

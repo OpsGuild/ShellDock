@@ -135,6 +135,7 @@ func runSyncCommand(skipPrompt bool) {
 	}
 
 	fmt.Println()
+	fmt.Println("⬇️  Downloading command sets...")
 	count, err := syncRepository(bundledPath)
 	if err != nil {
 		fmt.Printf("❌ Error syncing repository: %v\n", err)
@@ -202,7 +203,6 @@ func processDirectory(dirPath, localBasePath string) (int, error) {
 				continue
 			}
 
-			fmt.Printf("  📥 Downloaded %s\n", relPath)
 			count++
 		} else if item.Type == "dir" {
 			subCount, err := processDirectory(item.Path, localBasePath)

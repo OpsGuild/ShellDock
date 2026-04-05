@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
-
-	"runtime"
 
 	"golang.org/x/term"
 
@@ -506,8 +504,7 @@ func buildExecutionCommand(command string) *exec.Cmd {
 
 	userShell := strings.TrimSpace(os.Getenv("SHELL"))
 	if userShell != "" {
-		shellName := filepath.Base(userShell)
-		if shellSupportsLoginFlag(shellName) {
+		if useLoginShell() {
 			return exec.Command(userShell, "-lc", command)
 		}
 		return exec.Command(userShell, "-c", command)
@@ -520,13 +517,9 @@ func buildExecutionCommand(command string) *exec.Cmd {
 	return exec.Command("sh", "-c", command)
 }
 
-func shellSupportsLoginFlag(shellName string) bool {
-	switch shellName {
-	case "bash", "zsh", "ksh", "mksh", "ash", "dash", "sh", "fish":
-		return true
-	default:
-		return false
-	}
+func useLoginShell() bool {
+	value := strings.TrimSpace(strings.ToLower(os.Getenv("SHELLDOCK_USE_LOGIN_SHELL")))
+	return value == "1" || value == "true" || value == "yes"
 }
 
 func buildExecutionEnv() []string {
