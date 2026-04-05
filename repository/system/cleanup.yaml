@@ -55,7 +55,7 @@ versions:
           fedora: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
           arch: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
           alpine: 'find /var/log -type f -name "*.log" -mtime +7 -exec truncate -s 0 {} \; && echo "Old log files truncated"'
-          darwin: 'sudo log erase --older --style syslog 2>/dev/null; echo "System logs cleaned"'
+          darwin: 'sudo -n log erase --older --style syslog >/dev/null 2>&1 && echo "System logs cleaned" || echo "Skipping system log cleanup (sudo unavailable)"'
           windows: 'wevtutil el | ForEach-Object { wevtutil cl $_ 2>$null }; Write-Host "Event logs cleared"'
         command: journalctl --vacuum-time={{journal_retention}} 2>/dev/null && echo "Journal logs cleaned" || echo "journalctl not available"
         skip_on_error: true
@@ -92,7 +92,7 @@ versions:
       - description: Prune Docker resources (if Docker is installed)
         platforms:
           linux: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
-          darwin: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
+          darwin: 'if [ "${SHELLDOCK_ENABLE_DARWIN_DOCKER_PRUNE:-0}" = "1" ] && command -v docker >/dev/null 2>&1 && DOCKER_CLIENT_TIMEOUT=3 COMPOSE_HTTP_TIMEOUT=3 docker info >/dev/null 2>&1; then DOCKER_CLIENT_TIMEOUT=20 COMPOSE_HTTP_TIMEOUT=20 docker system prune -af --volumes >/dev/null 2>&1 && echo "Docker resources pruned" || echo "Docker prune failed or timed out"; else echo "Skipping Docker prune on macOS (set SHELLDOCK_ENABLE_DARWIN_DOCKER_PRUNE=1 to enable)"; fi'
           windows: 'if (Get-Command docker -ErrorAction SilentlyContinue) { docker system prune -af --volumes 2>$null; Write-Host "Docker resources pruned" } else { Write-Host "Docker not installed, skipping" }'
         command: 'command -v docker >/dev/null 2>&1 && docker system prune -af --volumes 2>/dev/null && echo "Docker resources pruned" || echo "Docker not installed, skipping"'
         skip_on_error: true

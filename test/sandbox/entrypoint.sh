@@ -13,6 +13,7 @@ TESTS_FAILED=0
 TESTS_SKIPPED=0
 TOTAL_TESTS=0
 FAILED_DETAILS=""
+TEST_HOME=""
 
 PLATFORM="${SHELLDOCK_PLATFORM:-auto}"
 FILTER_COMMAND="${SHELLDOCK_COMMAND:-}"
@@ -52,6 +53,20 @@ fi
 
 cp "$SRC_BINARY" "$BINARY"
 chmod +x "$BINARY"
+
+cleanup() {
+    if [ -n "$TEST_HOME" ] && [ -d "$TEST_HOME" ]; then
+        rm -rf "$TEST_HOME"
+    fi
+}
+trap cleanup EXIT
+
+TEST_HOME="$(mktemp -d -t shelldock-sandbox-XXXXXX)"
+export HOME="$TEST_HOME"
+mkdir -p "$HOME/.shelldock"
+if [ -d "$PROJECT_ROOT/repository" ]; then
+    cp -R "$PROJECT_ROOT/repository/." "$HOME/.shelldock/"
+fi
 
 sd() {
     HOME="$HOME" "$BINARY" "$@"
@@ -305,7 +320,7 @@ test_execute_and_validate() {
     echo "$output" | sed -n '/Executing commands/,$ p' | sed 's/^/    │ /'
     echo -e "${CYAN}    └────────────${NC}"
 
-    if echo "$output" | grep -q "TIMEOUT"; then
+    if echo "$output" | grep -q '^TIMEOUT$'; then
         test_fail "[${PLATFORM}] execution timed out after ${EXEC_TIMEOUT}s for ${label}"
         return
     fi
