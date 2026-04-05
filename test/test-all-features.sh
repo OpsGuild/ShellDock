@@ -34,9 +34,19 @@ test_fail() {
 # Change to project root
 cd "$(dirname "$0")/.."
 
+if [ -x "./build/shelldock" ]; then
+    SD_BIN="./build/shelldock"
+else
+    SD_BIN="./shelldock"
+fi
+
+sd() {
+    "$SD_BIN" "$@"
+}
+
 # Test 1: List command sets
 test_step "1. List command sets"
-if ./shelldock list | grep -q "test"; then
+if sd list | grep -q "test"; then
     test_pass
 else
     test_fail
@@ -44,7 +54,7 @@ fi
 
 # Test 2: Show command (preview)
 test_step "2. Show command (preview without execution)"
-if ./shelldock show test 2>&1 | grep -q "Command Set: test"; then
+if sd show test 2>&1 | grep -q "Command Set: test"; then
     test_pass
 else
     test_fail
@@ -52,7 +62,7 @@ fi
 
 # Test 3: List versions
 test_step "3. List available versions"
-if ./shelldock versions test 2>&1 | grep -q "v1\|v2\|v3"; then
+if sd versions test 2>&1 | grep -q "v1\|v2\|v3"; then
     test_pass
 else
     test_fail
@@ -60,7 +70,7 @@ fi
 
 # Test 4: Show specific version (v1)
 test_step "4. Show specific version (v1)"
-if ./shelldock show test@v1 2>&1 | grep -q "Version: v1"; then
+if sd show test@v1 2>&1 | grep -q "Version: v1"; then
     test_pass
 else
     test_fail
@@ -68,7 +78,7 @@ fi
 
 # Test 5: Show another version (v2)
 test_step "5. Show specific version (v2)"
-if ./shelldock show test@v2 2>&1 | grep -q "Version: v2"; then
+if sd show test@v2 2>&1 | grep -q "Version: v2"; then
     test_pass
 else
     test_fail
@@ -76,8 +86,8 @@ fi
 
 # Test 6: Platform detection
 test_step "6. Platform detection and configuration"
-./shelldock config show
-if ./shelldock config show 2>&1 | grep -q "Platform"; then
+sd config show
+if sd config show 2>&1 | grep -q "Platform"; then
     test_pass
 else
     test_fail
@@ -85,7 +95,7 @@ fi
 
 # Test 7: Show with platform-specific commands
 test_step "7. Show platform-specific commands"
-if ./shelldock show test 2>&1 | grep -q "Platform:"; then
+if sd show test 2>&1 | grep -q "Platform:"; then
     test_pass
 else
     test_fail
@@ -93,7 +103,7 @@ fi
 
 # Test 8: Test --skip flag (preview)
 test_step "8. Test --skip flag (preview)"
-if echo "n" | ./shelldock test --skip 1,2 2>&1 | grep -q "Skipping steps"; then
+if echo "n" | sd test --skip 1,2 2>&1 | grep -q "Skipping steps"; then
     test_pass
 else
     test_fail
@@ -101,7 +111,7 @@ fi
 
 # Test 9: Test --only flag (preview)
 test_step "9. Test --only flag (preview)"
-if echo "n" | ./shelldock test --only 1,3 2>&1 | grep -q "Running only steps"; then
+if echo "n" | sd test --only 1,3 2>&1 | grep -q "Running only steps"; then
     test_pass
 else
     test_fail
@@ -109,7 +119,7 @@ fi
 
 # Test 10: Test --local flag
 test_step "10. Test --local flag"
-if echo "n" | ./shelldock --local test 2>&1 | grep -q "Command Set: test"; then
+if echo "n" | sd --local test 2>&1 | grep -q "Command Set: test"; then
     test_pass
 else
     test_fail
@@ -117,7 +127,7 @@ fi
 
 # Test 11: Test version flag
 test_step "11. Test --ver flag"
-if echo "n" | ./shelldock test --ver v1 2>&1 | grep -q "Version: v1"; then
+if echo "n" | sd test --ver v1 2>&1 | grep -q "Version: v1"; then
     test_pass
 else
     test_fail
@@ -125,7 +135,7 @@ fi
 
 # Test 12: Test @version syntax
 test_step "12. Test @version syntax"
-if echo "n" | ./shelldock test@v2 2>&1 | grep -q "Version: v2"; then
+if echo "n" | sd test@v2 2>&1 | grep -q "Version: v2"; then
     test_pass
 else
     test_fail
@@ -133,7 +143,7 @@ fi
 
 # Test 13: Test run subcommand
 test_step "13. Test 'run' subcommand"
-if echo "n" | ./shelldock run test 2>&1 | grep -q "Command Set: test"; then
+if echo "n" | sd run test 2>&1 | grep -q "Command Set: test"; then
     test_pass
 else
     test_fail
@@ -141,73 +151,81 @@ fi
 
 # Test 14: Test help
 test_step "14. Test help command"
-if ./shelldock --help 2>&1 | grep -q "ShellDock"; then
+if sd --help 2>&1 | grep -q "ShellDock"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 15: Test config set
-test_step "15. Test config set command"
-./shelldock config set auto > /dev/null 2>&1
-if ./shelldock config show 2>&1 | grep -q "Platform"; then
+# Test 15: Test install subcommand alias
+test_step "15. Test 'install' subcommand alias"
+if echo "n" | sd install test 2>&1 | grep -q "Command Set: test"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 16: Test platform-specific command selection
-test_step "16. Test platform-specific command selection"
-PLATFORM=$(./shelldock config show 2>&1 | grep "Active platform" | awk '{print $3}')
-if ./shelldock show test 2>&1 | grep -q "Platform: $PLATFORM"; then
+# Test 16: Test config set
+test_step "16. Test config set command"
+sd config set auto > /dev/null 2>&1
+if sd config show 2>&1 | grep -q "Platform"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 17: Test error handling (non-existent command set)
-test_step "17. Test error handling (non-existent command set)"
-if ./shelldock nonexistent 2>&1 | grep -q "not found"; then
+# Test 17: Test platform-specific command selection
+test_step "17. Test platform-specific command selection"
+PLATFORM=$(sd config show 2>&1 | grep "Active platform" | awk '{print $3}')
+if sd show test 2>&1 | grep -q "Platform: $PLATFORM"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 18: Test error handling (non-existent version)
-test_step "18. Test error handling (non-existent version)"
-if ./shelldock test@v999 2>&1 | grep -q "not found\|Error"; then
+# Test 18: Test error handling (non-existent command set)
+test_step "18. Test error handling (non-existent command set)"
+if sd nonexistent 2>&1 | grep -q "not found"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 19: Test skip and only conflict
-test_step "19. Test skip and only conflict detection"
-if ./shelldock test --skip 1 --only 2 2>&1 | grep -q "cannot use both\|Error"; then
+# Test 19: Test error handling (non-existent version)
+test_step "19. Test error handling (non-existent version)"
+if sd test@v999 2>&1 | grep -q "not found\|Error"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 20: Test version with skip
-test_step "20. Test version with skip flag"
-if echo "n" | ./shelldock test@v1 --skip 1 2>&1 | grep -q "Version: v1"; then
+# Test 20: Test skip and only conflict
+test_step "20. Test skip and only conflict detection"
+if sd test --skip 1 --only 2 2>&1 | grep -q "cannot use both\|Error"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 21: Show latest version (default should be v3)
-test_step "21. Show latest version (default)"
-if ./shelldock show test 2>&1 | grep -q "Version: v3"; then
+# Test 21: Test version with skip
+test_step "21. Test version with skip flag"
+if echo "n" | sd test@v1 --skip 1 2>&1 | grep -q "Version: v1"; then
     test_pass
 else
     test_fail
 fi
 
-# Test 22: Execute with -a flag
-test_step "22. Execute with -a flag (skip all prompts)"
-output=$(./shelldock test@v1 --only 1 -a 2>&1)
+# Test 22: Show latest version (default should be v3)
+test_step "22. Show latest version (default)"
+if sd show test 2>&1 | grep -q "Version: v3"; then
+    test_pass
+else
+    test_fail
+fi
+
+# Test 23: Execute with -a flag
+test_step "23. Execute with -a flag (skip all prompts)"
+output=$(sd test@v1 --only 1 -a 2>&1)
 if echo "$output" | grep -qiE "executing|success|all commands"; then
     test_pass
 else

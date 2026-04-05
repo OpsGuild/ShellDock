@@ -1,6 +1,9 @@
 package cli
 
 import (
+	"os"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/shelldock/shelldock/internal/repo"
@@ -213,17 +216,17 @@ func TestCollectCommandArgs(t *testing.T) {
 func TestOriginalIndicesInitialization(t *testing.T) {
 	// Test that originalIndices is properly initialized when no filtering is applied
 	// This tests the fix for the panic: "index out of range [0] with length 0"
-	
+
 	commands := []repo.Command{
 		{Description: "Command 1", Command: "echo 1"},
 		{Description: "Command 2", Command: "echo 2"},
 		{Description: "Command 3", Command: "echo 3"},
 	}
-	
+
 	// Simulate the logic from executeCommandSet when no filtering is applied
 	commandsToRun := commands
 	var originalIndices []int
-	
+
 	// No filtering (empty skipSteps and onlySteps)
 	// This is the scenario that was causing the panic
 	if false { // Simulating: skipSteps == "" && onlySteps == ""
@@ -235,12 +238,12 @@ func TestOriginalIndicesInitialization(t *testing.T) {
 			originalIndices[i] = i + 1 // 1-indexed
 		}
 	}
-	
+
 	// Verify originalIndices is properly initialized
 	if len(originalIndices) != len(commandsToRun) {
 		t.Fatalf("originalIndices length mismatch: got %d, expected %d", len(originalIndices), len(commandsToRun))
 	}
-	
+
 	// Verify each index is correct (1-indexed)
 	expectedIndices := []int{1, 2, 3}
 	for i, idx := range originalIndices {
@@ -248,7 +251,7 @@ func TestOriginalIndicesInitialization(t *testing.T) {
 			t.Errorf("originalIndices[%d] = %d, expected %d", i, expectedIndices[i], idx)
 		}
 	}
-	
+
 	// Verify we can safely access all indices without panic
 	for i := range commandsToRun {
 		originalNum := originalIndices[i]
@@ -258,3 +261,65 @@ func TestOriginalIndicesInitialization(t *testing.T) {
 	}
 }
 
+func TestEnsureSystemPath(t *testing.T) {
+	path := "/custom/bin:/usr/bin"
+	normalized := ensureSystemPath(path)
+
+	expected := []string{
+		"/custom/bin",
+		"/usr/bin",
+		"/usr/local/sbin",
+		"/usr/local/bin",
+		"/usr/sbin",
+		"/sbin",
+		"/bin",
+	}
+
+	for _, p := range expected {
+		if !strings.Contains(":"+normalized+":", ":"+p+":") {
+			t.Fatalf("expected PATH to contain %q, got %q", p, normalized)
+		}
+	}
+}
+
+func TestBuildExecutionCommandPrefersUserShell(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell selection test is Unix-specific")
+	}
+
+	originalShell := os.Getenv("SHELL")
+	defer func() {
+		if originalShell == "" {
+			_ = os.Unsetenv("SHELL")
+		} else {
+			_ = os.Setenv("SHELL", originalShell)
+		}
+	}()
+
+	_ = os.Setenv("SHELL", "/bin/bash")
+	cmd := buildExecutionCommand("echo hi")
+	if cmd.Path != "/bin/bash" {
+		t.Fatalf("expected command path /bin/bash, got %q", cmd.Path)
+	}
+	if len(cmd.Args) < 2 || cmd.Args[1] != "-lc" {
+		t.Fatalf("expected bash to use -lc, got args %v", cmd.Args)
+	}
+}
+
+func TestInstallSubcommandRegistered(t *testing.T) {
+	cmd, _, err := rootCmd.Find([]string{"install"})
+	if err != nil {
+		t.Fatalf("expected install command to be registered: %v", err)
+	}
+	if cmd == nil || cmd.Name() != "install" {
+		t.Fatalf("expected command name install, got %#v", cmd)
+	}
+
+	aliasCmd, _, err := rootCmd.Find([]string{"i"})
+	if err != nil {
+		t.Fatalf("expected install alias 'i' to be registered: %v", err)
+	}
+	if aliasCmd == nil || aliasCmd.Name() != "install" {
+		t.Fatalf("expected alias 'i' to resolve to install, got %#v", aliasCmd)
+	}
+}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -474,16 +476,12 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, all
 			}
 		}
 
-		var execCmd *exec.Cmd
-		if runtime.GOOS == "windows" {
-			execCmd = exec.Command("powershell", "-Command", command)
-		} else {
-			execCmd = exec.Command("sh", "-c", command)
-		}
+		execCmd := buildExecutionCommand(command)
 
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 		execCmd.Stdin = os.Stdin
+		execCmd.Env = buildExecutionEnv()
 
 		if err := execCmd.Run(); err != nil {
 			if cmd.SkipOnError {
@@ -499,6 +497,71 @@ func executeCommandSet(cmdSet *repo.CommandSet, skipSteps, onlySteps string, all
 	}
 
 	fmt.Println("🎉 All commands executed successfully!")
+}
+
+func buildExecutionCommand(command string) *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("powershell", "-Command", command)
+	}
+
+	userShell := strings.TrimSpace(os.Getenv("SHELL"))
+	if userShell != "" {
+		shellName := filepath.Base(userShell)
+		if shellSupportsLoginFlag(shellName) {
+			return exec.Command(userShell, "-lc", command)
+		}
+		return exec.Command(userShell, "-c", command)
+	}
+
+	if _, err := exec.LookPath("bash"); err == nil {
+		return exec.Command("bash", "-lc", command)
+	}
+
+	return exec.Command("sh", "-c", command)
+}
+
+func shellSupportsLoginFlag(shellName string) bool {
+	switch shellName {
+	case "bash", "zsh", "ksh", "mksh", "ash", "dash", "sh", "fish":
+		return true
+	default:
+		return false
+	}
+}
+
+func buildExecutionEnv() []string {
+	env := os.Environ()
+	if runtime.GOOS == "windows" {
+		return env
+	}
+
+	pathValue := os.Getenv("PATH")
+	normalizedPath := ensureSystemPath(pathValue)
+
+	for i, v := range env {
+		if strings.HasPrefix(v, "PATH=") {
+			env[i] = "PATH=" + normalizedPath
+			return env
+		}
+	}
+
+	return append(env, "PATH="+normalizedPath)
+}
+
+func ensureSystemPath(pathValue string) string {
+	entries := []string{}
+	if pathValue != "" {
+		entries = strings.Split(pathValue, ":")
+	}
+
+	commonPaths := []string{"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"}
+	for _, p := range commonPaths {
+		if !slices.Contains(entries, p) {
+			entries = append(entries, p)
+		}
+	}
+
+	return strings.Join(entries, ":")
 }
 
 var runCmd = &cobra.Command{

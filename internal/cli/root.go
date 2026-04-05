@@ -30,6 +30,7 @@ You can run a command set directly:
 
 Or use subcommands:
   shelldock run docker
+  shelldock install docker
   shelldock list
   shelldock manage`,
 	Version: "dev",
@@ -77,6 +78,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&rootYesFlag, "yes", "a", false, "Execute all commands without prompting for confirmation")
 	rootCmd.Flags().StringVar(&rootArgsFlag, "args", "", "Provide arguments as key=value pairs (e.g., --args name=John,email=john@example.com)")
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(echoCmd)
 	rootCmd.AddCommand(manageCmd)

@@ -55,6 +55,11 @@ setup_test_env() {
     # Get the project root directory (where this script is located)
     PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
     cd "$PROJECT_ROOT"
+    if [ -x "$PROJECT_ROOT/build/shelldock" ]; then
+        SD_BIN="$PROJECT_ROOT/build/shelldock"
+    else
+        SD_BIN="$PROJECT_ROOT/shelldock"
+    fi
     cp test/test-clean.yaml "$TEST_DIR/.shelldock/test.yaml"
     cp examples/docker.yaml "$TEST_DIR/.shelldock/docker.yaml" 2>/dev/null || true
 }
@@ -64,7 +69,7 @@ sd() {
     # Set HOME and create symlink to repository for bundled repo detection
     HOME="$TEST_DIR" \
     REPOSITORY_PATH="$TEST_DIR/repository" \
-    ./shelldock "$@"
+    "$SD_BIN" "$@"
 }
 
 echo "🧪 ShellDock Comprehensive Test Suite"
@@ -498,6 +503,13 @@ if sd show test 2>&1 | grep -q "Command Set: test"; then
     test_pass
 else
     test_fail "Run subcommand" "Show command not working"
+fi
+
+test_start "Install subcommand alias"
+if echo "n" | sd install test 2>&1 | grep -q "Command Set: test"; then
+    test_pass
+else
+    test_fail "Install subcommand alias" "Install alias not working"
 fi
 
 test_start "Direct execution (no subcommand)"
